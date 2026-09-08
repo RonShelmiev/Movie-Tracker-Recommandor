@@ -1,0 +1,224 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+  <style>
+    body { margin: 0; background: #04060A; }
+    a { color: #4EE2F2; text-decoration: none; }
+    a:hover { color: #9AF0FA; }
+    .atmo {
+      position: absolute; inset: 0; pointer-events: none;
+      background:
+        radial-gradient(70% 55% at 12% 0%, rgba(78,226,242,0.13), transparent 62%),
+        radial-gradient(60% 50% at 96% 92%, rgba(255,77,158,0.12), transparent 60%),
+        radial-gradient(90% 70% at 50% 50%, rgba(8,14,22,0), rgba(2,3,6,0.85) 100%);
+    }
+    .grain {
+      position: absolute; inset: 0; pointer-events: none; opacity: 0.05; mix-blend-mode: overlay;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+    }
+    .scan {
+      position: absolute; inset: 0; pointer-events: none;
+      background: repeating-linear-gradient(to bottom, rgba(190,235,245,0.030) 0 1px, transparent 1px 3px);
+    }
+    .lbl { font: 500 10px 'JetBrains Mono', ui-monospace, monospace; letter-spacing: 0.22em; color: #4A5C68; text-transform: uppercase; }
+    .meta { font: 400 11px 'JetBrains Mono', ui-monospace, monospace; letter-spacing: 0.08em; color: #7C919E; }
+  </style>
+</helmet>
+
+<div style="position: relative; width: 1440px; height: 780px; overflow: hidden; background: #04060A; color: #D7E6ED; font-family: 'Chakra Petch', 'Saira Condensed', system-ui, sans-serif;">
+
+  <div class="atmo"></div>
+  <div class="grain"></div>
+  <div class="scan"></div>
+
+  <div style="position: relative; z-index: 2; padding: 40px;">
+
+    <div style="display: flex; align-items: flex-end; justify-content: space-between;">
+      <div>
+        <div style="font: 600 30px 'Chakra Petch', sans-serif; letter-spacing: 0.06em; color: #EAF6FA;">WHAT DO WE CALL IT</div>
+        <div class="meta" style="margin-top: 8px;">FOUR CANDIDATES / SAME WORDMARK TREATMENT / PICK ONE AND I WILL SWAP IT EVERYWHERE</div>
+      </div>
+      <div style="max-width: 430px; text-align: right;">
+        <div class="meta" style="font-size: 10px; line-height: 1.7; color: #5A6E7B;">NONE OF THESE HAVE BEEN CHECKED FOR TRADEMARK OR DOMAIN AVAILABILITY &mdash; WORTH DOING BEFORE YOU COMMIT.</div>
+      </div>
+    </div>
+
+    <div style="margin-top: 32px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px;">
+      <div style="position: relative; display: flex; border: 1px solid rgba(78,226,242,0.32); background: rgba(9,14,22,0.6); backdrop-filter: blur(10px); overflow: hidden;">
+        <div style="position: absolute; left: 0; top: 0; bottom: 0; width: 2px; background: #4EE2F2;"></div>
+        <div style="flex-grow: 1; min-width: 0; padding: 28px 26px; display: flex; flex-direction: column;">
+          <div style="display: flex; align-items: baseline; gap: 12px;">
+            <span class="lbl" style="color: #4EE2F2;">Current placeholder</span>
+          </div>
+          <div style="margin-top: 16px; font: 600 40px 'Chakra Petch', sans-serif; letter-spacing: 0.24em; line-height: 1; color: #F2FAFD;">NOCTURNE</div>
+          <div class="meta" style="margin-top: 12px; font-size: 10px; letter-spacing: 0.16em; color: #4A5C68;">NOK-turn</div>
+          <div style="margin-top: 18px; height: 1px; background: rgba(126,214,232,0.10);"></div>
+          <div style="margin-top: 18px; font: 300 13.5px 'Chakra Petch', sans-serif; line-height: 1.65; color: #93A7B3; text-wrap: pretty;">A night piece, in music. Already set across every screen, and the most atmospheric of the four &mdash; but also the softest, and the most used elsewhere.</div>
+          <div style="margin-top: auto; padding-top: 18px; display: flex; gap: 8px;">
+            <span style="height: 26px; display: flex; align-items: center; padding: 0 11px; border: 1px solid rgba(126,214,232,0.16); font: 400 10.5px 'JetBrains Mono', monospace; letter-spacing: 0.14em; color: #6E8492;">MOODY</span>
+            <span style="height: 26px; display: flex; align-items: center; padding: 0 11px; border: 1px solid rgba(126,214,232,0.16); font: 400 10.5px 'JetBrains Mono', monospace; letter-spacing: 0.14em; color: #6E8492;">MUSICAL</span>
+            <span style="height: 26px; display: flex; align-items: center; padding: 0 11px; border: 1px solid rgba(126,214,232,0.16); font: 400 10.5px 'JetBrains Mono', monospace; letter-spacing: 0.14em; color: #6E8492;">FAMILIAR</span>
+          </div>
+        </div>
+
+        <div style="width: 196px; flex-shrink: 0; border-left: 1px solid rgba(126,214,232,0.10); background: rgba(6,10,16,0.7); padding: 22px 18px;">
+          <div class="lbl" style="font-size: 8.5px; color: #3E5460;">In the rail</div>
+          <div style="margin-top: 16px; font: 600 15px 'Chakra Petch', sans-serif; letter-spacing: 0.26em; color: #E6F3F8;">NOCTURNE</div>
+          <div class="meta" style="margin-top: 6px; font-size: 9px; letter-spacing: 0.16em; color: #4A5C68;">FILM INDEX / 0.1</div>
+          <div style="margin-top: 16px; height: 1px; background: rgba(126,214,232,0.10);"></div>
+          <div style="margin-top: 14px; display: flex; flex-direction: column; gap: 11px;">
+            <div style="display: flex; align-items: center; gap: 9px;">
+              <span style="width: 3px; height: 12px; background: #4EE2F2;"></span>
+              <span style="font: 500 10.5px 'Chakra Petch', sans-serif; letter-spacing: 0.09em; color: #C4D6DF;">DASHBOARD</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 9px; padding-left: 12px;">
+              <span style="font: 400 10.5px 'Chakra Petch', sans-serif; letter-spacing: 0.09em; color: #5A6E7B;">TO SEE</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 9px; padding-left: 12px;">
+              <span style="font: 400 10.5px 'Chakra Petch', sans-serif; letter-spacing: 0.09em; color: #5A6E7B;">FOR YOU</span>
+            </div>
+          </div>
+          <div style="margin-top: 20px; padding-top: 14px; border-top: 1px solid rgba(126,214,232,0.10);">
+            <div class="lbl" style="font-size: 8.5px; color: #3E5460;">Domain shape</div>
+            <div class="meta" style="margin-top: 8px; font-size: 10px; color: #6E8492;">nocturne.app</div>
+          </div>
+        </div>
+      </div>
+      <div style="position: relative; display: flex; border: 1px solid rgba(126,214,232,0.14); background: rgba(9,14,22,0.6); backdrop-filter: blur(10px); overflow: hidden;">
+        
+        <div style="flex-grow: 1; min-width: 0; padding: 28px 26px; display: flex; flex-direction: column;">
+          <div style="display: flex; align-items: baseline; gap: 12px;">
+            <span class="lbl" style="color: #4A5C68;">Option 2</span>
+          </div>
+          <div style="margin-top: 16px; font: 600 40px 'Chakra Petch', sans-serif; letter-spacing: 0.26em; line-height: 1; color: #F2FAFD;">LATENT</div>
+          <div class="meta" style="margin-top: 12px; font-size: 10px; letter-spacing: 0.16em; color: #4A5C68;">LAY-tuhnt</div>
+          <div style="margin-top: 18px; height: 1px; background: rgba(126,214,232,0.10);"></div>
+          <div style="margin-top: 18px; font: 300 13.5px 'Chakra Petch', sans-serif; line-height: 1.65; color: #93A7B3; text-wrap: pretty;">The latent image is the one already on exposed film, invisible until it is developed. Which is the whole product: your taste is in there, the log develops it.</div>
+          <div style="margin-top: auto; padding-top: 18px; display: flex; gap: 8px;">
+            <span style="height: 26px; display: flex; align-items: center; padding: 0 11px; border: 1px solid rgba(126,214,232,0.16); font: 400 10.5px 'JetBrains Mono', monospace; letter-spacing: 0.14em; color: #6E8492;">QUIET</span>
+            <span style="height: 26px; display: flex; align-items: center; padding: 0 11px; border: 1px solid rgba(126,214,232,0.16); font: 400 10.5px 'JetBrains Mono', monospace; letter-spacing: 0.14em; color: #6E8492;">TECHNICAL</span>
+            <span style="height: 26px; display: flex; align-items: center; padding: 0 11px; border: 1px solid rgba(126,214,232,0.16); font: 400 10.5px 'JetBrains Mono', monospace; letter-spacing: 0.14em; color: #6E8492;">DOUBLE MEANING</span>
+          </div>
+        </div>
+
+        <div style="width: 196px; flex-shrink: 0; border-left: 1px solid rgba(126,214,232,0.10); background: rgba(6,10,16,0.7); padding: 22px 18px;">
+          <div class="lbl" style="font-size: 8.5px; color: #3E5460;">In the rail</div>
+          <div style="margin-top: 16px; font: 600 15px 'Chakra Petch', sans-serif; letter-spacing: 0.28em; color: #E6F3F8;">LATENT</div>
+          <div class="meta" style="margin-top: 6px; font-size: 9px; letter-spacing: 0.16em; color: #4A5C68;">FILM INDEX / 0.1</div>
+          <div style="margin-top: 16px; height: 1px; background: rgba(126,214,232,0.10);"></div>
+          <div style="margin-top: 14px; display: flex; flex-direction: column; gap: 11px;">
+            <div style="display: flex; align-items: center; gap: 9px;">
+              <span style="width: 3px; height: 12px; background: #4EE2F2;"></span>
+              <span style="font: 500 10.5px 'Chakra Petch', sans-serif; letter-spacing: 0.09em; color: #C4D6DF;">DASHBOARD</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 9px; padding-left: 12px;">
+              <span style="font: 400 10.5px 'Chakra Petch', sans-serif; letter-spacing: 0.09em; color: #5A6E7B;">TO SEE</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 9px; padding-left: 12px;">
+              <span style="font: 400 10.5px 'Chakra Petch', sans-serif; letter-spacing: 0.09em; color: #5A6E7B;">FOR YOU</span>
+            </div>
+          </div>
+          <div style="margin-top: 20px; padding-top: 14px; border-top: 1px solid rgba(126,214,232,0.10);">
+            <div class="lbl" style="font-size: 8.5px; color: #3E5460;">Domain shape</div>
+            <div class="meta" style="margin-top: 8px; font-size: 10px; color: #6E8492;">latent.film</div>
+          </div>
+        </div>
+      </div>
+      <div style="position: relative; display: flex; border: 1px solid rgba(126,214,232,0.14); background: rgba(9,14,22,0.6); backdrop-filter: blur(10px); overflow: hidden;">
+        
+        <div style="flex-grow: 1; min-width: 0; padding: 28px 26px; display: flex; flex-direction: column;">
+          <div style="display: flex; align-items: baseline; gap: 12px;">
+            <span class="lbl" style="color: #4A5C68;">Option 3</span>
+          </div>
+          <div style="margin-top: 16px; font: 600 40px 'Chakra Petch', sans-serif; letter-spacing: 0.26em; line-height: 1; color: #F2FAFD;">HALIDE</div>
+          <div class="meta" style="margin-top: 12px; font-size: 10px; letter-spacing: 0.16em; color: #4A5C68;">HAY-lide</div>
+          <div style="margin-top: 18px; height: 1px; background: rgba(126,214,232,0.10);"></div>
+          <div style="margin-top: 18px; font: 300 13.5px 'Chakra Petch', sans-serif; line-height: 1.65; color: #93A7B3; text-wrap: pretty;">Silver halide &mdash; the light-sensitive grain that photographic film is physically made of. Cold, precise, and unmistakably about film rather than streaming.</div>
+          <div style="margin-top: auto; padding-top: 18px; display: flex; gap: 8px;">
+            <span style="height: 26px; display: flex; align-items: center; padding: 0 11px; border: 1px solid rgba(126,214,232,0.16); font: 400 10.5px 'JetBrains Mono', monospace; letter-spacing: 0.14em; color: #6E8492;">COLD</span>
+            <span style="height: 26px; display: flex; align-items: center; padding: 0 11px; border: 1px solid rgba(126,214,232,0.16); font: 400 10.5px 'JetBrains Mono', monospace; letter-spacing: 0.14em; color: #6E8492;">PRECISE</span>
+            <span style="height: 26px; display: flex; align-items: center; padding: 0 11px; border: 1px solid rgba(126,214,232,0.16); font: 400 10.5px 'JetBrains Mono', monospace; letter-spacing: 0.14em; color: #6E8492;">MATERIAL</span>
+          </div>
+        </div>
+
+        <div style="width: 196px; flex-shrink: 0; border-left: 1px solid rgba(126,214,232,0.10); background: rgba(6,10,16,0.7); padding: 22px 18px;">
+          <div class="lbl" style="font-size: 8.5px; color: #3E5460;">In the rail</div>
+          <div style="margin-top: 16px; font: 600 15px 'Chakra Petch', sans-serif; letter-spacing: 0.28em; color: #E6F3F8;">HALIDE</div>
+          <div class="meta" style="margin-top: 6px; font-size: 9px; letter-spacing: 0.16em; color: #4A5C68;">FILM INDEX / 0.1</div>
+          <div style="margin-top: 16px; height: 1px; background: rgba(126,214,232,0.10);"></div>
+          <div style="margin-top: 14px; display: flex; flex-direction: column; gap: 11px;">
+            <div style="display: flex; align-items: center; gap: 9px;">
+              <span style="width: 3px; height: 12px; background: #4EE2F2;"></span>
+              <span style="font: 500 10.5px 'Chakra Petch', sans-serif; letter-spacing: 0.09em; color: #C4D6DF;">DASHBOARD</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 9px; padding-left: 12px;">
+              <span style="font: 400 10.5px 'Chakra Petch', sans-serif; letter-spacing: 0.09em; color: #5A6E7B;">TO SEE</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 9px; padding-left: 12px;">
+              <span style="font: 400 10.5px 'Chakra Petch', sans-serif; letter-spacing: 0.09em; color: #5A6E7B;">FOR YOU</span>
+            </div>
+          </div>
+          <div style="margin-top: 20px; padding-top: 14px; border-top: 1px solid rgba(126,214,232,0.10);">
+            <div class="lbl" style="font-size: 8.5px; color: #3E5460;">Domain shape</div>
+            <div class="meta" style="margin-top: 8px; font-size: 10px; color: #6E8492;">halide.film</div>
+          </div>
+        </div>
+      </div>
+      <div style="position: relative; display: flex; border: 1px solid rgba(126,214,232,0.14); background: rgba(9,14,22,0.6); backdrop-filter: blur(10px); overflow: hidden;">
+        
+        <div style="flex-grow: 1; min-width: 0; padding: 28px 26px; display: flex; flex-direction: column;">
+          <div style="display: flex; align-items: baseline; gap: 12px;">
+            <span class="lbl" style="color: #4A5C68;">Option 4</span>
+          </div>
+          <div style="margin-top: 16px; font: 600 40px 'Chakra Petch', sans-serif; letter-spacing: 0.22em; line-height: 1; color: #F2FAFD;">NITRATE</div>
+          <div class="meta" style="margin-top: 12px; font-size: 10px; letter-spacing: 0.16em; color: #4A5C68;">NY-trayt</div>
+          <div style="margin-top: 18px; height: 1px; background: rgba(126,214,232,0.10);"></div>
+          <div style="margin-top: 18px; font: 300 13.5px 'Chakra Petch', sans-serif; line-height: 1.65; color: #93A7B3; text-wrap: pretty;">Nitrate stock: what cinema burned on until 1951. Volatile, gorgeous, gone. The most noir of the four and the one with actual danger in it.</div>
+          <div style="margin-top: auto; padding-top: 18px; display: flex; gap: 8px;">
+            <span style="height: 26px; display: flex; align-items: center; padding: 0 11px; border: 1px solid rgba(126,214,232,0.16); font: 400 10.5px 'JetBrains Mono', monospace; letter-spacing: 0.14em; color: #6E8492;">HOT</span>
+            <span style="height: 26px; display: flex; align-items: center; padding: 0 11px; border: 1px solid rgba(126,214,232,0.16); font: 400 10.5px 'JetBrains Mono', monospace; letter-spacing: 0.14em; color: #6E8492;">NOIR</span>
+            <span style="height: 26px; display: flex; align-items: center; padding: 0 11px; border: 1px solid rgba(126,214,232,0.16); font: 400 10.5px 'JetBrains Mono', monospace; letter-spacing: 0.14em; color: #6E8492;">MEMORABLE</span>
+          </div>
+        </div>
+
+        <div style="width: 196px; flex-shrink: 0; border-left: 1px solid rgba(126,214,232,0.10); background: rgba(6,10,16,0.7); padding: 22px 18px;">
+          <div class="lbl" style="font-size: 8.5px; color: #3E5460;">In the rail</div>
+          <div style="margin-top: 16px; font: 600 15px 'Chakra Petch', sans-serif; letter-spacing: 0.24em; color: #E6F3F8;">NITRATE</div>
+          <div class="meta" style="margin-top: 6px; font-size: 9px; letter-spacing: 0.16em; color: #4A5C68;">FILM INDEX / 0.1</div>
+          <div style="margin-top: 16px; height: 1px; background: rgba(126,214,232,0.10);"></div>
+          <div style="margin-top: 14px; display: flex; flex-direction: column; gap: 11px;">
+            <div style="display: flex; align-items: center; gap: 9px;">
+              <span style="width: 3px; height: 12px; background: #4EE2F2;"></span>
+              <span style="font: 500 10.5px 'Chakra Petch', sans-serif; letter-spacing: 0.09em; color: #C4D6DF;">DASHBOARD</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 9px; padding-left: 12px;">
+              <span style="font: 400 10.5px 'Chakra Petch', sans-serif; letter-spacing: 0.09em; color: #5A6E7B;">TO SEE</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 9px; padding-left: 12px;">
+              <span style="font: 400 10.5px 'Chakra Petch', sans-serif; letter-spacing: 0.09em; color: #5A6E7B;">FOR YOU</span>
+            </div>
+          </div>
+          <div style="margin-top: 20px; padding-top: 14px; border-top: 1px solid rgba(126,214,232,0.10);">
+            <div class="lbl" style="font-size: 8.5px; color: #3E5460;">Domain shape</div>
+            <div class="meta" style="margin-top: 8px; font-size: 10px; color: #6E8492;">nitrate.film</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+
+<script data-dc-script data-props='{"$preview":{"width":1440,"height":1024}}'>
+class Component extends DCLogic {}
+</script>
+</body>
+</html>
