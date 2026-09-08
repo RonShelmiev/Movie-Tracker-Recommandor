@@ -1,0 +1,35 @@
+{
+  "pages": [
+    { "id": "screens", "name": "Screens" },
+    { "id": "directions", "name": "Other directions" }
+  ],
+  "artboards": [
+    { "file": "Main.dc.html",      "title": "Home / Dashboard",   "page": "screens",    "x": 0,    "y": 0,    "w": 1440, "h": 1024 },
+    { "file": "Browse.dc.html",    "title": "Browse all movies",  "page": "screens",    "x": 1560, "y": 0,    "w": 1440, "h": 1024 },
+    { "file": "Detail.dc.html",    "title": "Movie detail",       "page": "screens",    "x": 3120, "y": 0,    "w": 1440, "h": 1024 },
+    { "file": "Watchlist.dc.html", "title": "To see",             "page": "screens",    "x": 0,    "y": 1200, "w": 1440, "h": 1024 },
+    { "file": "History.dc.html",   "title": "Seen / history",     "page": "screens",    "x": 1560, "y": 1200, "w": 1440, "h": 1024 },
+    { "file": "ForYou.dc.html",    "title": "For you",            "page": "screens",    "x": 3120, "y": 1200, "w": 1440, "h": 1024 },
+    { "file": "DirectionB.dc.html", "title": "Direction B - Archive terminal", "page": "directions", "x": 0,    "y": 0, "w": 1440, "h": 1024 },
+    { "file": "DirectionC.dc.html", "title": "Direction C - Hazard HUD",       "page": "directions", "x": 1560, "y": 0, "w": 1440, "h": 1024 }
+  ],
+  "annotations": [
+    {
+      "id": "read-me-screens",
+      "page": "screens",
+      "x": -420,
+      "y": 0,
+      "w": 340,
+      "text": "DIRECTION A - NEON RAIN\n\nSix screens in the leading direction: deep blue-black, cyan + magenta, glass panels, scanlines and grain.\n\nTwo other directions live on the 'Other directions' page - have a look before we commit.\n\nPlaceholders to replace:\n- 'NOCTURNE' is a stand-in app name\n- posters are abstract art, not real key art\n- all counts, scores and match %% are sample data\n\nOn the Home artboard the chips above the frame change the accent colour and toggle the scanlines."
+    },
+    {
+      "id": "read-me-directions",
+      "page": "directions",
+      "x": -420,
+      "y": 0,
+      "w": 340,
+      "text": "TWO ALTERNATIVES\n\nSame Home screen, different stance.\n\nB - ARCHIVE TERMINAL\nWallace-Corp side of Blade Runner: amber on warm black, condensed type, hard rules, data as a ledger rather than posters. Calm and grown-up; less obviously 'sci-fi app'. Trade-off: reads as a database, so browsing by feel is weaker.\n\nC - HAZARD HUD\nThe Cyberpunk 2077 end: hazard yellow, clipped corners, glitched title, dense HUD chrome. Highest energy and most distinctive. Trade-off: loud, and it will fight the posters once real key art goes in."
+    }
+  ],
+  "launch": { "view": "canvas", "page": "screens" }
+}

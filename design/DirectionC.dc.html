@@ -1,0 +1,302 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap">
+  <style>
+    body { margin: 0; background: #060607; }
+    a { color: #FCEE0A; text-decoration: none; }
+    a:hover { color: #FFF89A; }
+    .hud {
+      position: absolute; inset: 0; pointer-events: none;
+      background:
+        radial-gradient(60% 40% at 8% 4%, rgba(252,238,10,0.10), transparent 60%),
+        radial-gradient(60% 50% at 96% 96%, rgba(0,229,255,0.10), transparent 60%);
+    }
+    .grid {
+      position: absolute; inset: 0; pointer-events: none; opacity: 0.5;
+      background-image:
+        repeating-linear-gradient(to right, rgba(252,238,10,0.045) 0 1px, transparent 1px 64px),
+        repeating-linear-gradient(to bottom, rgba(252,238,10,0.045) 0 1px, transparent 1px 64px);
+    }
+    .scan2 {
+      position: absolute; inset: 0; pointer-events: none;
+      background: repeating-linear-gradient(to bottom, rgba(255,255,255,0.035) 0 1px, transparent 1px 4px);
+    }
+    .mono { font-family: 'Share Tech Mono', ui-monospace, monospace; }
+    .tag { font: 400 10px 'Share Tech Mono', monospace; letter-spacing: 0.2em; color: #6E7276; text-transform: uppercase; }
+    .cut { clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 14px 100%, 0 calc(100% - 14px)); }
+    .cut-sm { clip-path: polygon(0 0, calc(100% - 9px) 0, 100% 9px, 100% 100%, 9px 100%, 0 calc(100% - 9px)); }
+  </style>
+</helmet>
+
+<div style="position: relative; width: 1440px; height: 1024px; overflow: hidden; background: #060607; color: #D6DADE; font-family: 'Rajdhani', system-ui, sans-serif;">
+
+  <div class="hud"></div>
+  <div class="grid"></div>
+  <div class="scan2"></div>
+
+  <div style="position: relative; z-index: 2; display: flex; height: 100%;">
+
+    <!-- icon rail -->
+    <div style="width: 72px; flex-shrink: 0; border-right: 1px solid rgba(252,238,10,0.16); background: rgba(10,10,11,0.7); display: flex; flex-direction: column; align-items: center; padding: 18px 0;">
+      <div style="width: 38px; height: 38px; background: #FCEE0A; display: flex; align-items: center; justify-content: center; font: 700 18px 'Rajdhani', sans-serif; color: #060607;">N</div>
+
+      <div style="margin-top: 26px; display: flex; flex-direction: column; align-items: center; gap: 6px;">
+        <div style="position: relative; width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; background: rgba(252,238,10,0.14);">
+          <div style="position: absolute; left: 0; top: 0; bottom: 0; width: 2px; background: #FCEE0A;"></div>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FCEE0A" stroke-width="1.6"><rect x="3" y="3" width="7.5" height="7.5"/><rect x="13.5" y="3" width="7.5" height="7.5"/><rect x="3" y="13.5" width="7.5" height="7.5"/><rect x="13.5" y="13.5" width="7.5" height="7.5"/></svg>
+        </div>
+        <div style="width: 48px; height: 48px; display: flex; align-items: center; justify-content: center;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6E7276" stroke-width="1.6"><rect x="3" y="4.5" width="18" height="15"/><line x1="3" y1="9.5" x2="21" y2="9.5"/><line x1="3" y1="14.5" x2="21" y2="14.5"/><line x1="8" y1="4.5" x2="8" y2="19.5"/><line x1="16" y1="4.5" x2="16" y2="19.5"/></svg>
+        </div>
+        <div style="width: 48px; height: 48px; display: flex; align-items: center; justify-content: center;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6E7276" stroke-width="1.6"><path d="M6.5 3.5h11v17l-5.5-4.6-5.5 4.6z"/></svg>
+        </div>
+        <div style="width: 48px; height: 48px; display: flex; align-items: center; justify-content: center;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6E7276" stroke-width="1.6"><circle cx="12" cy="12" r="8.5"/><path d="M8.2 12.4l2.6 2.6 5-5.4"/></svg>
+        </div>
+        <div style="position: relative; width: 48px; height: 48px; display: flex; align-items: center; justify-content: center;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#00E5FF" stroke-width="1.6"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/><line x1="12" y1="1.6" x2="12" y2="4.2"/><line x1="1.6" y1="12" x2="4.2" y2="12"/></svg>
+          <span style="position: absolute; top: 8px; right: 8px; width: 5px; height: 5px; background: #FF3B5C;"></span>
+        </div>
+      </div>
+
+      <div style="margin-top: auto; width: 34px; height: 34px; border: 1px solid rgba(214,218,222,0.24); display: flex; align-items: center; justify-content: center; font: 400 11px 'Share Tech Mono', monospace; color: #9AA1A7;">RS</div>
+    </div>
+
+    <div style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column;">
+
+      <!-- status ticker -->
+      <div style="height: 34px; flex-shrink: 0; border-bottom: 1px solid rgba(252,238,10,0.16); background: rgba(10,10,11,0.6); display: flex; align-items: center; gap: 26px; padding: 0 28px;">
+        <span class="tag" style="color: #FCEE0A;">// NOCTURNE v0.1</span>
+        <span class="tag">INDEX 48,210</span>
+        <span class="tag">LOGGED 312</span>
+        <span class="tag">QUEUE 47</span>
+        <span class="tag">ENGINE REBUILT 06:00</span>
+        <span style="margin-left: auto;" class="tag">08.09.2026 &nbsp; 14:22:07</span>
+      </div>
+
+      <!-- search strip -->
+      <div style="height: 64px; flex-shrink: 0; border-bottom: 1px solid rgba(214,218,222,0.10); display: flex; align-items: center; gap: 14px; padding: 0 28px;">
+        <div class="cut-sm" style="flex-grow: 1; max-width: 560px; height: 40px; display: flex; align-items: center; gap: 12px; padding: 0 16px; background: rgba(214,218,222,0.06); border: 1px solid rgba(214,218,222,0.14);">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6E7276" stroke-width="1.8"><circle cx="10.5" cy="10.5" r="6.8"/><line x1="15.5" y1="15.5" x2="21" y2="21"/></svg>
+          <span style="font: 500 15px 'Rajdhani', sans-serif; letter-spacing: 0.06em; color: #6E7276;">SEARCH INDEX</span>
+        </div>
+        <div class="cut-sm" style="height: 40px; display: flex; align-items: center; padding: 0 16px; border: 1px solid rgba(214,218,222,0.14); font: 500 12px 'Rajdhani', sans-serif; letter-spacing: 0.16em; color: #9AA1A7;">FILTERS</div>
+        <div class="cut-sm" style="margin-left: auto; height: 40px; display: flex; align-items: center; gap: 9px; padding: 0 20px; background: #FCEE0A;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#060607" stroke-width="2.4"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          <span style="font: 700 12px 'Rajdhani', sans-serif; letter-spacing: 0.18em; color: #060607;">LOG FILM</span>
+        </div>
+      </div>
+
+      <!-- content -->
+      <div style="flex-grow: 1; display: flex; gap: 22px; padding: 26px 28px; min-height: 0;">
+
+        <div style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 22px;">
+
+          <!-- hero -->
+          <div class="cut" style="position: relative; height: 372px; overflow: hidden; border: 1px solid rgba(252,238,10,0.3); background: linear-gradient(115deg, #0B1418 0%, #12222A 44%, #1C0F16 100%);">
+            <div style="position: absolute; inset: 0; background: radial-gradient(70% 110% at 78% 24%, rgba(0,229,255,0.28), transparent 60%);"></div>
+            <div style="position: absolute; inset: 0; background: radial-gradient(50% 80% at 14% 88%, rgba(252,238,10,0.16), transparent 60%);"></div>
+            <div style="position: absolute; top: 0; right: 0; width: 300px; height: 100%; background: repeating-linear-gradient(135deg, rgba(252,238,10,0.10) 0 12px, transparent 12px 26px);"></div>
+
+            <div style="position: absolute; left: 30px; top: 26px; display: flex; align-items: center; gap: 12px;">
+              <span style="height: 22px; display: flex; align-items: center; padding: 0 9px; background: #FCEE0A; font: 700 10px 'Rajdhani', sans-serif; letter-spacing: 0.2em; color: #060607;">TONIGHT</span>
+              <span class="mono" style="font-size: 11px; letter-spacing: 0.16em; color: #00E5FF;">MATCH 94.0%</span>
+            </div>
+
+            <div style="position: absolute; left: 30px; bottom: 30px; right: 320px;">
+              <div style="position: relative;">
+                <div style="position: absolute; left: -2px; top: 1px; font: 700 66px 'Rajdhani', sans-serif; line-height: 0.94; letter-spacing: 0.03em; color: rgba(255,59,92,0.55);">STALKER</div>
+                <div style="position: absolute; left: 2px; top: -1px; font: 700 66px 'Rajdhani', sans-serif; line-height: 0.94; letter-spacing: 0.03em; color: rgba(0,229,255,0.55);">STALKER</div>
+                <div style="position: relative; font: 700 66px 'Rajdhani', sans-serif; line-height: 0.94; letter-spacing: 0.03em; color: #F2F5F7;">STALKER</div>
+              </div>
+
+              <div class="mono" style="margin-top: 16px; font-size: 12px; letter-spacing: 0.16em; color: #8E959B;">1979 // TARKOVSKY // 162MIN // USSR</div>
+
+              <div style="margin-top: 14px; max-width: 460px; font: 500 15px 'Rajdhani', sans-serif; line-height: 1.6; letter-spacing: 0.03em; color: #9AA1A7;">Pulled from your SOLARIS and ANNIHILATION signal. Long takes, wet interiors, almost no score.</div>
+
+              <div style="margin-top: 22px; display: flex; gap: 12px;">
+                <div class="cut-sm" style="height: 46px; display: flex; align-items: center; gap: 9px; padding: 0 22px; background: #FCEE0A;">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#060607" stroke-width="2.2"><path d="M6.5 3.5h11v17l-5.5-4.6-5.5 4.6z"/></svg>
+                  <span style="font: 700 12px 'Rajdhani', sans-serif; letter-spacing: 0.18em; color: #060607;">QUEUE IT</span>
+                </div>
+                <div class="cut-sm" style="height: 46px; display: flex; align-items: center; gap: 9px; padding: 0 22px; border: 1px solid #00E5FF; background: rgba(0,229,255,0.10);">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#00E5FF" stroke-width="2"><path d="M5 12.5l4.5 4.5L19 7"/></svg>
+                  <span style="font: 700 12px 'Rajdhani', sans-serif; letter-spacing: 0.18em; color: #00E5FF;">SEEN IT</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- queue strip -->
+          <div style="flex-grow: 1; min-height: 0;">
+            <div style="display: flex; align-items: center; gap: 14px;">
+              <span style="font: 700 15px 'Rajdhani', sans-serif; letter-spacing: 0.22em; color: #D6DADE;">QUEUE</span>
+              <span style="flex-grow: 1; height: 1px; background: rgba(252,238,10,0.22);"></span>
+              <span class="tag">47 ITEMS</span>
+            </div>
+
+            <div style="margin-top: 16px; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 16px;">
+              <div class="cut-sm" style="position: relative; height: 200px; overflow: hidden; border: 1px solid rgba(214,218,222,0.16); background: linear-gradient(150deg, #0A1A22, #1E0E18);">
+                <div style="position: absolute; inset: 0; background: radial-gradient(110% 80% at 72% 18%, rgba(0,229,255,0.30), transparent 58%);"></div>
+                <div style="position: absolute; left: 0; right: 0; bottom: 0; height: 60%; background: linear-gradient(to top, rgba(6,6,7,0.95), transparent);"></div>
+                <div style="position: absolute; left: 10px; right: 10px; bottom: 10px;">
+                  <div style="font: 600 14px 'Rajdhani', sans-serif; letter-spacing: 0.06em; color: #EEF2F5;">ARRIVAL</div>
+                  <div class="mono" style="margin-top: 3px; font-size: 9px; letter-spacing: 0.14em; color: #FCEE0A;">96%</div>
+                </div>
+              </div>
+              <div class="cut-sm" style="position: relative; height: 200px; overflow: hidden; border: 1px solid rgba(214,218,222,0.16); background: linear-gradient(150deg, #1A1030, #0A1C24);">
+                <div style="position: absolute; inset: 0; background: radial-gradient(110% 80% at 24% 76%, rgba(255,59,92,0.30), transparent 58%);"></div>
+                <div style="position: absolute; left: 0; right: 0; bottom: 0; height: 60%; background: linear-gradient(to top, rgba(6,6,7,0.95), transparent);"></div>
+                <div style="position: absolute; left: 10px; right: 10px; bottom: 10px;">
+                  <div style="font: 600 14px 'Rajdhani', sans-serif; letter-spacing: 0.06em; color: #EEF2F5;">UNDER THE SKIN</div>
+                  <div class="mono" style="margin-top: 3px; font-size: 9px; letter-spacing: 0.14em; color: #FCEE0A;">87%</div>
+                </div>
+              </div>
+              <div class="cut-sm" style="position: relative; height: 200px; overflow: hidden; border: 1px solid rgba(214,218,222,0.16); background: linear-gradient(150deg, #2A1A06, #0C1418);">
+                <div style="position: absolute; inset: 0; background: radial-gradient(110% 80% at 58% 20%, rgba(252,238,10,0.26), transparent 60%);"></div>
+                <div style="position: absolute; left: 0; right: 0; bottom: 0; height: 60%; background: linear-gradient(to top, rgba(6,6,7,0.95), transparent);"></div>
+                <div style="position: absolute; left: 10px; right: 10px; bottom: 10px;">
+                  <div style="font: 600 14px 'Rajdhani', sans-serif; letter-spacing: 0.06em; color: #EEF2F5;">DUNE: PART TWO</div>
+                  <div class="mono" style="margin-top: 3px; font-size: 9px; letter-spacing: 0.14em; color: #FCEE0A;">89%</div>
+                </div>
+              </div>
+              <div class="cut-sm" style="position: relative; height: 200px; overflow: hidden; border: 1px solid rgba(214,218,222,0.16); background: linear-gradient(150deg, #06181C, #1A0A1C);">
+                <div style="position: absolute; inset: 0; background: radial-gradient(105% 76% at 48% 84%, rgba(0,229,255,0.26), transparent 58%);"></div>
+                <div style="position: absolute; left: 0; right: 0; bottom: 0; height: 60%; background: linear-gradient(to top, rgba(6,6,7,0.95), transparent);"></div>
+                <div style="position: absolute; left: 10px; right: 10px; bottom: 10px;">
+                  <div style="font: 600 14px 'Rajdhani', sans-serif; letter-spacing: 0.06em; color: #EEF2F5;">GHOST IN THE SHELL</div>
+                  <div class="mono" style="margin-top: 3px; font-size: 9px; letter-spacing: 0.14em; color: #FCEE0A;">91%</div>
+                </div>
+              </div>
+              <div class="cut-sm" style="position: relative; height: 200px; overflow: hidden; border: 1px solid rgba(214,218,222,0.16); background: linear-gradient(150deg, #0C1226, #240C18);">
+                <div style="position: absolute; inset: 0; background: radial-gradient(108% 74% at 38% 18%, rgba(139,124,255,0.30), transparent 60%);"></div>
+                <div style="position: absolute; left: 0; right: 0; bottom: 0; height: 60%; background: linear-gradient(to top, rgba(6,6,7,0.95), transparent);"></div>
+                <div style="position: absolute; left: 10px; right: 10px; bottom: 10px;">
+                  <div style="font: 600 14px 'Rajdhani', sans-serif; letter-spacing: 0.06em; color: #EEF2F5;">GATTACA</div>
+                  <div class="mono" style="margin-top: 3px; font-size: 9px; letter-spacing: 0.14em; color: #FCEE0A;">82%</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- right hud -->
+        <div style="width: 320px; flex-shrink: 0; display: flex; flex-direction: column; gap: 22px;">
+
+          <div class="cut" style="border: 1px solid rgba(214,218,222,0.14); background: rgba(12,13,15,0.72); padding: 20px;">
+            <div style="display: flex; align-items: center; justify-content: space-between;">
+              <span style="font: 700 13px 'Rajdhani', sans-serif; letter-spacing: 0.2em; color: #D6DADE;">STATS</span>
+              <span class="tag">ALL TIME</span>
+            </div>
+            <div style="margin-top: 18px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px;">
+              <div>
+                <div class="tag">Logged</div>
+                <div style="margin-top: 6px; font: 700 30px 'Rajdhani', sans-serif; line-height: 1; color: #F2F5F7;">312</div>
+              </div>
+              <div>
+                <div class="tag">Queued</div>
+                <div style="margin-top: 6px; font: 700 30px 'Rajdhani', sans-serif; line-height: 1; color: #F2F5F7;">47</div>
+              </div>
+              <div>
+                <div class="tag">Hours</div>
+                <div style="margin-top: 6px; font: 700 30px 'Rajdhani', sans-serif; line-height: 1; color: #F2F5F7;">631</div>
+              </div>
+              <div>
+                <div class="tag">Mean</div>
+                <div style="margin-top: 6px; font: 700 30px 'Rajdhani', sans-serif; line-height: 1; color: #FCEE0A;">7.8</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="cut" style="border: 1px solid rgba(214,218,222,0.14); background: rgba(12,13,15,0.72); padding: 20px;">
+            <div style="font: 700 13px 'Rajdhani', sans-serif; letter-spacing: 0.2em; color: #D6DADE;">TASTE SIGNAL</div>
+            <div style="margin-top: 18px; display: flex; flex-direction: column; gap: 15px;">
+              <div>
+                <div style="display: flex; justify-content: space-between; align-items: baseline;">
+                  <span style="font: 500 13px 'Rajdhani', sans-serif; letter-spacing: 0.06em; color: #9AA1A7;">CEREBRAL SCI-FI</span>
+                  <span class="mono" style="font-size: 10px; color: #6E7276;">92</span>
+                </div>
+                <div style="margin-top: 7px; height: 4px; background: rgba(214,218,222,0.10);">
+                  <div style="width: 92%; height: 4px; background: #FCEE0A;"></div>
+                </div>
+              </div>
+              <div>
+                <div style="display: flex; justify-content: space-between; align-items: baseline;">
+                  <span style="font: 500 13px 'Rajdhani', sans-serif; letter-spacing: 0.06em; color: #9AA1A7;">NEO-NOIR</span>
+                  <span class="mono" style="font-size: 10px; color: #6E7276;">84</span>
+                </div>
+                <div style="margin-top: 7px; height: 4px; background: rgba(214,218,222,0.10);">
+                  <div style="width: 84%; height: 4px; background: #FCEE0A;"></div>
+                </div>
+              </div>
+              <div>
+                <div style="display: flex; justify-content: space-between; align-items: baseline;">
+                  <span style="font: 500 13px 'Rajdhani', sans-serif; letter-spacing: 0.06em; color: #9AA1A7;">SLOW CINEMA</span>
+                  <span class="mono" style="font-size: 10px; color: #6E7276;">71</span>
+                </div>
+                <div style="margin-top: 7px; height: 4px; background: rgba(214,218,222,0.10);">
+                  <div style="width: 71%; height: 4px; background: #FCEE0A;"></div>
+                </div>
+              </div>
+              <div>
+                <div style="display: flex; justify-content: space-between; align-items: baseline;">
+                  <span style="font: 500 13px 'Rajdhani', sans-serif; letter-spacing: 0.06em; color: #9AA1A7;">BLOCKBUSTER</span>
+                  <span class="mono" style="font-size: 10px; color: #6E7276;">22</span>
+                </div>
+                <div style="margin-top: 7px; height: 4px; background: rgba(214,218,222,0.10);">
+                  <div style="width: 22%; height: 4px; background: #454A4E;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="cut" style="flex-grow: 1; min-height: 0; border: 1px solid rgba(214,218,222,0.14); background: rgba(12,13,15,0.72); padding: 20px;">
+            <div style="display: flex; align-items: center; justify-content: space-between;">
+              <span style="font: 700 13px 'Rajdhani', sans-serif; letter-spacing: 0.2em; color: #D6DADE;">RECENT LOG</span>
+              <span class="tag">30D</span>
+            </div>
+            <div style="margin-top: 16px; display: flex; flex-direction: column; gap: 13px;">
+              <div style="display: flex; align-items: baseline; gap: 12px;">
+                <span class="mono" style="width: 48px; font-size: 10px; color: #565B5F;">04 SEP</span>
+                <span style="flex-grow: 1; font: 500 14px 'Rajdhani', sans-serif; letter-spacing: 0.05em; color: #C5CBD0;">SICARIO</span>
+                <span class="mono" style="font-size: 11px; color: #00E5FF;">8.6</span>
+              </div>
+              <div style="display: flex; align-items: baseline; gap: 12px;">
+                <span class="mono" style="width: 48px; font-size: 10px; color: #565B5F;">01 SEP</span>
+                <span style="flex-grow: 1; font: 500 14px 'Rajdhani', sans-serif; letter-spacing: 0.05em; color: #C5CBD0;">ENEMY</span>
+                <span class="mono" style="font-size: 11px; color: #00E5FF;">7.9</span>
+              </div>
+              <div style="display: flex; align-items: baseline; gap: 12px;">
+                <span class="mono" style="width: 48px; font-size: 10px; color: #565B5F;">28 AUG</span>
+                <span style="flex-grow: 1; font: 500 14px 'Rajdhani', sans-serif; letter-spacing: 0.05em; color: #C5CBD0;">CHILDREN OF MEN</span>
+                <span class="mono" style="font-size: 11px; color: #00E5FF;">9.1</span>
+              </div>
+              <div style="display: flex; align-items: baseline; gap: 12px;">
+                <span class="mono" style="width: 48px; font-size: 10px; color: #565B5F;">24 AUG</span>
+                <span style="flex-grow: 1; font: 500 14px 'Rajdhani', sans-serif; letter-spacing: 0.05em; color: #C5CBD0;">PRIMER</span>
+                <span class="mono" style="font-size: 11px; color: #6E7276;">6.4</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+
+<script data-dc-script data-props='{"$preview":{"width":1440,"height":1024}}'>
+class Component extends DCLogic {}
+</script>
+</body>
+</html>
