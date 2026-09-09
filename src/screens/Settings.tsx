@@ -1,0 +1,164 @@
+import { CATALOGUE, getFilm } from '../data/catalogue';
+import { Thumb } from '../components/Poster';
+import { Chip, Slider, ToggleRow } from '../components/ui';
+import { Icon } from '../components/Icon';
+import { recommend } from '../lib/recommend';
+import { DEFAULT_SETTINGS, useStore } from '../lib/store';
+import type { Genre } from '../lib/types';
+
+const CEILINGS: { label: string; value: number | null }[] = [
+  { label: 'No limit', value: null },
+  { label: 'Under 3h', value: 180 },
+  { label: 'Under 2h', value: 120 },
+  { label: 'Under 90m', value: 90 },
+];
+
+const EXCLUDABLE: Genre[] = ['Horror', 'Action', 'Romance', 'Comedy', 'War', 'Animation'];
+
+export function Settings() {
+  const { state, dispatch } = useStore();
+  const { settings } = state;
+  const preview = recommend(state, CATALOGUE, getFilm, 5);
+
+  const set = (key: keyof typeof settings.weights) => (value: number) =>
+    dispatch({ type: 'settings/weight', key, value });
+
+  return (
+    <div className="screen" style={{ gap: 30 }}>
+      <div className="screen-head">
+        <div>
+          <h1 className="h1">TUNE MY TASTE</h1>
+          <div className="meta">
+            HOW THE ENGINE WEIGHS YOUR {state.log.length} LOGGED {state.log.length === 1 ? 'FILM' : 'FILMS'}
+          </div>
+        </div>
+        <button
+          type="button"
+          className="btn"
+          style={{ height: 40 }}
+          onClick={() => dispatch({ type: 'settings/patch', patch: DEFAULT_SETTINGS })}
+        >
+          RESET TO DEFAULT
+        </button>
+      </div>
+
+      <div className="split">
+        <div>
+          <div className="lbl">Signal weights</div>
+          <div style={{ marginTop: 18, display: 'flex', flexDirection: 'column', gap: 22 }}>
+            <Slider label="People you rate highly" note="DIRECTORS YOU KEEP COMING BACK TO" value={settings.weights.people} onChange={set('people')} />
+            <Slider label="Genre and mood affinity" note="FROM YOUR SCORES, NOT YOUR TAGS" value={settings.weights.affinity} onChange={set('affinity')} />
+            <Slider label="Runtime that fits your habits" note="LENGTHS YOU ACTUALLY FINISH" value={settings.weights.runtimeFit} onChange={set('runtimeFit')} />
+            <Slider label="Era and period" note="THE DECADES YOU SKEW TOWARD" value={settings.weights.era} onChange={set('era')} />
+            <Slider label="What everyone else scores" note="KEEP LOW TO STAY OFF THE BEATEN PATH" value={settings.weights.community} onChange={set('community')} />
+          </div>
+
+          <div className="lbl" style={{ display: 'block', marginTop: 34 }}>Hard rules</div>
+
+          <div style={{ marginTop: 16, display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
+            <span style={{ width: 150, flexShrink: 0, font: '400 14px var(--sans)', color: 'var(--ink-3)' }}>Runtime ceiling</span>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              {CEILINGS.map((c) => (
+                <Chip
+                  key={c.label}
+                  label={c.label}
+                  on={settings.runtimeCeiling === c.value}
+                  onClick={() => dispatch({ type: 'settings/patch', patch: { runtimeCeiling: c.value } })}
+                />
+              ))}
+            </div>
+          </div>
+
+          <div style={{ marginTop: 16, display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
+            <span style={{ width: 150, flexShrink: 0, font: '400 14px var(--sans)', color: 'var(--ink-3)' }}>Never recommend</span>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              {EXCLUDABLE.map((g) => {
+                const on = settings.excludedGenres.includes(g);
+                return (
+                  <Chip key={g} on={on} danger onClick={() => dispatch({ type: 'settings/toggleGenre', genre: g })}>
+                    {g}
+                    {on && <Icon name="close" size={11} width={2.2} colour="var(--magenta-hi)" />}
+                  </Chip>
+                );
+              })}
+            </div>
+          </div>
+
+          <div style={{ marginTop: 22 }}>
+            <ToggleRow
+              label="Include rewatches in picks"
+              sub="SUGGEST FILMS YOU HAVE ALREADY LOGGED"
+              on={settings.includeRewatches}
+              onChange={(v) => dispatch({ type: 'settings/patch', patch: { includeRewatches: v } })}
+            />
+            <ToggleRow
+              label="Surface the obscure"
+              sub="ALLOW FILMS WITH UNDER 200K RATINGS"
+              on={settings.surfaceObscure}
+              onChange={(v) => dispatch({ type: 'settings/patch', patch: { surfaceObscure: v } })}
+            />
+          </div>
+
+          <div style={{ marginTop: 30, paddingTop: 22, borderTop: '1px solid var(--hairline)' }}>
+            <div className="lbl">Danger zone</div>
+            <button
+              type="button"
+              className="btn"
+              style={{ marginTop: 14, borderColor: 'rgba(255,77,158,0.35)', color: 'var(--magenta-hi)' }}
+              onClick={() => {
+                if (confirm('Erase your entire log, list and settings? This cannot be undone.')) {
+                  dispatch({ type: 'reset' });
+                }
+              }}
+            >
+              ERASE EVERYTHING
+            </button>
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
+          <div className="panel">
+            <div className="panel-head">
+              <span className="h3">WITH THESE SETTINGS</span>
+              <span style={{ width: 6, height: 6, background: 'var(--cyan)', boxShadow: '0 0 8px rgba(78,226,242,0.9)' }} />
+            </div>
+            <div style={{ padding: '6px 20px 14px' }}>
+              {preview.length === 0 && (
+                <div style={{ padding: '18px 0', font: '300 13.5px var(--sans)', color: 'var(--ink-5)' }}>
+                  Your rules have filtered everything out.
+                </div>
+              )}
+              {preview.map((r) => (
+                <div key={r.film.id} style={{ display: 'flex', alignItems: 'center', gap: 12, height: 56, borderBottom: '1px solid rgba(126,214,232,0.07)' }}>
+                  <Thumb film={r.film} w={30} h={42} />
+                  <div style={{ flexGrow: 1, minWidth: 0 }}>
+                    <div style={{ font: '400 14px var(--sans)', letterSpacing: '0.03em', color: 'var(--ink-2)' }}>{r.film.title}</div>
+                    <div className="meta" style={{ marginTop: 3, fontSize: 9.5, color: 'var(--ink-7)' }}>{r.film.year}</div>
+                  </div>
+                  <span style={{ font: '500 13px var(--mono)', color: 'var(--cyan)' }}>{r.match}</span>
+                </div>
+              ))}
+            </div>
+            <div style={{ padding: '14px 20px 18px' }}>
+              <div className="meta" style={{ fontSize: 10, color: 'var(--ink-7)' }}>
+                RECOMPUTED LIVE / {state.log.length} FILMS / {CATALOGUE.length} CANDIDATES
+              </div>
+            </div>
+          </div>
+
+          {settings.weights.community > 60 && (
+            <div style={{ padding: 20, border: '1px solid rgba(255,180,84,0.22)', background: 'rgba(255,180,84,0.05)' }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+                <span style={{ marginTop: 5, width: 5, height: 5, flexShrink: 0, background: 'var(--amber)' }} />
+                <div style={{ font: '300 13px var(--sans)', lineHeight: 1.6, color: '#C0A882' }}>
+                  Community score is at {settings.weights.community}. Much above 60 and your picks start looking like a
+                  streaming front page rather than yours.
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
