@@ -1,6 +1,6 @@
 import { createContext, useContext, useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { getFilm } from '../data/catalogue';
+import { useCatalogue } from '../lib/catalogue';
 import { computeStats } from '../lib/stats';
 import { useStore } from '../lib/store';
 import { Icon } from './Icon';
@@ -22,6 +22,7 @@ const NAV: { to: string; label: string; icon: IconName; count?: 'toSee' | 'seen'
 ];
 
 export function AppShell() {
+  const { getFilm } = useCatalogue();
   const { state } = useStore();
   const navigate = useNavigate();
   const stats = computeStats(state, getFilm);

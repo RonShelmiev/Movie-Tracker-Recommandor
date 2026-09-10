@@ -1,5 +1,5 @@
 import { Link, useParams } from 'react-router-dom';
-import { CATALOGUE, getFilm } from '../data/catalogue';
+import { useCatalogue } from '../lib/catalogue';
 import { useLogModal } from '../components/AppShell';
 import { Icon } from '../components/Icon';
 import { Poster } from '../components/Poster';
@@ -8,9 +8,9 @@ import { buildTaste, formatRuntime } from '../lib/recommend';
 import { useStore } from '../lib/store';
 import type { Film } from '../lib/types';
 
-function similar(film: Film, limit = 5): Film[] {
+function similar(film: Film, pool: Film[], limit = 5): Film[] {
   const mine = new Set<string>([...film.tags, ...film.genres]);
-  return CATALOGUE.filter((f) => f.id !== film.id)
+  return pool.filter((f) => f.id !== film.id)
     .map((f) => {
       let n = 0;
       for (const t of [...f.tags, ...f.genres]) if (mine.has(t)) n += 1;
@@ -25,6 +25,7 @@ function similar(film: Film, limit = 5): Film[] {
 
 export function FilmDetail() {
   const { id } = useParams();
+  const { candidates, getFilm } = useCatalogue();
   const { state, dispatch } = useStore();
   const { openLog } = useLogModal();
   const film = id ? getFilm(id) : undefined;
@@ -135,7 +136,7 @@ export function FilmDetail() {
           <div style={{ marginTop: 34 }}>
             <SectionHead title="MORE LIKE THIS" />
             <div className="grid-posters" style={{ marginTop: 14, gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))' }}>
-              {similar(film).map((f) => (
+              {similar(film, candidates).map((f) => (
                 <Poster key={f.id} film={f} status={seen.has(f.id) ? 'seen' : listedIds.has(f.id) ? 'listed' : null} />
               ))}
             </div>

@@ -1,4 +1,5 @@
-import { CATALOGUE, getFilm } from '../data/catalogue';
+import { useState } from 'react';
+import { useCatalogue } from '../lib/catalogue';
 import { Thumb } from '../components/Poster';
 import { Chip, Slider, ToggleRow } from '../components/ui';
 import { Icon } from '../components/Icon';
@@ -16,9 +17,12 @@ const CEILINGS: { label: string; value: number | null }[] = [
 const EXCLUDABLE: Genre[] = ['Horror', 'Action', 'Romance', 'Comedy', 'War', 'Animation'];
 
 export function Settings() {
+  const { candidates, getFilm, mode, tmdbKey, setTmdbKey, probe, busy } = useCatalogue();
   const { state, dispatch } = useStore();
+  const [keyDraft, setKeyDraft] = useState(tmdbKey);
+  const [probeResult, setProbeResult] = useState<{ ok: boolean; message: string; sample?: string } | null>(null);
   const { settings } = state;
-  const preview = recommend(state, CATALOGUE, getFilm, 5);
+  const preview = recommend(state, candidates, getFilm, 5);
 
   const set = (key: keyof typeof settings.weights) => (value: number) =>
     dispatch({ type: 'settings/weight', key, value });
@@ -117,6 +121,100 @@ export function Settings() {
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
+          <div className="panel" style={{ padding: 20 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+              <span className="h3">CATALOGUE</span>
+              <span
+                className="meta"
+                style={{ fontSize: 10, color: mode === 'tmdb' ? 'var(--cyan)' : 'var(--ink-6)' }}
+              >
+                {mode === 'tmdb' ? 'TMDB CONNECTED' : `STARTER · ${candidates.length} FILMS`}
+              </span>
+            </div>
+
+            <p style={{ margin: '14px 0 0', font: '300 13px var(--sans)', lineHeight: 1.6, color: 'var(--ink-4)' }}>
+              Without a key you get the {candidates.length}-film starter set. A free{' '}
+              <a href="https://www.themoviedb.org/settings/api" target="_blank" rel="noreferrer noopener">
+                TMDB key
+              </a>{' '}
+              opens the full index, with real posters.
+            </p>
+
+            <div className="field" style={{ marginTop: 14 }}>
+              <input
+                value={keyDraft}
+                onChange={(e) => setKeyDraft(e.target.value)}
+                placeholder="Paste a TMDB API key or v4 read token"
+                aria-label="TMDB API key"
+                spellCheck={false}
+                autoComplete="off"
+              />
+            </div>
+
+            <div style={{ marginTop: 12, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+              <button
+                type="button"
+                className="btn btn-sm"
+                onClick={() => {
+                  setTmdbKey(keyDraft);
+                  setProbeResult(null);
+                }}
+              >
+                SAVE KEY
+              </button>
+              <button
+                type="button"
+                className="btn btn-sm"
+                disabled={busy || !keyDraft.trim()}
+                onClick={async () => {
+                  setTmdbKey(keyDraft);
+                  setProbeResult(await probe());
+                }}
+              >
+                {busy ? 'TESTING…' : 'TEST CONNECTION'}
+              </button>
+              {tmdbKey && (
+                <button
+                  type="button"
+                  className="btn btn-sm btn-ghost"
+                  onClick={() => {
+                    setTmdbKey('');
+                    setKeyDraft('');
+                    setProbeResult(null);
+                  }}
+                >
+                  REMOVE
+                </button>
+              )}
+            </div>
+
+            {probeResult && (
+              <div
+                style={{
+                  marginTop: 14,
+                  padding: 14,
+                  border: `1px solid ${probeResult.ok ? 'rgba(78,226,242,0.3)' : 'rgba(255,77,158,0.3)'}`,
+                  background: probeResult.ok ? 'rgba(78,226,242,0.06)' : 'rgba(255,77,158,0.06)',
+                  font: '300 12.5px var(--sans)',
+                  lineHeight: 1.6,
+                  color: probeResult.ok ? 'var(--ink-2)' : 'var(--magenta-hi)',
+                }}
+              >
+                {probeResult.message}
+                {probeResult.sample && (
+                  <div className="meta" style={{ marginTop: 8, fontSize: 10, color: 'var(--ink-6)' }}>
+                    {probeResult.sample.toUpperCase()}
+                  </div>
+                )}
+              </div>
+            )}
+
+            <div className="meta" style={{ marginTop: 14, fontSize: 9.5, lineHeight: 1.7, color: 'var(--ink-7)' }}>
+              THE KEY IS KEPT IN THIS BROWSER ONLY. IT IS READ-ONLY, BUT ANY KEY IN A PAGE LIKE THIS IS VISIBLE TO
+              WHOEVER OPENS IT — USE ONE YOU DO NOT MIND EXPOSING.
+            </div>
+          </div>
+
           <div className="panel">
             <div className="panel-head">
               <span className="h3">WITH THESE SETTINGS</span>
@@ -141,7 +239,7 @@ export function Settings() {
             </div>
             <div style={{ padding: '14px 20px 18px' }}>
               <div className="meta" style={{ fontSize: 10, color: 'var(--ink-7)' }}>
-                RECOMPUTED LIVE / {state.log.length} FILMS / {CATALOGUE.length} CANDIDATES
+                RECOMPUTED LIVE / {state.log.length} FILMS / {candidates.length} CANDIDATES
               </div>
             </div>
           </div>

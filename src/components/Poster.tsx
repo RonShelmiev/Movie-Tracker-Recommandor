@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { posterUrl } from '../lib/tmdb';
 import type { Film } from '../lib/types';
 import { StatusMark } from './ui';
 
@@ -17,6 +18,9 @@ export function Poster({
 }) {
   return (
     <Link to={`/film/${film.id}`} className={posterClass(film)} aria-label={film.title}>
+      {film.posterPath && (
+        <img className="art-img" src={posterUrl(film.posterPath, 'w342')} alt="" loading="lazy" />
+      )}
       <span className="fade" />
       {status && <StatusMark kind={status} />}
       {caption && (
@@ -33,5 +37,9 @@ export function Poster({
 
 /** Same artwork, no link or caption — for list rows and modals. */
 export function Thumb({ film, w, h }: { film: Film; w: number; h: number }) {
-  return <span className={`thumb art-${film.art}`} style={{ width: w, height: h }} aria-hidden="true" />;
+  return (
+    <span className={`thumb art-${film.art}`} style={{ width: w, height: h }} aria-hidden="true">
+      {film.posterPath && <img className="art-img" src={posterUrl(film.posterPath, 'w342')} alt="" loading="lazy" />}
+    </span>
+  );
 }

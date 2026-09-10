@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { CATALOGUE, getFilm } from '../data/catalogue';
+import { useCatalogue } from '../lib/catalogue';
 import { useStore } from '../lib/store';
 import type { Film } from '../lib/types';
 import { Icon } from './Icon';
@@ -13,8 +13,10 @@ const shiftISO = (days: number) => {
 };
 
 export function LogModal({ filmId, onClose }: { filmId: string | null; onClose: () => void }) {
+  const { getFilm, search, mode, busy } = useCatalogue();
   const { state, dispatch } = useStore();
   const [query, setQuery] = useState('');
+  const [matches, setMatches] = useState<Film[]>([]);
   const [picked, setPicked] = useState<Film | null>(filmId ? getFilm(filmId) ?? null : null);
   const [watchedOn, setWatchedOn] = useState(todayISO());
   const [rewatch, setRewatch] = useState(false);
@@ -37,13 +39,24 @@ export function LogModal({ filmId, onClose }: { filmId: string | null; onClose: 
     return () => window.removeEventListener('keydown', onKey);
   }, [onClose]);
 
-  const matches = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (!q) return [];
-    return CATALOGUE.filter(
-      (f) => f.title.toLowerCase().includes(q) || f.director.toLowerCase().includes(q),
-    ).slice(0, 6);
-  }, [query]);
+  // Debounced so typing does not fire a request per keystroke against TMDB.
+  useEffect(() => {
+    const q = query.trim();
+    if (!q) {
+      setMatches([]);
+      return;
+    }
+    let cancelled = false;
+    const t = setTimeout(() => {
+      search(q).then((found) => {
+        if (!cancelled) setMatches(found.slice(0, 6));
+      });
+    }, mode === 'tmdb' ? 350 : 0);
+    return () => {
+      cancelled = true;
+      clearTimeout(t);
+    };
+  }, [query, search, mode]);
 
   function save() {
     if (!picked) return;
@@ -110,7 +123,11 @@ export function LogModal({ filmId, onClose }: { filmId: string | null; onClose: 
                 )}
                 {query.trim() && matches.length === 0 && (
                   <div className="meta" style={{ marginTop: 12, color: 'var(--ink-6)' }}>
-                    NOTHING IN THE STARTER CATALOGUE MATCHES THAT
+                    {busy
+                      ? 'SEARCHING…'
+                      : mode === 'tmdb'
+                        ? 'NO MATCHES'
+                        : 'NOT IN THE STARTER CATALOGUE — ADD A TMDB KEY IN TUNE MY TASTE TO SEARCH EVERYTHING'}
                   </div>
                 )}
               </div>

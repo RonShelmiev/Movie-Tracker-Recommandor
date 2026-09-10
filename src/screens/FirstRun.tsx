@@ -1,12 +1,14 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FIRST_RUN_PICKS, getFilm } from '../data/catalogue';
+import { FIRST_RUN_PICKS } from '../data/catalogue';
+import { useCatalogue } from '../lib/catalogue';
 import { Icon } from '../components/Icon';
 import { useStore } from '../lib/store';
 
 const NEEDED = 5;
 
 export function FirstRun() {
+  const { getFilm } = useCatalogue();
   const { dispatch } = useStore();
   const navigate = useNavigate();
   const [picked, setPicked] = useState<string[]>([]);

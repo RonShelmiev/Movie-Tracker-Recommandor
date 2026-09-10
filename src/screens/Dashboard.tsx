@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { CATALOGUE, getFilm } from '../data/catalogue';
+import { useCatalogue } from '../lib/catalogue';
 import { useLogModal } from '../components/AppShell';
 import { Icon } from '../components/Icon';
 import { Poster, Thumb } from '../components/Poster';
@@ -24,11 +24,12 @@ const TAG_LABEL: Record<string, string> = {
 };
 
 export function Dashboard() {
+  const { candidates, getFilm } = useCatalogue();
   const { state, dispatch } = useStore();
   const { openLog } = useLogModal();
   const stats = computeStats(state, getFilm);
   const taste = buildTaste(state.log, getFilm);
-  const recs = recommend(state, CATALOGUE, getFilm, 8);
+  const recs = recommend(state, candidates, getFilm, 8);
   const top = recs[0];
 
   const nextUp = state.watchlist

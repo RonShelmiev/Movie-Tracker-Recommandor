@@ -23,8 +23,10 @@ export interface Film {
   acclaim: number;
   /** Number of community ratings, in thousands. Drives the "surface the obscure" rule. */
   ratingsK: number;
-  /** 0-7, picks one of the procedural poster treatments. */
+  /** 0-7, picks one of the procedural poster treatments (the fallback when there is no artwork). */
   art: number;
+  /** TMDB poster path, when the film came from TMDB. Absent for the bundled catalogue. */
+  posterPath?: string;
   synopsis: string;
 }
 

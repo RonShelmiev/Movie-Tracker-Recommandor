@@ -1,38 +1,55 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { CATALOGUE } from '../data/catalogue';
+import { useCatalogue } from '../lib/catalogue';
 import { Icon } from '../components/Icon';
 import { Thumb } from '../components/Poster';
 import { SectionHead } from '../components/ui';
 import { formatRuntime } from '../lib/recommend';
 import { useStore } from '../lib/store';
+import type { Film } from '../lib/types';
 
 export function SearchResults() {
   const [params] = useSearchParams();
   const q = (params.get('q') ?? '').trim();
+  const { search, candidates, mode, busy, lastError } = useCatalogue();
   const { state } = useStore();
   const lower = q.toLowerCase();
+  const [hits, setHits] = useState<Film[]>([]);
 
-  const films = useMemo(
-    () => (lower ? CATALOGUE.filter((f) => f.title.toLowerCase().includes(lower)) : []),
-    [lower],
-  );
+  useEffect(() => {
+    if (!q) {
+      setHits([]);
+      return;
+    }
+    let cancelled = false;
+    search(q).then((found) => {
+      if (!cancelled) setHits(found);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [q, search]);
+
+  const pool = useMemo(() => {
+    const m = new Map<string, Film>();
+    for (const f of [...candidates, ...hits]) m.set(f.id, f);
+    return [...m.values()];
+  }, [candidates, hits]);
+
+  const films = useMemo(() => hits.filter((f) => f.title.toLowerCase().includes(lower)), [hits, lower]);
 
   const people = useMemo(() => {
     if (!lower) return [];
     const names = new Map<string, number>();
-    for (const f of CATALOGUE) {
+    for (const f of pool) {
       if (f.director.toLowerCase().includes(lower)) names.set(f.director, (names.get(f.director) ?? 0) + 1);
     }
     return [...names.entries()].map(([name, count]) => ({ name, count }));
-  }, [lower]);
+  }, [lower, pool]);
 
   const byPerson = useMemo(
-    () =>
-      people.length
-        ? CATALOGUE.filter((f) => people.some((p) => p.name === f.director)).sort((a, b) => b.year - a.year)
-        : [],
-    [people],
+    () => (people.length ? pool.filter((f) => people.some((p) => p.name === f.director)).sort((a, b) => b.year - a.year) : []),
+    [people, pool],
   );
 
   const collections = state.collections.filter((c) => c.name.toLowerCase().includes(lower) && lower);
@@ -60,14 +77,28 @@ export function SearchResults() {
 
       {!q && <div className="empty-note">Type something in the search box above.</div>}
 
-      {q && total === 0 && (
+      {q && busy && total === 0 && <div className="empty-note">Searching&hellip;</div>}
+
+      {q && !busy && total === 0 && (
         <div className="empty-note">
-          Nothing in the starter catalogue matches &ldquo;{q}&rdquo;. It holds {CATALOGUE.length} films — see the README for wiring up a full index.
+          Nothing matches &ldquo;{q}&rdquo;.{' '}
+          {mode === 'bundled' && (
+            <>
+              You are on the {candidates.length}-film starter catalogue —{' '}
+              <Link to="/settings">add a TMDB key</Link> to search everything.
+            </>
+          )}
+        </div>
+      )}
+
+      {lastError && (
+        <div className="empty-note" style={{ borderColor: 'rgba(255,77,158,0.3)', color: 'var(--magenta-hi)' }}>
+          TMDB request failed: {lastError}
         </div>
       )}
 
       {people.map((p) => {
-        const theirs = CATALOGUE.filter((f) => f.director === p.name);
+        const theirs = pool.filter((f) => f.director === p.name);
         const logged = theirs.filter((f) => state.log.some((e) => e.filmId === f.id));
         const mean = logged.length
           ? logged.reduce((s, f) => s + (scoreOf(f.id) ?? 0), 0) / logged.length

@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { CATALOGUE, getFilm } from '../data/catalogue';
+import { useCatalogue } from '../lib/catalogue';
 import { useLogModal } from '../components/AppShell';
 import { Icon } from '../components/Icon';
 import { Thumb } from '../components/Poster';
@@ -12,6 +12,7 @@ import { useStore } from '../lib/store';
 type Filter = 'all' | 'short' | 'month' | 'high';
 
 export function ToSee() {
+  const { candidates, getFilm } = useCatalogue();
   const { state, dispatch } = useStore();
   const { openLog } = useLogModal();
   const stats = computeStats(state, getFilm);
@@ -21,9 +22,9 @@ export function ToSee() {
   const matchById = useMemo(() => {
     const all = recommend(
       { ...state, watchlist: [] },
-      CATALOGUE,
+      candidates,
       getFilm,
-      CATALOGUE.length,
+      candidates.length,
     );
     return new Map(all.map((r) => [r.film.id, r.match]));
   }, [state]);

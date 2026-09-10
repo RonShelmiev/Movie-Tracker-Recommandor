@@ -301,5 +301,19 @@ textarea.note:focus { border-color: var(--cyan); }
 [class*='art-']::after { content: ''; position: absolute; pointer-events: none; }
 [class*='art-']::before { inset: 0; }
 
+/* Real artwork sits on top of the procedural skin, so a missing or slow image
+   degrades to the gradient rather than to a grey box. */
+.art-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 1;
+}
+.poster > .fade,
+.poster > .cap,
+.poster > .mark { z-index: 2; }
+
 /* Thumbnails reuse the same skins without the caption furniture. */
 .thumb { position: relative; overflow: hidden; border: 1px solid var(--edge); flex-shrink: 0; }

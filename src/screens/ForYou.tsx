@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { CATALOGUE, getFilm } from '../data/catalogue';
+import { useCatalogue } from '../lib/catalogue';
 import { Icon } from '../components/Icon';
 import { Thumb } from '../components/Poster';
 import { SectionHead } from '../components/ui';
@@ -7,8 +7,9 @@ import { recommend, seedClusters } from '../lib/recommend';
 import { useStore } from '../lib/store';
 
 export function ForYou() {
+  const { candidates, getFilm } = useCatalogue();
   const { state, dispatch } = useStore();
-  const recs = recommend(state, CATALOGUE, getFilm, 12);
+  const recs = recommend(state, candidates, getFilm, 12);
   const clusters = seedClusters(recs, state, getFilm);
   const top = recs.slice(0, 3);
 

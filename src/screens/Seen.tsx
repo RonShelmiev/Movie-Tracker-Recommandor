@@ -1,12 +1,13 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { getFilm } from '../data/catalogue';
+import { useCatalogue } from '../lib/catalogue';
 import { Thumb } from '../components/Poster';
 import { Chip, Meter, SectionHead } from '../components/ui';
 import { computeStats, genreCounts, groupByMonth, loggedYears, perMonth } from '../lib/stats';
 import { useStore } from '../lib/store';
 
 export function Seen() {
+  const { getFilm } = useCatalogue();
   const { state } = useStore();
   const stats = computeStats(state, getFilm);
   const years = loggedYears(state.log);

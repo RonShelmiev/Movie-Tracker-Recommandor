@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { CATALOGUE } from '../data/catalogue';
+import { useCatalogue } from '../lib/catalogue';
 import { Poster } from '../components/Poster';
 import { Chip } from '../components/ui';
 import { useStore } from '../lib/store';
@@ -11,6 +11,7 @@ const DECADES = [1920, 1940, 1960, 1970, 1980, 1990, 2000, 2010, 2020];
 type Sort = 'title' | 'year' | 'acclaim';
 
 export function Browse() {
+  const { candidates } = useCatalogue();
   const { state } = useStore();
   const [params, setParams] = useSearchParams();
   const [genre, setGenre] = useState<Genre | null>(null);
@@ -25,7 +26,7 @@ export function Browse() {
   const listed = useMemo(() => new Set(state.watchlist.map((w) => w.filmId)), [state.watchlist]);
 
   const films = useMemo(() => {
-    let out = CATALOGUE.slice();
+    let out = candidates.slice();
     if (collection) out = out.filter((f) => collection.filmIds.includes(f.id));
     if (genre) out = out.filter((f) => f.genres.includes(genre));
     if (decade !== null) out = out.filter((f) => Math.floor(f.year / 10) * 10 === decade);
@@ -46,7 +47,7 @@ export function Browse() {
         <div>
           <h1 className="h1">{collection ? collection.name.toUpperCase() : 'BROWSE ALL'}</h1>
           <div className="meta">
-            {CATALOGUE.length} TITLES INDEXED / {films.length} SHOWN
+            {candidates.length} TITLES INDEXED / {films.length} SHOWN
             {collection && ' / COLLECTION'}
           </div>
         </div>

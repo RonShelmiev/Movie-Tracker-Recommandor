@@ -58,23 +58,45 @@ collaborate with — and every number it shows is derived from what you have log
 
 ## The catalogue
 
-`src/data/catalogue.ts` holds 89 hand-curated films. Years, directors and runtimes
-are real; **`acclaim` and `ratingsK` are editorial estimates, not real ratings
-data**, and the `tags` are my own editorial vocabulary rather than anything
-canonical.
+Two sources, behind one provider (`src/lib/catalogue.tsx`).
 
-Posters are procedural — eight CSS gradient treatments assigned per film. Nothing
-is fetched, so there is no key art to license and no network dependency.
+**Bundled (default).** `src/data/catalogue.ts` holds 89 hand-curated films. Years,
+directors and runtimes are real; **`acclaim` and `ratingsK` are editorial
+estimates, not real ratings data**, and the `tags` are my own vocabulary. Posters
+are procedural — eight CSS gradient treatments. Nothing is fetched, so it works
+offline with no key.
 
-To swap in a real index (TMDB, OMDb, Wikidata), replace `CATALOGUE` with a fetched
-list conforming to `Film` in `src/lib/types.ts`. The recommender needs `tags` to be
-populated to do anything interesting, so a real source would want either a keyword
-mapping or an editorial pass.
+**TMDB (optional).** Paste a free [TMDB key](https://www.themoviedb.org/settings/api)
+into *Tune my taste* and the whole index opens up, with real posters. The key is
+kept in `localStorage`, never committed. `VITE_TMDB_KEY` works too, but a key baked
+into the bundle is visible to anyone who opens the site — use one you do not mind
+exposing, and prefer the in-app field.
+
+Hit **Test connection** in Settings to round-trip a known film and see exactly what
+came back and how it mapped.
+
+> ⚠️ **The TMDB layer has not been run against the live API.** It was written in a
+> sandbox that blocks egress to `api.themoviedb.org`, so the request shapes come
+> from TMDB's documented v3 contract rather than an observed response. Test it
+> locally with a real key before relying on it.
+
+Every film you touch is cached in `localStorage` under `flick.films.v1`. That is not
+an optimisation: the log stores ids, and stats and recommendations need the metadata
+synchronously and offline.
+
+### Where TMDB data is weaker
+
+TMDB has no notion of "slow" or "bleak", so the recommender's editorial tags are
+derived from TMDB *keywords* via a hand-written mapping in `src/lib/tmdb.ts`. This
+is the honest weak point: films with sparse keywords come through under-tagged and
+score lower than they deserve. The bundled 89 are tagged by hand and behave better.
 
 ## Known gaps
 
 - Single user, single device. No sync, no accounts.
-- The catalogue is a starter set, not an index of everything.
+- The TMDB integration is written but unverified against the live API.
+- Recommendations score a local candidate pool, not all of TMDB — with a key set,
+  `expandPool()` pulls candidates by your strongest genres.
 - CSV / Letterboxd import is designed but not implemented.
 - No mobile layout yet — the rail hides below 860px but the screens are still
   desktop-shaped.
