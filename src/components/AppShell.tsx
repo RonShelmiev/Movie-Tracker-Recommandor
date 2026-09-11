@@ -46,7 +46,7 @@ export function AppShell() {
             </div>
           </div>
 
-          <div className="rail-group">
+          <div className="rail-group rail-nav">
             <div className="lbl">Library</div>
             {NAV.map((item) => (
               <NavLink
@@ -69,7 +69,7 @@ export function AppShell() {
 
           <div className="rail-divider" />
 
-          <div className="rail-group">
+          <div className="rail-group rail-collections">
             <div className="lbl">Collections</div>
             {state.collections.map((c) => (
               <button
@@ -119,9 +119,9 @@ export function AppShell() {
               )}
             </form>
 
-            <button type="button" className="btn" onClick={() => navigate('/settings')}>
+            <button type="button" className="btn btn-icon-sm" onClick={() => navigate('/settings')} aria-label="Tune my taste">
               <Icon name="filters" size={17} width={1.5} />
-              TUNE
+              <span className="btn-label">TUNE</span>
             </button>
 
             <button
@@ -131,7 +131,7 @@ export function AppShell() {
               onClick={() => openLog()}
             >
               <Icon name="plus" size={16} width={1.8} colour="var(--void)" />
-              LOG A FILM
+              <span className="btn-label">LOG A FILM</span>
             </button>
           </header>
 

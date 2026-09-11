@@ -40,6 +40,7 @@ export type Action =
   | { type: 'settings/weight'; key: keyof Settings['weights']; value: number }
   | { type: 'settings/toggleGenre'; genre: Genre }
   | { type: 'onboard'; filmIds: string[] }
+  | { type: 'replace'; state: AppState }
   | { type: 'reset' };
 
 const today = () => new Date().toISOString().slice(0, 10);
@@ -135,6 +136,8 @@ function reducer(state: AppState, action: Action): AppState {
       }));
       return { ...state, log: [...entries, ...state.log], onboarded: true };
     }
+    case 'replace':
+      return action.state;
     case 'reset':
       return { ...INITIAL, onboarded: false };
     default:

@@ -3,6 +3,7 @@ import { useCatalogue } from '../lib/catalogue';
 import { useLogModal } from '../components/AppShell';
 import { Icon } from '../components/Icon';
 import { Poster, Thumb } from '../components/Poster';
+import { posterUrl } from '../lib/tmdb';
 import { Meter, SectionHead, Stat } from '../components/ui';
 import { buildTaste, formatRuntime, recommend } from '../lib/recommend';
 import { computeStats } from '../lib/stats';
@@ -47,8 +48,8 @@ export function Dashboard() {
   return (
     <div className="screen" style={{ gap: 28 }}>
       {top && (
-        <section className="panel" style={{ display: 'flex', overflow: 'hidden', minHeight: 340 }}>
-          <div style={{ flexGrow: 1, minWidth: 0, padding: '28px 30px', display: 'flex', flexDirection: 'column' }}>
+        <section className="panel hero">
+          <div className="hero-body">
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               <span className="lbl" style={{ color: 'var(--cyan)' }}>Tonight&rsquo;s pick</span>
               <span style={{ width: 26, height: 1, background: 'var(--edge-3)' }} />
@@ -84,7 +85,9 @@ export function Dashboard() {
             </div>
           </div>
 
-          <div style={{ width: 264, flexShrink: 0 }} className={`art-${top.film.art}`} aria-hidden="true" />
+          <div className={`hero-art art-${top.film.art}`} aria-hidden="true">
+            {top.film.posterPath && <img className="art-img" src={posterUrl(top.film.posterPath, 'w500')} alt="" />}
+          </div>
         </section>
       )}
 

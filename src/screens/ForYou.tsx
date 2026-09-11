@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { useCatalogue } from '../lib/catalogue';
 import { Icon } from '../components/Icon';
 import { Thumb } from '../components/Poster';
+import { posterUrl } from '../lib/tmdb';
 import { SectionHead } from '../components/ui';
 import { recommend, seedClusters } from '../lib/recommend';
 import { useStore } from '../lib/store';
@@ -51,8 +52,10 @@ export function ForYou() {
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 24 }}>
           {top.map((rec) => (
-            <article key={rec.film.id} className="panel" style={{ display: 'flex', minHeight: 400, overflow: 'hidden' }}>
-              <div style={{ width: 140, flexShrink: 0 }} className={`art-${rec.film.art}`} aria-hidden="true" />
+            <article key={rec.film.id} className="panel rec-card">
+              <div className={`rec-art art-${rec.film.art}`} aria-hidden="true">
+                {rec.film.posterPath && <img className="art-img" src={posterUrl(rec.film.posterPath, 'w342')} alt="" />}
+              </div>
               <div style={{ flexGrow: 1, minWidth: 0, padding: 20, display: 'flex', flexDirection: 'column' }}>
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
                   <span style={{ font: '500 26px var(--sans)', color: 'var(--cyan)' }}>{rec.match}</span>

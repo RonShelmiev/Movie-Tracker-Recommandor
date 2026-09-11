@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useCatalogue } from '../lib/catalogue';
 import { Thumb } from '../components/Poster';
 import { Chip, Slider, ToggleRow } from '../components/ui';
 import { Icon } from '../components/Icon';
+import { backupFilename, buildBackup, download, mergeStates, parseBackup } from '../lib/backup';
 import { recommend } from '../lib/recommend';
 import { DEFAULT_SETTINGS, useStore } from '../lib/store';
 import type { Genre } from '../lib/types';
@@ -17,10 +18,24 @@ const CEILINGS: { label: string; value: number | null }[] = [
 const EXCLUDABLE: Genre[] = ['Horror', 'Action', 'Romance', 'Comedy', 'War', 'Animation'];
 
 export function Settings() {
-  const { candidates, getFilm, mode, tmdbKey, setTmdbKey, probe, busy } = useCatalogue();
+  const { candidates, getFilm, mode, tmdbKey, setTmdbKey, probe, busy, remember } = useCatalogue();
   const { state, dispatch } = useStore();
   const [keyDraft, setKeyDraft] = useState(tmdbKey);
   const [probeResult, setProbeResult] = useState<{ ok: boolean; message: string; sample?: string } | null>(null);
+  const [importNote, setImportNote] = useState<{ ok: boolean; message: string } | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  async function onImportFile(file: File) {
+    const result = parseBackup(await file.text());
+    if (!result.ok || !result.backup) {
+      setImportNote({ ok: false, message: result.message });
+      return;
+    }
+    const { backup } = result;
+    remember(backup.films);
+    dispatch({ type: 'replace', state: mergeStates(state, backup.state) });
+    setImportNote({ ok: true, message: `Merged in ${result.message}` });
+  }
   const { settings } = state;
   const preview = recommend(state, candidates, getFilm, 5);
 
@@ -104,19 +119,78 @@ export function Settings() {
           </div>
 
           <div style={{ marginTop: 30, paddingTop: 22, borderTop: '1px solid var(--hairline)' }}>
-            <div className="lbl">Danger zone</div>
-            <button
-              type="button"
-              className="btn"
-              style={{ marginTop: 14, borderColor: 'rgba(255,77,158,0.35)', color: 'var(--magenta-hi)' }}
-              onClick={() => {
-                if (confirm('Erase your entire log, list and settings? This cannot be undone.')) {
-                  dispatch({ type: 'reset' });
-                }
-              }}
-            >
-              ERASE EVERYTHING
-            </button>
+            <div className="lbl">Your data</div>
+            <p style={{ margin: '12px 0 0', maxWidth: 540, font: '300 13px var(--sans)', lineHeight: 1.6, color: 'var(--ink-4)' }}>
+              Everything lives in this browser and nowhere else. Export regularly — clearing site data or switching
+              device loses the lot otherwise.
+            </p>
+
+            <div style={{ marginTop: 16, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+              <button
+                type="button"
+                className="btn btn-sm"
+                disabled={state.log.length === 0 && state.watchlist.length === 0}
+                onClick={() => {
+                  const remote = candidates.filter((f) => f.id.startsWith('tmdb:'));
+                  download(buildBackup(state, remote), backupFilename(state));
+                }}
+              >
+                EXPORT BACKUP
+              </button>
+
+              <button type="button" className="btn btn-sm" onClick={() => fileRef.current?.click()}>
+                IMPORT BACKUP
+              </button>
+              <input
+                ref={fileRef}
+                type="file"
+                accept="application/json,.json"
+                hidden
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) void onImportFile(file);
+                  e.target.value = '';
+                }}
+              />
+            </div>
+
+            {importNote && (
+              <div
+                style={{
+                  marginTop: 14,
+                  padding: 14,
+                  maxWidth: 540,
+                  border: `1px solid ${importNote.ok ? 'rgba(78,226,242,0.3)' : 'rgba(255,77,158,0.3)'}`,
+                  background: importNote.ok ? 'rgba(78,226,242,0.06)' : 'rgba(255,77,158,0.06)',
+                  font: '300 12.5px var(--sans)',
+                  lineHeight: 1.6,
+                  color: importNote.ok ? 'var(--ink-2)' : 'var(--magenta-hi)',
+                }}
+              >
+                {importNote.message}
+              </div>
+            )}
+
+            <div className="meta" style={{ marginTop: 14, fontSize: 9.5, lineHeight: 1.7, color: 'var(--ink-7)' }}>
+              IMPORTS MERGE RATHER THAN OVERWRITE — THE SAME FILM ON THE SAME DATE IS NOT DOUBLED, SO RE-IMPORTING IS
+              SAFE.
+            </div>
+
+            <div style={{ marginTop: 26, paddingTop: 22, borderTop: '1px solid var(--hairline)' }}>
+              <div className="lbl">Danger zone</div>
+              <button
+                type="button"
+                className="btn"
+                style={{ marginTop: 14, borderColor: 'rgba(255,77,158,0.35)', color: 'var(--magenta-hi)' }}
+                onClick={() => {
+                  if (confirm('Erase your entire log, list and settings? Export first — this cannot be undone.')) {
+                    dispatch({ type: 'reset' });
+                  }
+                }}
+              >
+                ERASE EVERYTHING
+              </button>
+            </div>
           </div>
         </div>
 

@@ -7,6 +7,20 @@ Neon-noir interface — the full design lives on the
 [design canvas](https://claude.ai/code/artifact/27ea89e4-3505-40d8-93d9-afba399a2b07),
 with the source artboards in [`design/`](design/).
 
+## Live site
+
+Pushing to `main` builds and publishes to GitHub Pages via
+`.github/workflows/deploy.yml`.
+
+**One-time setup, which has to be done by hand in the repo:**
+Settings → Pages → Build and deployment → Source → **GitHub Actions**.
+Until that is set, the workflow runs and the deploy step fails.
+
+Routing uses `HashRouter` (`/#/browse`), because GitHub Pages has no SPA
+fallback — a path-based route would 404 on refresh or on a shared deep link.
+The build uses a relative base, so the same artefact works at a domain root or
+under `/repo-name/` with no rebuild.
+
 ## Running it
 
 ```bash
@@ -93,10 +107,13 @@ score lower than they deserve. The bundled 89 are tagged by hand and behave bett
 
 ## Known gaps
 
-- Single user, single device. No sync, no accounts.
+- Single user, single device. No sync, no accounts — use Export / Import in
+  *Tune my taste* to move between browsers.
 - The TMDB integration is written but unverified against the live API.
 - Recommendations score a local candidate pool, not all of TMDB — with a key set,
   `expandPool()` pulls candidates by your strongest genres.
-- CSV / Letterboxd import is designed but not implemented.
-- No mobile layout yet — the rail hides below 860px but the screens are still
-  desktop-shaped.
+- CSV / Letterboxd import is designed but not implemented; JSON backup
+  export/import is.
+- No automated tests. Behaviour is verified by driving the real app in a browser
+  (`scratchpad/drive*.js` during development), which has caught real bugs, but
+  nothing guards against regressions in CI.
