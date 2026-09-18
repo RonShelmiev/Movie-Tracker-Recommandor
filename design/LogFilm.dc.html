@@ -1,0 +1,522 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+  <style>
+    body { margin: 0; background: #04060A; }
+    a { color: #4EE2F2; text-decoration: none; }
+    a:hover { color: #9AF0FA; }
+    .atmo {
+      position: absolute; inset: 0; pointer-events: none;
+      background:
+        radial-gradient(70% 55% at 12% 0%, rgba(78,226,242,0.13), transparent 62%),
+        radial-gradient(60% 50% at 96% 92%, rgba(255,77,158,0.12), transparent 60%),
+        radial-gradient(90% 70% at 50% 50%, rgba(8,14,22,0), rgba(2,3,6,0.85) 100%);
+    }
+    .grain {
+      position: absolute; inset: 0; pointer-events: none; opacity: 0.05; mix-blend-mode: overlay;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+    }
+    .scan {
+      position: absolute; inset: 0; pointer-events: none;
+      background: repeating-linear-gradient(to bottom, rgba(190,235,245,0.030) 0 1px, transparent 1px 3px);
+    }
+    .lbl { font: 500 10px 'JetBrains Mono', ui-monospace, monospace; letter-spacing: 0.22em; color: #4A5C68; text-transform: uppercase; }
+    .meta { font: 400 11px 'JetBrains Mono', ui-monospace, monospace; letter-spacing: 0.08em; color: #7C919E; }
+  </style>
+</helmet>
+
+<div style="position: relative; width: 1440px; height: 1024px; overflow: hidden; background: #04060A; color: #D7E6ED; font-family: 'Chakra Petch', 'Saira Condensed', system-ui, sans-serif;">
+
+  <div class="atmo"></div>
+  <div class="grain"></div>
+  <div class="scan"></div>
+
+  <div style="position: relative; z-index: 2; display: flex; height: 100%;">
+
+    <!-- RAIL -->
+    <div style="width: 236px; flex-shrink: 0; display: flex; flex-direction: column; border-right: 1px solid rgba(126,214,232,0.10); background: rgba(6,10,16,0.55);">
+
+      <div style="padding: 30px 24px 26px 24px; border-bottom: 1px solid rgba(126,214,232,0.08);">
+        <div style="font: 600 22px 'Chakra Petch', sans-serif; letter-spacing: 0.30em; color: #E6F3F8;">FLICK</div>
+        <div class="meta" style="margin-top: 7px; color: #4A5C68; letter-spacing: 0.16em;">FILM INDEX / 0.1</div>
+      </div>
+
+      <div style="padding: 24px 0 0 0; display: flex; flex-direction: column; gap: 2px;">
+        <div class="lbl" style="padding: 0 24px 12px 24px;">Library</div>
+
+<div style="display: flex; align-items: center; gap: 13px; height: 46px; padding: 0 24px;">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#7C919E" stroke-width="1.5"><rect x="3" y="3" width="7.5" height="7.5"/><rect x="13.5" y="3" width="7.5" height="7.5"/><rect x="3" y="13.5" width="7.5" height="7.5"/><rect x="13.5" y="13.5" width="7.5" height="7.5"/></svg>
+          <span style="font: 400 13.5px 'Chakra Petch', sans-serif; letter-spacing: 0.09em; color: #7C919E;">DASHBOARD</span>
+        </div>
+
+<div style="position: relative; display: flex; align-items: center; gap: 13px; height: 46px; padding: 0 24px; background: rgba(78,226,242,0.08);">
+          <div style="position: absolute; left: 0; top: 0; bottom: 0; width: 2px; background: #4EE2F2;"></div>
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#4EE2F2" stroke-width="1.5"><rect x="3" y="4.5" width="18" height="15"/><line x1="3" y1="9.5" x2="21" y2="9.5"/><line x1="3" y1="14.5" x2="21" y2="14.5"/><line x1="8" y1="4.5" x2="8" y2="19.5"/><line x1="16" y1="4.5" x2="16" y2="19.5"/></svg>
+          <span style="font: 500 13.5px 'Chakra Petch', sans-serif; letter-spacing: 0.09em; color: #E6F3F8;">BROWSE ALL</span>
+        </div>
+
+<div style="display: flex; align-items: center; gap: 13px; height: 46px; padding: 0 24px;">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#7C919E" stroke-width="1.5"><path d="M6.5 3.5h11v17l-5.5-4.6-5.5 4.6z"/></svg>
+          <span style="flex-grow: 1; font: 400 13.5px 'Chakra Petch', sans-serif; letter-spacing: 0.09em; color: #7C919E;">TO SEE</span>
+          <span class="meta" style="color: #5A6E7B;">47</span>
+        </div>
+
+<div style="display: flex; align-items: center; gap: 13px; height: 46px; padding: 0 24px;">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#7C919E" stroke-width="1.5"><circle cx="12" cy="12" r="8.5"/><path d="M8.2 12.4l2.6 2.6 5-5.4"/></svg>
+          <span style="flex-grow: 1; font: 400 13.5px 'Chakra Petch', sans-serif; letter-spacing: 0.09em; color: #7C919E;">SEEN</span>
+          <span class="meta" style="color: #5A6E7B;">312</span>
+        </div>
+
+<div style="display: flex; align-items: center; gap: 13px; height: 46px; padding: 0 24px;">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#7C919E" stroke-width="1.5"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/><line x1="12" y1="1.6" x2="12" y2="4.2"/><line x1="12" y1="19.8" x2="12" y2="22.4"/><line x1="1.6" y1="12" x2="4.2" y2="12"/><line x1="19.8" y1="12" x2="22.4" y2="12"/></svg>
+          <span style="flex-grow: 1; font: 400 13.5px 'Chakra Petch', sans-serif; letter-spacing: 0.09em; color: #7C919E;">FOR YOU</span>
+          <span style="width: 6px; height: 6px; background: #FF4D9E; box-shadow: 0 0 8px rgba(255,77,158,0.9);"></span>
+        </div>
+      </div>
+
+      <div style="margin: 26px 24px 0 24px; height: 1px; background: rgba(126,214,232,0.10);"></div>
+
+      <div style="padding: 22px 0 0 0; display: flex; flex-direction: column; gap: 2px;">
+        <div class="lbl" style="padding: 0 24px 12px 24px;">Collections</div>
+        <div style="display: flex; align-items: center; gap: 12px; height: 34px; padding: 0 24px;">
+          <span style="width: 5px; height: 5px; background: #4EE2F2;"></span>
+          <span style="font: 300 13px 'Chakra Petch', sans-serif; letter-spacing: 0.05em; color: #8FA3AF;">Neo-noir / rain</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 12px; height: 34px; padding: 0 24px;">
+          <span style="width: 5px; height: 5px; background: #FF4D9E;"></span>
+          <span style="font: 300 13px 'Chakra Petch', sans-serif; letter-spacing: 0.05em; color: #8FA3AF;">Slow sci-fi</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 12px; height: 34px; padding: 0 24px;">
+          <span style="width: 5px; height: 5px; background: #FFB454;"></span>
+          <span style="font: 300 13px 'Chakra Petch', sans-serif; letter-spacing: 0.05em; color: #8FA3AF;">Rewatch queue</span>
+        </div>
+      </div>
+
+      <div style="margin-top: auto; padding: 20px 24px; border-top: 1px solid rgba(126,214,232,0.08); display: flex; align-items: center; gap: 12px;">
+        <div style="width: 36px; height: 36px; flex-shrink: 0; background: linear-gradient(140deg, #123145, #2B0E24); border: 1px solid rgba(126,214,232,0.22); display: flex; align-items: center; justify-content: center; font: 500 12px 'JetBrains Mono', monospace; color: #9AF0FA; letter-spacing: 0.04em;">RS</div>
+        <div>
+          <div style="font: 500 13px 'Chakra Petch', sans-serif; letter-spacing: 0.06em; color: #C4D6DF;">Ron S.</div>
+          <div class="meta" style="color: #4A5C68; font-size: 10px;">SYNCED 14:22</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MAIN -->
+    <div style="flex-grow: 1; display: flex; flex-direction: column; min-width: 0;">
+
+      <div style="height: 76px; flex-shrink: 0; border-bottom: 1px solid rgba(126,214,232,0.10); display: flex; align-items: center; gap: 20px; padding: 0 40px; background: rgba(6,10,16,0.4);">
+        <div style="flex-grow: 1; max-width: 520px; height: 44px; display: flex; align-items: center; gap: 12px; padding: 0 16px; border: 1px solid rgba(126,214,232,0.16); background: rgba(10,16,24,0.6);">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#5A6E7B" stroke-width="1.5"><circle cx="10.5" cy="10.5" r="6.8"/><line x1="15.5" y1="15.5" x2="21" y2="21"/></svg>
+          <span style="flex-grow: 1; font: 300 14px 'Chakra Petch', sans-serif; letter-spacing: 0.04em; color: #5A6E7B;">Search 48,210 titles, people, collections</span>
+
+        </div>
+
+        <div style="height: 44px; display: flex; align-items: center; gap: 10px; padding: 0 16px; border: 1px solid rgba(126,214,232,0.16);">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#8FA3AF" stroke-width="1.5"><line x1="3.5" y1="8" x2="20.5" y2="8"/><circle cx="10" cy="8" r="2.6"/><line x1="3.5" y1="16" x2="20.5" y2="16"/><circle cx="15.5" cy="16" r="2.6"/></svg>
+          <span style="font: 400 12.5px 'Chakra Petch', sans-serif; letter-spacing: 0.1em; color: #8FA3AF;">FILTERS</span>
+        </div>
+
+        <div style="margin-left: auto; height: 44px; display: flex; align-items: center; gap: 10px; padding: 0 20px; background: rgba(78,226,242,0.14); border: 1px solid #4EE2F2;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4EE2F2" stroke-width="1.8"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          <span style="font: 500 12.5px 'Chakra Petch', sans-serif; letter-spacing: 0.12em; color: #4EE2F2;">LOG A FILM</span>
+        </div>
+      </div>
+
+      <div style="flex-grow: 1; display: flex; flex-direction: column; padding: 30px 40px 34px 40px; min-height: 0;">
+
+        <div style="display: flex; align-items: flex-end; justify-content: space-between;">
+          <div>
+            <div style="font: 600 30px 'Chakra Petch', sans-serif; letter-spacing: 0.06em; color: #EAF6FA;">BROWSE ALL</div>
+            <div class="meta" style="margin-top: 8px;">48,210 TITLES INDEXED / 21 SHOWN</div>
+          </div>
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <span class="lbl">Sort</span>
+            <div style="height: 34px; display: flex; align-items: center; gap: 10px; padding: 0 14px; border: 1px solid rgba(126,214,232,0.16);">
+              <span style="font: 400 12px 'Chakra Petch', sans-serif; letter-spacing: 0.1em; color: #C4D6DF;">TITLE A-Z</span>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#7C919E" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top: 22px; display: flex; flex-wrap: wrap; gap: 10px;">
+        <div style="height: 34px; display: flex; align-items: center; padding: 0 15px; border: 1px solid #4EE2F2; background: rgba(78,226,242,0.12); font: 500 11.5px 'Chakra Petch', sans-serif; letter-spacing: 0.11em; color: #4EE2F2;">ALL</div>
+        <div style="height: 34px; display: flex; align-items: center; padding: 0 15px; border: 1px solid rgba(126,214,232,0.16); font: 400 11.5px 'Chakra Petch', sans-serif; letter-spacing: 0.11em; color: #8FA3AF;">SCI-FI</div>
+        <div style="height: 34px; display: flex; align-items: center; padding: 0 15px; border: 1px solid rgba(126,214,232,0.16); font: 400 11.5px 'Chakra Petch', sans-serif; letter-spacing: 0.11em; color: #8FA3AF;">NEO-NOIR</div>
+        <div style="height: 34px; display: flex; align-items: center; padding: 0 15px; border: 1px solid rgba(126,214,232,0.16); font: 400 11.5px 'Chakra Petch', sans-serif; letter-spacing: 0.11em; color: #8FA3AF;">THRILLER</div>
+        <div style="height: 34px; display: flex; align-items: center; padding: 0 15px; border: 1px solid rgba(126,214,232,0.16); font: 400 11.5px 'Chakra Petch', sans-serif; letter-spacing: 0.11em; color: #8FA3AF;">ANIMATION</div>
+        <div style="height: 34px; display: flex; align-items: center; padding: 0 15px; border: 1px solid rgba(126,214,232,0.16); font: 400 11.5px 'Chakra Petch', sans-serif; letter-spacing: 0.11em; color: #8FA3AF;">1970s</div>
+        <div style="height: 34px; display: flex; align-items: center; padding: 0 15px; border: 1px solid rgba(126,214,232,0.16); font: 400 11.5px 'Chakra Petch', sans-serif; letter-spacing: 0.11em; color: #8FA3AF;">1980s</div>
+        <div style="height: 34px; display: flex; align-items: center; padding: 0 15px; border: 1px solid rgba(126,214,232,0.16); font: 400 11.5px 'Chakra Petch', sans-serif; letter-spacing: 0.11em; color: #8FA3AF;">1990s</div>
+        <div style="height: 34px; display: flex; align-items: center; padding: 0 15px; border: 1px solid rgba(126,214,232,0.16); font: 400 11.5px 'Chakra Petch', sans-serif; letter-spacing: 0.11em; color: #8FA3AF;">2000s</div>
+        <div style="height: 34px; display: flex; align-items: center; padding: 0 15px; border: 1px solid rgba(126,214,232,0.16); font: 400 11.5px 'Chakra Petch', sans-serif; letter-spacing: 0.11em; color: #8FA3AF;">2010s</div>
+        <div style="height: 34px; display: flex; align-items: center; padding: 0 15px; border: 1px solid rgba(126,214,232,0.16); font: 400 11.5px 'Chakra Petch', sans-serif; letter-spacing: 0.11em; color: #8FA3AF;">2020s</div>
+        <div style="height: 34px; display: flex; align-items: center; padding: 0 15px; border: 1px solid rgba(126,214,232,0.16); font: 400 11.5px 'Chakra Petch', sans-serif; letter-spacing: 0.11em; color: #8FA3AF;">UNSEEN ONLY</div>
+        </div>
+
+        <div style="margin-top: 24px; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 18px;">
+        <div style="position: relative; height: 214px; overflow: hidden; border: 1px solid rgba(126,214,232,0.16); background: linear-gradient(155deg, #0A2231 0%, #123145 44%, #2B0E24 100%);">
+          <div style="position: absolute; inset: 0; background: radial-gradient(120% 80% at 76% 16%, rgba(78,226,242,0.32), transparent 58%);"></div>
+          <div style="position: absolute; top: -20%; left: 8%; width: 52%; height: 155%; background: linear-gradient(90deg, transparent, rgba(255,77,158,0.20), transparent); transform: rotate(17deg);"></div>
+          <div style="position: absolute; left: 0; right: 0; bottom: 0; height: 64%; background: linear-gradient(to top, rgba(4,6,10,0.94), transparent);"></div>
+          <div style="position: absolute; top: 8px; right: 8px; width: 22px; height: 22px; background: rgba(4,6,10,0.72); border: 1px solid rgba(78,226,242,0.5); display: flex; align-items: center; justify-content: center;">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#4EE2F2" stroke-width="2.4"><path d="M5 12.5l4.5 4.5L19 7"/></svg>
+          </div>
+          <div style="position: absolute; left: 11px; right: 11px; bottom: 11px;">
+            <div style="font: 600 13.5px 'Chakra Petch', sans-serif; line-height: 1.14; color: #EAF6FA; letter-spacing: 0.02em;">AKIRA</div>
+            <div class="meta" style="margin-top: 4px; font-size: 9.5px; letter-spacing: 0.12em;">1988 / 2H04</div>
+          </div>
+        </div>
+        <div style="position: relative; height: 214px; overflow: hidden; border: 1px solid rgba(126,214,232,0.16); background: linear-gradient(150deg, #191038 0%, #2A1145 42%, #0A1E2A 100%);">
+          <div style="position: absolute; inset: 0; background: radial-gradient(110% 75% at 22% 78%, rgba(255,77,158,0.34), transparent 58%);"></div>
+          <div style="position: absolute; top: 24%; left: -6%; width: 112%; height: 1px; background: rgba(230,243,248,0.26);"></div>
+          <div style="position: absolute; top: 31%; left: -6%; width: 112%; height: 1px; background: rgba(230,243,248,0.13);"></div>
+          <div style="position: absolute; left: 0; right: 0; bottom: 0; height: 64%; background: linear-gradient(to top, rgba(4,6,10,0.94), transparent);"></div>
+          <div style="position: absolute; top: 8px; right: 8px; width: 22px; height: 22px; background: rgba(4,6,10,0.72); border: 1px solid rgba(78,226,242,0.5); display: flex; align-items: center; justify-content: center;">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#4EE2F2" stroke-width="2.4"><path d="M5 12.5l4.5 4.5L19 7"/></svg>
+          </div>
+          <div style="position: absolute; left: 11px; right: 11px; bottom: 11px;">
+            <div style="font: 600 13.5px 'Chakra Petch', sans-serif; line-height: 1.14; color: #EAF6FA; letter-spacing: 0.02em;">ALIEN</div>
+            <div class="meta" style="margin-top: 4px; font-size: 9.5px; letter-spacing: 0.12em;">1979 / 1H57</div>
+          </div>
+        </div>
+        <div style="position: relative; height: 214px; overflow: hidden; border: 1px solid rgba(126,214,232,0.16); background: linear-gradient(165deg, #2A1608 0%, #3A1A12 40%, #0B1620 100%);">
+          <div style="position: absolute; inset: 0; background: radial-gradient(115% 80% at 60% 20%, rgba(255,180,84,0.32), transparent 60%);"></div>
+          <div style="position: absolute; left: 50%; top: 12%; width: 1px; height: 44%; background: rgba(255,220,170,0.42);"></div>
+          <div style="position: absolute; left: 0; right: 0; bottom: 0; height: 64%; background: linear-gradient(to top, rgba(4,6,10,0.94), transparent);"></div>
+          <div style="position: absolute; top: 8px; right: 8px; width: 22px; height: 22px; background: rgba(4,6,10,0.72); border: 1px solid rgba(78,226,242,0.5); display: flex; align-items: center; justify-content: center;">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#4EE2F2" stroke-width="2.4"><path d="M5 12.5l4.5 4.5L19 7"/></svg>
+          </div>
+          <div style="position: absolute; left: 11px; right: 11px; bottom: 11px;">
+            <div style="font: 600 13.5px 'Chakra Petch', sans-serif; line-height: 1.14; color: #EAF6FA; letter-spacing: 0.02em;">ANNIHILATION</div>
+            <div class="meta" style="margin-top: 4px; font-size: 9.5px; letter-spacing: 0.12em;">2018 / 1H55</div>
+          </div>
+        </div>
+        <div style="position: relative; height: 214px; overflow: hidden; border: 1px solid rgba(126,214,232,0.16); background: linear-gradient(140deg, #06171C 0%, #0E2C33 46%, #1C0A1E 100%);">
+          <div style="position: absolute; inset: 0; background: radial-gradient(100% 70% at 50% 88%, rgba(78,226,242,0.26), transparent 58%);"></div>
+          <div style="position: absolute; left: 20%; top: 16%; width: 46px; height: 46px; border: 1px solid rgba(154,240,250,0.45); transform: rotate(45deg);"></div>
+          <div style="position: absolute; left: 0; right: 0; bottom: 0; height: 64%; background: linear-gradient(to top, rgba(4,6,10,0.94), transparent);"></div>
+          <div style="position: absolute; top: 8px; right: 8px; width: 22px; height: 22px; background: rgba(4,6,10,0.72); border: 1px solid rgba(255,77,158,0.5); display: flex; align-items: center; justify-content: center;">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="#FF4D9E" stroke="none"><path d="M6.5 3.5h11v17l-5.5-4.6-5.5 4.6z"/></svg>
+          </div>
+          <div style="position: absolute; left: 11px; right: 11px; bottom: 11px;">
+            <div style="font: 600 13.5px 'Chakra Petch', sans-serif; line-height: 1.14; color: #EAF6FA; letter-spacing: 0.02em;">ARRIVAL</div>
+            <div class="meta" style="margin-top: 4px; font-size: 9.5px; letter-spacing: 0.12em;">2016 / 1H56</div>
+          </div>
+        </div>
+        <div style="position: relative; height: 214px; overflow: hidden; border: 1px solid rgba(126,214,232,0.16); background: linear-gradient(160deg, #2A0713 0%, #3A0F1E 45%, #0A1218 100%);">
+          <div style="position: absolute; inset: 0; background: radial-gradient(110% 78% at 70% 26%, rgba(255,77,158,0.30), transparent 60%);"></div>
+          <div style="position: absolute; left: 26%; top: 18%; width: 54px; height: 54px; border-radius: 50%; border: 1px solid rgba(255,150,190,0.45);"></div>
+          <div style="position: absolute; left: 0; right: 0; bottom: 0; height: 64%; background: linear-gradient(to top, rgba(4,6,10,0.94), transparent);"></div>
+          <div style="position: absolute; top: 8px; right: 8px; width: 22px; height: 22px; background: rgba(4,6,10,0.72); border: 1px solid rgba(78,226,242,0.5); display: flex; align-items: center; justify-content: center;">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#4EE2F2" stroke-width="2.4"><path d="M5 12.5l4.5 4.5L19 7"/></svg>
+          </div>
+          <div style="position: absolute; left: 11px; right: 11px; bottom: 11px;">
+            <div style="font: 600 13.5px 'Chakra Petch', sans-serif; line-height: 1.14; color: #EAF6FA; letter-spacing: 0.02em;">BLADE RUNNER 2049</div>
+            <div class="meta" style="margin-top: 4px; font-size: 9.5px; letter-spacing: 0.12em;">2017 / 2H43</div>
+          </div>
+        </div>
+        <div style="position: relative; height: 214px; overflow: hidden; border: 1px solid rgba(126,214,232,0.16); background: linear-gradient(150deg, #0D1822 0%, #1A2A36 48%, #241224 100%);">
+          <div style="position: absolute; inset: 0; background: radial-gradient(105% 72% at 30% 20%, rgba(154,240,250,0.22), transparent 60%);"></div>
+          <div style="position: absolute; top: -20%; left: 30%; width: 46%; height: 155%; background: linear-gradient(90deg, transparent, rgba(154,240,250,0.22), transparent); transform: rotate(-14deg);"></div>
+          <div style="position: absolute; left: 0; right: 0; bottom: 0; height: 64%; background: linear-gradient(to top, rgba(4,6,10,0.94), transparent);"></div>
+          <div style="position: absolute; top: 8px; right: 8px; width: 22px; height: 22px; background: rgba(4,6,10,0.72); border: 1px solid rgba(78,226,242,0.5); display: flex; align-items: center; justify-content: center;">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#4EE2F2" stroke-width="2.4"><path d="M5 12.5l4.5 4.5L19 7"/></svg>
+          </div>
+          <div style="position: absolute; left: 11px; right: 11px; bottom: 11px;">
+            <div style="font: 600 13.5px 'Chakra Petch', sans-serif; line-height: 1.14; color: #EAF6FA; letter-spacing: 0.02em;">CHILDREN OF MEN</div>
+            <div class="meta" style="margin-top: 4px; font-size: 9.5px; letter-spacing: 0.12em;">2006 / 1H49</div>
+          </div>
+        </div>
+        <div style="position: relative; height: 214px; overflow: hidden; border: 1px solid rgba(126,214,232,0.16); background: linear-gradient(158deg, #07201C 0%, #0F3330 44%, #1E0C22 100%);">
+          <div style="position: absolute; inset: 0; background: radial-gradient(112% 76% at 64% 80%, rgba(120,240,200,0.24), transparent 60%);"></div>
+          <div style="position: absolute; top: 24%; left: -6%; width: 112%; height: 1px; background: rgba(230,243,248,0.26);"></div>
+          <div style="position: absolute; top: 31%; left: -6%; width: 112%; height: 1px; background: rgba(230,243,248,0.13);"></div>
+          <div style="position: absolute; left: 0; right: 0; bottom: 0; height: 64%; background: linear-gradient(to top, rgba(4,6,10,0.94), transparent);"></div>
+          <div style="position: absolute; left: 11px; right: 11px; bottom: 11px;">
+            <div style="font: 600 13.5px 'Chakra Petch', sans-serif; line-height: 1.14; color: #EAF6FA; letter-spacing: 0.02em;">DRIVE</div>
+            <div class="meta" style="margin-top: 4px; font-size: 9.5px; letter-spacing: 0.12em;">2011 / 1H40</div>
+          </div>
+        </div>
+        <div style="position: relative; height: 214px; overflow: hidden; border: 1px solid rgba(126,214,232,0.16); background: linear-gradient(145deg, #0A1030 0%, #141B4A 44%, #2A0C1E 100%);">
+          <div style="position: absolute; inset: 0; background: radial-gradient(108% 74% at 40% 18%, rgba(139,124,255,0.30), transparent 60%);"></div>
+          <div style="position: absolute; left: 20%; top: 16%; width: 46px; height: 46px; border: 1px solid rgba(154,240,250,0.45); transform: rotate(45deg);"></div>
+          <div style="position: absolute; left: 0; right: 0; bottom: 0; height: 64%; background: linear-gradient(to top, rgba(4,6,10,0.94), transparent);"></div>
+          <div style="position: absolute; top: 8px; right: 8px; width: 22px; height: 22px; background: rgba(4,6,10,0.72); border: 1px solid rgba(255,77,158,0.5); display: flex; align-items: center; justify-content: center;">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="#FF4D9E" stroke="none"><path d="M6.5 3.5h11v17l-5.5-4.6-5.5 4.6z"/></svg>
+          </div>
+          <div style="position: absolute; left: 11px; right: 11px; bottom: 11px;">
+            <div style="font: 600 13.5px 'Chakra Petch', sans-serif; line-height: 1.14; color: #EAF6FA; letter-spacing: 0.02em;">DUNE: PART TWO</div>
+            <div class="meta" style="margin-top: 4px; font-size: 9.5px; letter-spacing: 0.12em;">2024 / 2H46</div>
+          </div>
+        </div>
+        <div style="position: relative; height: 214px; overflow: hidden; border: 1px solid rgba(126,214,232,0.16); background: linear-gradient(155deg, #0A2231 0%, #123145 44%, #2B0E24 100%);">
+          <div style="position: absolute; inset: 0; background: radial-gradient(120% 80% at 76% 16%, rgba(78,226,242,0.32), transparent 58%);"></div>
+          <div style="position: absolute; top: -20%; left: 8%; width: 52%; height: 155%; background: linear-gradient(90deg, transparent, rgba(255,77,158,0.20), transparent); transform: rotate(17deg);"></div>
+          <div style="position: absolute; left: 0; right: 0; bottom: 0; height: 64%; background: linear-gradient(to top, rgba(4,6,10,0.94), transparent);"></div>
+          <div style="position: absolute; top: 8px; right: 8px; width: 22px; height: 22px; background: rgba(4,6,10,0.72); border: 1px solid rgba(78,226,242,0.5); display: flex; align-items: center; justify-content: center;">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#4EE2F2" stroke-width="2.4"><path d="M5 12.5l4.5 4.5L19 7"/></svg>
+          </div>
+          <div style="position: absolute; left: 11px; right: 11px; bottom: 11px;">
+            <div style="font: 600 13.5px 'Chakra Petch', sans-serif; line-height: 1.14; color: #EAF6FA; letter-spacing: 0.02em;">ENEMY</div>
+            <div class="meta" style="margin-top: 4px; font-size: 9.5px; letter-spacing: 0.12em;">2013 / 1H31</div>
+          </div>
+        </div>
+        <div style="position: relative; height: 214px; overflow: hidden; border: 1px solid rgba(126,214,232,0.16); background: linear-gradient(150deg, #191038 0%, #2A1145 42%, #0A1E2A 100%);">
+          <div style="position: absolute; inset: 0; background: radial-gradient(110% 75% at 22% 78%, rgba(255,77,158,0.34), transparent 58%);"></div>
+          <div style="position: absolute; top: 24%; left: -6%; width: 112%; height: 1px; background: rgba(230,243,248,0.26);"></div>
+          <div style="position: absolute; top: 31%; left: -6%; width: 112%; height: 1px; background: rgba(230,243,248,0.13);"></div>
+          <div style="position: absolute; left: 0; right: 0; bottom: 0; height: 64%; background: linear-gradient(to top, rgba(4,6,10,0.94), transparent);"></div>
+          <div style="position: absolute; top: 8px; right: 8px; width: 22px; height: 22px; background: rgba(4,6,10,0.72); border: 1px solid rgba(78,226,242,0.5); display: flex; align-items: center; justify-content: center;">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#4EE2F2" stroke-width="2.4"><path d="M5 12.5l4.5 4.5L19 7"/></svg>
+          </div>
+          <div style="position: absolute; left: 11px; right: 11px; bottom: 11px;">
+            <div style="font: 600 13.5px 'Chakra Petch', sans-serif; line-height: 1.14; color: #EAF6FA; letter-spacing: 0.02em;">EX MACHINA</div>
+            <div class="meta" style="margin-top: 4px; font-size: 9.5px; letter-spacing: 0.12em;">2014 / 1H48</div>
+          </div>
+        </div>
+        <div style="position: relative; height: 214px; overflow: hidden; border: 1px solid rgba(126,214,232,0.16); background: linear-gradient(165deg, #2A1608 0%, #3A1A12 40%, #0B1620 100%);">
+          <div style="position: absolute; inset: 0; background: radial-gradient(115% 80% at 60% 20%, rgba(255,180,84,0.32), transparent 60%);"></div>
+          <div style="position: absolute; left: 50%; top: 12%; width: 1px; height: 44%; background: rgba(255,220,170,0.42);"></div>
+          <div style="position: absolute; left: 0; right: 0; bottom: 0; height: 64%; background: linear-gradient(to top, rgba(4,6,10,0.94), transparent);"></div>
+          <div style="position: absolute; top: 8px; right: 8px; width: 22px; height: 22px; background: rgba(4,6,10,0.72); border: 1px solid rgba(255,77,158,0.5); display: flex; align-items: center; justify-content: center;">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="#FF4D9E" stroke="none"><path d="M6.5 3.5h11v17l-5.5-4.6-5.5 4.6z"/></svg>
+          </div>
+          <div style="position: absolute; left: 11px; right: 11px; bottom: 11px;">
+            <div style="font: 600 13.5px 'Chakra Petch', sans-serif; line-height: 1.14; color: #EAF6FA; letter-spacing: 0.02em;">GHOST IN THE SHELL</div>
+            <div class="meta" style="margin-top: 4px; font-size: 9.5px; letter-spacing: 0.12em;">1995 / 1H23</div>
+          </div>
+        </div>
+        <div style="position: relative; height: 214px; overflow: hidden; border: 1px solid rgba(126,214,232,0.16); background: linear-gradient(140deg, #06171C 0%, #0E2C33 46%, #1C0A1E 100%);">
+          <div style="position: absolute; inset: 0; background: radial-gradient(100% 70% at 50% 88%, rgba(78,226,242,0.26), transparent 58%);"></div>
+          <div style="position: absolute; left: 20%; top: 16%; width: 46px; height: 46px; border: 1px solid rgba(154,240,250,0.45); transform: rotate(45deg);"></div>
+          <div style="position: absolute; left: 0; right: 0; bottom: 0; height: 64%; background: linear-gradient(to top, rgba(4,6,10,0.94), transparent);"></div>
+          <div style="position: absolute; top: 8px; right: 8px; width: 22px; height: 22px; background: rgba(4,6,10,0.72); border: 1px solid rgba(78,226,242,0.5); display: flex; align-items: center; justify-content: center;">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#4EE2F2" stroke-width="2.4"><path d="M5 12.5l4.5 4.5L19 7"/></svg>
+          </div>
+          <div style="position: absolute; left: 11px; right: 11px; bottom: 11px;">
+            <div style="font: 600 13.5px 'Chakra Petch', sans-serif; line-height: 1.14; color: #EAF6FA; letter-spacing: 0.02em;">HER</div>
+            <div class="meta" style="margin-top: 4px; font-size: 9.5px; letter-spacing: 0.12em;">2013 / 2H06</div>
+          </div>
+        </div>
+        <div style="position: relative; height: 214px; overflow: hidden; border: 1px solid rgba(126,214,232,0.16); background: linear-gradient(160deg, #2A0713 0%, #3A0F1E 45%, #0A1218 100%);">
+          <div style="position: absolute; inset: 0; background: radial-gradient(110% 78% at 70% 26%, rgba(255,77,158,0.30), transparent 60%);"></div>
+          <div style="position: absolute; left: 26%; top: 18%; width: 54px; height: 54px; border-radius: 50%; border: 1px solid rgba(255,150,190,0.45);"></div>
+          <div style="position: absolute; left: 0; right: 0; bottom: 0; height: 64%; background: linear-gradient(to top, rgba(4,6,10,0.94), transparent);"></div>
+          <div style="position: absolute; left: 11px; right: 11px; bottom: 11px;">
+            <div style="font: 600 13.5px 'Chakra Petch', sans-serif; line-height: 1.14; color: #EAF6FA; letter-spacing: 0.02em;">MAD MAX: FURY ROAD</div>
+            <div class="meta" style="margin-top: 4px; font-size: 9.5px; letter-spacing: 0.12em;">2015 / 2H00</div>
+          </div>
+        </div>
+        <div style="position: relative; height: 214px; overflow: hidden; border: 1px solid rgba(126,214,232,0.16); background: linear-gradient(150deg, #0D1822 0%, #1A2A36 48%, #241224 100%);">
+          <div style="position: absolute; inset: 0; background: radial-gradient(105% 72% at 30% 20%, rgba(154,240,250,0.22), transparent 60%);"></div>
+          <div style="position: absolute; top: -20%; left: 30%; width: 46%; height: 155%; background: linear-gradient(90deg, transparent, rgba(154,240,250,0.22), transparent); transform: rotate(-14deg);"></div>
+          <div style="position: absolute; left: 0; right: 0; bottom: 0; height: 64%; background: linear-gradient(to top, rgba(4,6,10,0.94), transparent);"></div>
+          <div style="position: absolute; left: 11px; right: 11px; bottom: 11px;">
+            <div style="font: 600 13.5px 'Chakra Petch', sans-serif; line-height: 1.14; color: #EAF6FA; letter-spacing: 0.02em;">MINORITY REPORT</div>
+            <div class="meta" style="margin-top: 4px; font-size: 9.5px; letter-spacing: 0.12em;">2002 / 2H25</div>
+          </div>
+        </div>
+        <div style="position: relative; height: 214px; overflow: hidden; border: 1px solid rgba(126,214,232,0.16); background: linear-gradient(158deg, #07201C 0%, #0F3330 44%, #1E0C22 100%);">
+          <div style="position: absolute; inset: 0; background: radial-gradient(112% 76% at 64% 80%, rgba(120,240,200,0.24), transparent 60%);"></div>
+          <div style="position: absolute; top: 24%; left: -6%; width: 112%; height: 1px; background: rgba(230,243,248,0.26);"></div>
+          <div style="position: absolute; top: 31%; left: -6%; width: 112%; height: 1px; background: rgba(230,243,248,0.13);"></div>
+          <div style="position: absolute; left: 0; right: 0; bottom: 0; height: 64%; background: linear-gradient(to top, rgba(4,6,10,0.94), transparent);"></div>
+          <div style="position: absolute; top: 8px; right: 8px; width: 22px; height: 22px; background: rgba(4,6,10,0.72); border: 1px solid rgba(78,226,242,0.5); display: flex; align-items: center; justify-content: center;">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#4EE2F2" stroke-width="2.4"><path d="M5 12.5l4.5 4.5L19 7"/></svg>
+          </div>
+          <div style="position: absolute; left: 11px; right: 11px; bottom: 11px;">
+            <div style="font: 600 13.5px 'Chakra Petch', sans-serif; line-height: 1.14; color: #EAF6FA; letter-spacing: 0.02em;">MOON</div>
+            <div class="meta" style="margin-top: 4px; font-size: 9.5px; letter-spacing: 0.12em;">2009 / 1H37</div>
+          </div>
+        </div>
+        <div style="position: relative; height: 214px; overflow: hidden; border: 1px solid rgba(126,214,232,0.16); background: linear-gradient(145deg, #0A1030 0%, #141B4A 44%, #2A0C1E 100%);">
+          <div style="position: absolute; inset: 0; background: radial-gradient(108% 74% at 40% 18%, rgba(139,124,255,0.30), transparent 60%);"></div>
+          <div style="position: absolute; left: 20%; top: 16%; width: 46px; height: 46px; border: 1px solid rgba(154,240,250,0.45); transform: rotate(45deg);"></div>
+          <div style="position: absolute; left: 0; right: 0; bottom: 0; height: 64%; background: linear-gradient(to top, rgba(4,6,10,0.94), transparent);"></div>
+          <div style="position: absolute; left: 11px; right: 11px; bottom: 11px;">
+            <div style="font: 600 13.5px 'Chakra Petch', sans-serif; line-height: 1.14; color: #EAF6FA; letter-spacing: 0.02em;">NIGHTCRAWLER</div>
+            <div class="meta" style="margin-top: 4px; font-size: 9.5px; letter-spacing: 0.12em;">2014 / 1H57</div>
+          </div>
+        </div>
+        <div style="position: relative; height: 214px; overflow: hidden; border: 1px solid rgba(126,214,232,0.16); background: linear-gradient(155deg, #0A2231 0%, #123145 44%, #2B0E24 100%);">
+          <div style="position: absolute; inset: 0; background: radial-gradient(120% 80% at 76% 16%, rgba(78,226,242,0.32), transparent 58%);"></div>
+          <div style="position: absolute; top: -20%; left: 8%; width: 52%; height: 155%; background: linear-gradient(90deg, transparent, rgba(255,77,158,0.20), transparent); transform: rotate(17deg);"></div>
+          <div style="position: absolute; left: 0; right: 0; bottom: 0; height: 64%; background: linear-gradient(to top, rgba(4,6,10,0.94), transparent);"></div>
+          <div style="position: absolute; top: 8px; right: 8px; width: 22px; height: 22px; background: rgba(4,6,10,0.72); border: 1px solid rgba(78,226,242,0.5); display: flex; align-items: center; justify-content: center;">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#4EE2F2" stroke-width="2.4"><path d="M5 12.5l4.5 4.5L19 7"/></svg>
+          </div>
+          <div style="position: absolute; left: 11px; right: 11px; bottom: 11px;">
+            <div style="font: 600 13.5px 'Chakra Petch', sans-serif; line-height: 1.14; color: #EAF6FA; letter-spacing: 0.02em;">SICARIO</div>
+            <div class="meta" style="margin-top: 4px; font-size: 9.5px; letter-spacing: 0.12em;">2015 / 2H01</div>
+          </div>
+        </div>
+        <div style="position: relative; height: 214px; overflow: hidden; border: 1px solid rgba(126,214,232,0.16); background: linear-gradient(150deg, #191038 0%, #2A1145 42%, #0A1E2A 100%);">
+          <div style="position: absolute; inset: 0; background: radial-gradient(110% 75% at 22% 78%, rgba(255,77,158,0.34), transparent 58%);"></div>
+          <div style="position: absolute; top: 24%; left: -6%; width: 112%; height: 1px; background: rgba(230,243,248,0.26);"></div>
+          <div style="position: absolute; top: 31%; left: -6%; width: 112%; height: 1px; background: rgba(230,243,248,0.13);"></div>
+          <div style="position: absolute; left: 0; right: 0; bottom: 0; height: 64%; background: linear-gradient(to top, rgba(4,6,10,0.94), transparent);"></div>
+          <div style="position: absolute; top: 8px; right: 8px; width: 22px; height: 22px; background: rgba(4,6,10,0.72); border: 1px solid rgba(78,226,242,0.5); display: flex; align-items: center; justify-content: center;">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#4EE2F2" stroke-width="2.4"><path d="M5 12.5l4.5 4.5L19 7"/></svg>
+          </div>
+          <div style="position: absolute; left: 11px; right: 11px; bottom: 11px;">
+            <div style="font: 600 13.5px 'Chakra Petch', sans-serif; line-height: 1.14; color: #EAF6FA; letter-spacing: 0.02em;">SOLARIS</div>
+            <div class="meta" style="margin-top: 4px; font-size: 9.5px; letter-spacing: 0.12em;">1972 / 2H47</div>
+          </div>
+        </div>
+        <div style="position: relative; height: 214px; overflow: hidden; border: 1px solid rgba(126,214,232,0.16); background: linear-gradient(165deg, #2A1608 0%, #3A1A12 40%, #0B1620 100%);">
+          <div style="position: absolute; inset: 0; background: radial-gradient(115% 80% at 60% 20%, rgba(255,180,84,0.32), transparent 60%);"></div>
+          <div style="position: absolute; left: 50%; top: 12%; width: 1px; height: 44%; background: rgba(255,220,170,0.42);"></div>
+          <div style="position: absolute; left: 0; right: 0; bottom: 0; height: 64%; background: linear-gradient(to top, rgba(4,6,10,0.94), transparent);"></div>
+          <div style="position: absolute; top: 8px; right: 8px; width: 22px; height: 22px; background: rgba(4,6,10,0.72); border: 1px solid rgba(255,77,158,0.5); display: flex; align-items: center; justify-content: center;">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="#FF4D9E" stroke="none"><path d="M6.5 3.5h11v17l-5.5-4.6-5.5 4.6z"/></svg>
+          </div>
+          <div style="position: absolute; left: 11px; right: 11px; bottom: 11px;">
+            <div style="font: 600 13.5px 'Chakra Petch', sans-serif; line-height: 1.14; color: #EAF6FA; letter-spacing: 0.02em;">STALKER</div>
+            <div class="meta" style="margin-top: 4px; font-size: 9.5px; letter-spacing: 0.12em;">1979 / 2H41</div>
+          </div>
+        </div>
+        <div style="position: relative; height: 214px; overflow: hidden; border: 1px solid rgba(126,214,232,0.16); background: linear-gradient(140deg, #06171C 0%, #0E2C33 46%, #1C0A1E 100%);">
+          <div style="position: absolute; inset: 0; background: radial-gradient(100% 70% at 50% 88%, rgba(78,226,242,0.26), transparent 58%);"></div>
+          <div style="position: absolute; left: 20%; top: 16%; width: 46px; height: 46px; border: 1px solid rgba(154,240,250,0.45); transform: rotate(45deg);"></div>
+          <div style="position: absolute; left: 0; right: 0; bottom: 0; height: 64%; background: linear-gradient(to top, rgba(4,6,10,0.94), transparent);"></div>
+          <div style="position: absolute; left: 11px; right: 11px; bottom: 11px;">
+            <div style="font: 600 13.5px 'Chakra Petch', sans-serif; line-height: 1.14; color: #EAF6FA; letter-spacing: 0.02em;">TENET</div>
+            <div class="meta" style="margin-top: 4px; font-size: 9.5px; letter-spacing: 0.12em;">2020 / 2H30</div>
+          </div>
+        </div>
+        <div style="position: relative; height: 214px; overflow: hidden; border: 1px solid rgba(126,214,232,0.16); background: linear-gradient(160deg, #2A0713 0%, #3A0F1E 45%, #0A1218 100%);">
+          <div style="position: absolute; inset: 0; background: radial-gradient(110% 78% at 70% 26%, rgba(255,77,158,0.30), transparent 60%);"></div>
+          <div style="position: absolute; left: 26%; top: 18%; width: 54px; height: 54px; border-radius: 50%; border: 1px solid rgba(255,150,190,0.45);"></div>
+          <div style="position: absolute; left: 0; right: 0; bottom: 0; height: 64%; background: linear-gradient(to top, rgba(4,6,10,0.94), transparent);"></div>
+          <div style="position: absolute; top: 8px; right: 8px; width: 22px; height: 22px; background: rgba(4,6,10,0.72); border: 1px solid rgba(255,77,158,0.5); display: flex; align-items: center; justify-content: center;">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="#FF4D9E" stroke="none"><path d="M6.5 3.5h11v17l-5.5-4.6-5.5 4.6z"/></svg>
+          </div>
+          <div style="position: absolute; left: 11px; right: 11px; bottom: 11px;">
+            <div style="font: 600 13.5px 'Chakra Petch', sans-serif; line-height: 1.14; color: #EAF6FA; letter-spacing: 0.02em;">UNDER THE SKIN</div>
+            <div class="meta" style="margin-top: 4px; font-size: 9.5px; letter-spacing: 0.12em;">2013 / 1H48</div>
+          </div>
+        </div>
+        </div>
+
+        <div style="margin-top: auto; padding-top: 24px; display: flex; align-items: center; gap: 16px;">
+          <span style="flex-grow: 1; height: 1px; background: rgba(126,214,232,0.10);"></span>
+          <span class="meta" style="color: #5A6E7B;">SHOWING 1-21 OF 48,210</span>
+          <div style="height: 34px; display: flex; align-items: center; padding: 0 16px; border: 1px solid rgba(126,214,232,0.2); font: 500 11.5px 'Chakra Petch', sans-serif; letter-spacing: 0.12em; color: #C4D6DF;">LOAD MORE</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div style="position: absolute; inset: 0; z-index: 3; background: rgba(2,4,7,0.58); backdrop-filter: blur(7px); display: flex; align-items: center; justify-content: center;">
+    <div style="width: 760px; border: 1px solid rgba(126,214,232,0.28); background: rgba(8,13,20,0.97); box-shadow: 0 0 0 1px rgba(4,6,10,0.9), 0 40px 120px rgba(0,0,0,0.7);">
+
+      <div style="display: flex; align-items: center; justify-content: space-between; padding: 22px 28px; border-bottom: 1px solid rgba(126,214,232,0.14);">
+        <div style="display: flex; align-items: center; gap: 14px;">
+          <span style="width: 7px; height: 7px; background: #4EE2F2; box-shadow: 0 0 10px rgba(78,226,242,0.9);"></span>
+          <span style="font: 600 16px 'Chakra Petch', sans-serif; letter-spacing: 0.2em; color: #EAF6FA;">LOG A FILM</span>
+        </div>
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#6E8492" stroke-width="1.8"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg>
+      </div>
+
+      <div style="padding: 26px 28px;">
+
+        <div class="lbl">Which film</div>
+        <div style="margin-top: 10px; display: flex; align-items: center; gap: 14px; padding: 14px 16px; border: 1px solid #4EE2F2; background: rgba(78,226,242,0.06);">
+          <div style="width: 44px; height: 62px; flex-shrink: 0; background: linear-gradient(150deg, #2C1A08, #101E28); border: 1px solid rgba(126,214,232,0.2);"></div>
+          <div style="flex-grow: 1; min-width: 0;">
+            <div style="font: 600 18px 'Chakra Petch', sans-serif; letter-spacing: 0.03em; color: #EAF6FA;">Children of Men</div>
+            <div class="meta" style="margin-top: 5px; font-size: 10.5px;">2006 / ALFONSO CUARON / 1H49 / UK, USA</div>
+          </div>
+          <span style="font: 400 12px 'Chakra Petch', sans-serif; letter-spacing: 0.12em; color: #6E8492;">CHANGE</span>
+        </div>
+
+        <div style="margin-top: 24px; display: flex; gap: 28px;">
+          <div style="flex-grow: 1;">
+            <div class="lbl">When</div>
+            <div style="margin-top: 10px; display: flex; gap: 8px;">
+              <div style="height: 44px; display: flex; align-items: center; padding: 0 16px; border: 1px solid #4EE2F2; background: rgba(78,226,242,0.12); font: 500 12.5px 'Chakra Petch', sans-serif; letter-spacing: 0.1em; color: #4EE2F2;">TODAY</div>
+              <div style="height: 44px; display: flex; align-items: center; padding: 0 16px; border: 1px solid rgba(126,214,232,0.16); font: 400 12.5px 'Chakra Petch', sans-serif; letter-spacing: 0.1em; color: #8FA3AF;">YESTERDAY</div>
+              <div style="height: 44px; display: flex; align-items: center; gap: 10px; padding: 0 16px; border: 1px solid rgba(126,214,232,0.16);">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#8FA3AF" stroke-width="1.6"><rect x="3.5" y="5" width="17" height="15.5"/><line x1="3.5" y1="10" x2="20.5" y2="10"/><line x1="8" y1="2.5" x2="8" y2="6"/><line x1="16" y1="2.5" x2="16" y2="6"/></svg>
+                <span style="font: 400 12.5px 'Chakra Petch', sans-serif; letter-spacing: 0.1em; color: #8FA3AF;">08 SEP 2026</span>
+              </div>
+            </div>
+          </div>
+
+          <div style="width: 236px; flex-shrink: 0;">
+            <div class="lbl">Watch type</div>
+            <div style="margin-top: 10px; display: flex; border: 1px solid rgba(126,214,232,0.16);">
+              <div style="flex-grow: 1; height: 44px; display: flex; align-items: center; justify-content: center; background: rgba(78,226,242,0.12); font: 500 12.5px 'Chakra Petch', sans-serif; letter-spacing: 0.1em; color: #4EE2F2;">FIRST</div>
+              <div style="flex-grow: 1; height: 44px; display: flex; align-items: center; justify-content: center; border-left: 1px solid rgba(126,214,232,0.16); font: 400 12.5px 'Chakra Petch', sans-serif; letter-spacing: 0.1em; color: #8FA3AF;">REWATCH</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top: 24px;">
+          <div style="display: flex; align-items: baseline; justify-content: space-between;">
+            <span class="lbl">Your score</span>
+            <span style="font: 500 28px 'Chakra Petch', sans-serif; line-height: 1; color: #4EE2F2;">9.1</span>
+          </div>
+          <div style="margin-top: 16px; position: relative; height: 18px; display: flex; align-items: center;">
+            <div style="width: 100%; height: 4px; background: rgba(126,214,232,0.12);"></div>
+            <div style="position: absolute; left: 0; width: 91%; height: 4px; background: #4EE2F2;"></div>
+            <div style="position: absolute; left: 91%; margin-left: -9px; width: 18px; height: 18px; background: #04060A; border: 2px solid #4EE2F2; box-shadow: 0 0 12px rgba(78,226,242,0.5);"></div>
+          </div>
+          <div style="margin-top: 10px; display: flex; justify-content: space-between;">
+            <span class="meta" style="font-size: 10px; color: #3E5460;">0</span>
+            <span class="meta" style="font-size: 10px; color: #3E5460;">5</span>
+            <span class="meta" style="font-size: 10px; color: #3E5460;">10</span>
+          </div>
+        </div>
+
+        <div style="margin-top: 24px;">
+          <div class="lbl">Note <span style="color: #3E5460;">&mdash; optional</span></div>
+          <div style="margin-top: 10px; height: 76px; padding: 14px 16px; border: 1px solid rgba(126,214,232,0.16); background: rgba(4,6,10,0.5);">
+            <span style="font: 300 13.5px 'Chakra Petch', sans-serif; color: #4A5C68;">What stayed with you?</span>
+          </div>
+        </div>
+
+        <div style="margin-top: 24px;">
+          <div class="lbl">Add to collections</div>
+          <div style="margin-top: 10px; display: flex; gap: 8px;">
+            <div style="height: 34px; display: flex; align-items: center; gap: 9px; padding: 0 14px; border: 1px solid #4EE2F2; background: rgba(78,226,242,0.12);">
+              <span style="width: 5px; height: 5px; background: #4EE2F2;"></span>
+              <span style="font: 500 11.5px 'Chakra Petch', sans-serif; letter-spacing: 0.1em; color: #4EE2F2;">NEO-NOIR / RAIN</span>
+            </div>
+            <div style="height: 34px; display: flex; align-items: center; gap: 9px; padding: 0 14px; border: 1px solid rgba(126,214,232,0.16);">
+              <span style="width: 5px; height: 5px; background: #FF4D9E;"></span>
+              <span style="font: 400 11.5px 'Chakra Petch', sans-serif; letter-spacing: 0.1em; color: #8FA3AF;">SLOW SCI-FI</span>
+            </div>
+            <div style="height: 34px; display: flex; align-items: center; gap: 8px; padding: 0 14px; border: 1px dashed rgba(126,214,232,0.2);">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#6E8492" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              <span style="font: 400 11.5px 'Chakra Petch', sans-serif; letter-spacing: 0.1em; color: #6E8492;">NEW</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 14px; padding: 20px 28px; border-top: 1px solid rgba(126,214,232,0.14);">
+        <span class="meta" style="flex-grow: 1; font-size: 10px; color: #4A5C68;">THIS WILL BE FILM 313 AND UPDATES YOUR PICKS</span>
+        <div style="height: 44px; display: flex; align-items: center; padding: 0 20px; font: 400 12.5px 'Chakra Petch', sans-serif; letter-spacing: 0.12em; color: #6E8492;">CANCEL</div>
+        <div style="height: 44px; display: flex; align-items: center; gap: 10px; padding: 0 24px; background: #4EE2F2;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#04060A" stroke-width="2.2"><path d="M5 12.5l4.5 4.5L19 7"/></svg>
+          <span style="font: 600 12.5px 'Chakra Petch', sans-serif; letter-spacing: 0.12em; color: #04060A;">SAVE TO LOG</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+
+<script data-dc-script data-props='{"$preview":{"width":1440,"height":1024}}'>
+class Component extends DCLogic {}
+</script>
+</body>
+</html>

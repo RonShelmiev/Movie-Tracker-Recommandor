@@ -1,0 +1,221 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+  <style>
+    body { margin: 0; background: #0A0806; }
+    a { color: #E8A33D; text-decoration: none; }
+    a:hover { color: #F5C579; }
+    .dust {
+      position: absolute; inset: 0; pointer-events: none;
+      background:
+        radial-gradient(80% 60% at 50% -10%, rgba(232,163,61,0.16), transparent 62%),
+        radial-gradient(50% 40% at 88% 100%, rgba(192,90,46,0.10), transparent 62%),
+        linear-gradient(to bottom, rgba(10,8,6,0), rgba(6,5,4,0.9));
+    }
+    .noise {
+      position: absolute; inset: 0; pointer-events: none; opacity: 0.07; mix-blend-mode: overlay;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
+    }
+    .m { font-family: 'IBM Plex Mono', ui-monospace, monospace; }
+    .k { font: 500 10px 'IBM Plex Mono', monospace; letter-spacing: 0.24em; color: #7A6C56; text-transform: uppercase; }
+  </style>
+</helmet>
+
+<div style="position: relative; width: 1440px; height: 1024px; overflow: hidden; background: #0A0806; color: #E8DCC8; font-family: 'Barlow Condensed', 'Oswald', sans-serif;">
+
+  <div class="dust"></div>
+  <div class="noise"></div>
+
+  <div style="position: relative; z-index: 2; display: flex; flex-direction: column; height: 100%;">
+
+    <!-- masthead -->
+    <div style="border-bottom: 2px solid #E8A33D; padding: 26px 48px 20px 48px;">
+      <div style="display: flex; align-items: flex-end; justify-content: space-between;">
+        <div>
+          <div style="font: 700 40px 'Barlow Condensed', sans-serif; letter-spacing: 0.32em; line-height: 1; color: #F2E7D2;">FLICK</div>
+          <div class="k" style="margin-top: 10px;">Personal film archive &nbsp;&middot;&nbsp; index 48,210 &nbsp;&middot;&nbsp; operator R. SHELMIEV</div>
+        </div>
+        <div style="text-align: right;">
+          <div class="m" style="font-size: 11px; letter-spacing: 0.18em; color: #8A7C64;">08 SEP 2026 &nbsp; 14:22:07</div>
+          <div class="m" style="margin-top: 8px; font-size: 11px; letter-spacing: 0.18em; color: #E8A33D;">SYNC OK</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- tabs -->
+    <div style="display: flex; border-bottom: 1px solid rgba(232,220,200,0.14); padding: 0 48px;">
+      <div style="padding: 16px 0; margin-right: 44px; border-bottom: 2px solid #E8A33D; font: 600 15px 'Barlow Condensed', sans-serif; letter-spacing: 0.26em; color: #F2E7D2;">OVERVIEW</div>
+      <div style="padding: 16px 0; margin-right: 44px; font: 400 15px 'Barlow Condensed', sans-serif; letter-spacing: 0.26em; color: #8A7C64;">CATALOGUE</div>
+      <div style="padding: 16px 0; margin-right: 44px; font: 400 15px 'Barlow Condensed', sans-serif; letter-spacing: 0.26em; color: #8A7C64;">QUEUE / 47</div>
+      <div style="padding: 16px 0; margin-right: 44px; font: 400 15px 'Barlow Condensed', sans-serif; letter-spacing: 0.26em; color: #8A7C64;">LOGGED / 312</div>
+      <div style="padding: 16px 0; font: 400 15px 'Barlow Condensed', sans-serif; letter-spacing: 0.26em; color: #8A7C64;">SUGGESTIONS</div>
+      <div style="margin-left: auto; display: flex; align-items: center; gap: 12px;">
+        <span class="k">Query</span>
+        <div style="width: 240px; height: 30px; border-bottom: 1px solid rgba(232,220,200,0.24);"></div>
+      </div>
+    </div>
+
+    <!-- body -->
+    <div style="flex-grow: 1; display: flex; padding: 0; min-height: 0;">
+
+      <!-- feature -->
+      <div style="width: 620px; flex-shrink: 0; border-right: 1px solid rgba(232,220,200,0.14); padding: 36px 40px 36px 48px; display: flex; flex-direction: column;">
+        <div class="k">Recommended for tonight &nbsp;&middot;&nbsp; confidence 0.94</div>
+
+        <div style="margin-top: 22px; font: 700 76px 'Barlow Condensed', sans-serif; line-height: 0.92; letter-spacing: 0.02em; color: #F5EADA; text-wrap: pretty;">STALKER</div>
+
+        <div class="m" style="margin-top: 18px; font-size: 12px; letter-spacing: 0.14em; color: #8A7C64;">1979 &nbsp;/&nbsp; TARKOVSKY, A. &nbsp;/&nbsp; 161 MIN &nbsp;/&nbsp; USSR</div>
+
+        <div style="margin-top: 26px; height: 470px; background: linear-gradient(150deg, #2A1C0C 0%, #4A3116 46%, #14100A 100%); border: 1px solid rgba(232,163,61,0.28); position: relative; overflow: hidden;">
+          <div style="position: absolute; inset: 0; background: radial-gradient(80% 100% at 26% 20%, rgba(232,163,61,0.34), transparent 60%);"></div>
+          <div style="position: absolute; left: 62%; top: 8%; width: 1px; height: 84%; background: rgba(245,220,180,0.4);"></div>
+          <div style="position: absolute; left: 70%; top: 22%; width: 1px; height: 56%; background: rgba(245,220,180,0.2);"></div>
+          <div style="position: absolute; left: 22px; bottom: 18px;" class="m">
+            <span style="font-size: 10px; letter-spacing: 0.26em; color: rgba(245,234,218,0.75);">PLATE 07 / THE ROOM</span>
+          </div>
+        </div>
+
+
+        <div style="margin-top: 24px; max-width: 460px; font: 400 16px 'Barlow Condensed', sans-serif; line-height: 1.6; letter-spacing: 0.03em; color: #A79579;">Matched against SOLARIS (9.0) and ANNIHILATION (8.7) in your logged set. Shared markers: long take, industrial interior, minimal score.</div>
+
+        <div style="margin-top: auto; display: flex; gap: 0; border: 1px solid rgba(232,220,200,0.2);">
+          <div style="flex-grow: 1; height: 52px; display: flex; align-items: center; justify-content: center; background: #E8A33D; font: 600 13px 'Barlow Condensed', sans-serif; letter-spacing: 0.22em; color: #0A0806;">START TONIGHT</div>
+          <div style="flex-grow: 1; height: 52px; display: flex; align-items: center; justify-content: center; border-left: 1px solid rgba(232,220,200,0.2); font: 500 13px 'Barlow Condensed', sans-serif; letter-spacing: 0.22em; color: #E8DCC8;">MARK LOGGED</div>
+          <div style="flex-grow: 1; height: 52px; display: flex; align-items: center; justify-content: center; border-left: 1px solid rgba(232,220,200,0.2); font: 500 13px 'Barlow Condensed', sans-serif; letter-spacing: 0.22em; color: #8A7C64;">DISMISS</div>
+        </div>
+      </div>
+
+      <!-- ledger -->
+      <div style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column;">
+
+        <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border-bottom: 1px solid rgba(232,220,200,0.14);">
+          <div style="padding: 26px 24px; border-right: 1px solid rgba(232,220,200,0.14);">
+            <div class="k">Logged</div>
+            <div style="margin-top: 12px; font: 600 38px 'Barlow Condensed', sans-serif; line-height: 1; color: #F2E7D2;">312</div>
+          </div>
+          <div style="padding: 26px 24px; border-right: 1px solid rgba(232,220,200,0.14);">
+            <div class="k">Queued</div>
+            <div style="margin-top: 12px; font: 600 38px 'Barlow Condensed', sans-serif; line-height: 1; color: #F2E7D2;">47</div>
+          </div>
+          <div style="padding: 26px 24px; border-right: 1px solid rgba(232,220,200,0.14);">
+            <div class="k">Hours</div>
+            <div style="margin-top: 12px; font: 600 38px 'Barlow Condensed', sans-serif; line-height: 1; color: #F2E7D2;">631</div>
+          </div>
+          <div style="padding: 26px 24px;">
+            <div class="k">Mean</div>
+            <div style="margin-top: 12px; font: 600 38px 'Barlow Condensed', sans-serif; line-height: 1; color: #E8A33D;">7.8</div>
+          </div>
+        </div>
+
+        <div style="padding: 28px 48px 0 32px;">
+          <div style="display: flex; align-items: baseline; justify-content: space-between;">
+            <span style="font: 600 15px 'Barlow Condensed', sans-serif; letter-spacing: 0.26em; color: #C9B896;">QUEUE / NEXT SEVEN</span>
+            <span class="k">Sorted by confidence</span>
+          </div>
+
+          <div style="margin-top: 18px;">
+            <div style="display: flex; align-items: center; gap: 18px; height: 62px; border-bottom: 1px solid rgba(232,220,200,0.08);">
+              <span class="m" style="width: 26px; font-size: 11px; color: #6A5D48;">01</span>
+              <span style="flex-grow: 1; font: 500 18px 'Barlow Condensed', sans-serif; letter-spacing: 0.06em; color: #EFE2CC;">ARRIVAL</span>
+              <span class="m" style="width: 46px; font-size: 11px; color: #8A7C64;">2016</span>
+              <span class="m" style="width: 56px; font-size: 11px; color: #8A7C64;">116M</span>
+              <span class="m" style="width: 34px; text-align: right; font-size: 12px; color: #E8A33D;">96</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 18px; height: 62px; border-bottom: 1px solid rgba(232,220,200,0.08);">
+              <span class="m" style="width: 26px; font-size: 11px; color: #6A5D48;">02</span>
+              <span style="flex-grow: 1; font: 500 18px 'Barlow Condensed', sans-serif; letter-spacing: 0.06em; color: #EFE2CC;">STALKER</span>
+              <span class="m" style="width: 46px; font-size: 11px; color: #8A7C64;">1979</span>
+              <span class="m" style="width: 56px; font-size: 11px; color: #8A7C64;">161M</span>
+              <span class="m" style="width: 34px; text-align: right; font-size: 12px; color: #E8A33D;">94</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 18px; height: 62px; border-bottom: 1px solid rgba(232,220,200,0.08);">
+              <span class="m" style="width: 26px; font-size: 11px; color: #6A5D48;">03</span>
+              <span style="flex-grow: 1; font: 500 18px 'Barlow Condensed', sans-serif; letter-spacing: 0.06em; color: #EFE2CC;">GHOST IN THE SHELL</span>
+              <span class="m" style="width: 46px; font-size: 11px; color: #8A7C64;">1995</span>
+              <span class="m" style="width: 56px; font-size: 11px; color: #8A7C64;">083M</span>
+              <span class="m" style="width: 34px; text-align: right; font-size: 12px; color: #E8A33D;">91</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 18px; height: 62px; border-bottom: 1px solid rgba(232,220,200,0.08);">
+              <span class="m" style="width: 26px; font-size: 11px; color: #6A5D48;">04</span>
+              <span style="flex-grow: 1; font: 500 18px 'Barlow Condensed', sans-serif; letter-spacing: 0.06em; color: #EFE2CC;">DUNE: PART TWO</span>
+              <span class="m" style="width: 46px; font-size: 11px; color: #8A7C64;">2024</span>
+              <span class="m" style="width: 56px; font-size: 11px; color: #8A7C64;">166M</span>
+              <span class="m" style="width: 34px; text-align: right; font-size: 12px; color: #E8A33D;">89</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 18px; height: 62px; border-bottom: 1px solid rgba(232,220,200,0.08);">
+              <span class="m" style="width: 26px; font-size: 11px; color: #6A5D48;">05</span>
+              <span style="flex-grow: 1; font: 500 18px 'Barlow Condensed', sans-serif; letter-spacing: 0.06em; color: #EFE2CC;">UNDER THE SKIN</span>
+              <span class="m" style="width: 46px; font-size: 11px; color: #8A7C64;">2013</span>
+              <span class="m" style="width: 56px; font-size: 11px; color: #8A7C64;">108M</span>
+              <span class="m" style="width: 34px; text-align: right; font-size: 12px; color: #E8A33D;">87</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 18px; height: 62px; border-bottom: 1px solid rgba(232,220,200,0.08);">
+              <span class="m" style="width: 26px; font-size: 11px; color: #6A5D48;">06</span>
+              <span style="flex-grow: 1; font: 500 18px 'Barlow Condensed', sans-serif; letter-spacing: 0.06em; color: #EFE2CC;">GATTACA</span>
+              <span class="m" style="width: 46px; font-size: 11px; color: #8A7C64;">1997</span>
+              <span class="m" style="width: 56px; font-size: 11px; color: #8A7C64;">106M</span>
+              <span class="m" style="width: 34px; text-align: right; font-size: 12px; color: #E8A33D;">82</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 18px; height: 62px;">
+              <span class="m" style="width: 26px; font-size: 11px; color: #6A5D48;">07</span>
+              <span style="flex-grow: 1; font: 500 18px 'Barlow Condensed', sans-serif; letter-spacing: 0.06em; color: #EFE2CC;">THE FIFTH ELEMENT</span>
+              <span class="m" style="width: 46px; font-size: 11px; color: #8A7C64;">1997</span>
+              <span class="m" style="width: 56px; font-size: 11px; color: #8A7C64;">126M</span>
+              <span class="m" style="width: 34px; text-align: right; font-size: 12px; color: #8A7C64;">64</span>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top: auto; padding: 0 48px 36px 32px;">
+          <div style="padding-top: 24px; border-top: 1px solid rgba(232,220,200,0.14); display: flex; align-items: baseline; justify-content: space-between;">
+            <span style="font: 600 15px 'Barlow Condensed', sans-serif; letter-spacing: 0.26em; color: #C9B896;">LAST LOGGED</span>
+            <span class="k">30 day window</span>
+          </div>
+          <div style="margin-top: 14px; display: flex; flex-direction: column; gap: 10px;">
+            <div style="display: flex; align-items: baseline; gap: 18px;">
+              <span class="m" style="width: 62px; font-size: 11px; color: #6A5D48;">04 SEP</span>
+              <span style="flex-grow: 1; font: 400 17px 'Barlow Condensed', sans-serif; letter-spacing: 0.05em; color: #C9B896;">SICARIO</span>
+              <span class="m" style="font-size: 12px; color: #E8A33D;">8.6</span>
+            </div>
+            <div style="display: flex; align-items: baseline; gap: 18px;">
+              <span class="m" style="width: 62px; font-size: 11px; color: #6A5D48;">01 SEP</span>
+              <span style="flex-grow: 1; font: 400 17px 'Barlow Condensed', sans-serif; letter-spacing: 0.05em; color: #C9B896;">ENEMY</span>
+              <span class="m" style="font-size: 12px; color: #E8A33D;">7.9</span>
+            </div>
+            <div style="display: flex; align-items: baseline; gap: 18px;">
+              <span class="m" style="width: 62px; font-size: 11px; color: #6A5D48;">28 AUG</span>
+              <span style="flex-grow: 1; font: 400 17px 'Barlow Condensed', sans-serif; letter-spacing: 0.05em; color: #C9B896;">CHILDREN OF MEN</span>
+              <span class="m" style="font-size: 12px; color: #E8A33D;">9.1</span>
+            </div>
+            <div style="display: flex; align-items: baseline; gap: 18px;">
+              <span class="m" style="width: 62px; font-size: 11px; color: #6A5D48;">24 AUG</span>
+              <span style="flex-grow: 1; font: 400 17px 'Barlow Condensed', sans-serif; letter-spacing: 0.05em; color: #C9B896;">PRIMER</span>
+              <span class="m" style="font-size: 12px; color: #8A7C64;">6.4</span>
+            </div>
+            <div style="display: flex; align-items: baseline; gap: 18px;">
+              <span class="m" style="width: 62px; font-size: 11px; color: #6A5D48;">21 AUG</span>
+              <span style="flex-grow: 1; font: 400 17px 'Barlow Condensed', sans-serif; letter-spacing: 0.05em; color: #C9B896;">MOON</span>
+              <span class="m" style="font-size: 12px; color: #E8A33D;">8.2</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+
+<script data-dc-script data-props='{"$preview":{"width":1440,"height":1024}}'>
+class Component extends DCLogic {}
+</script>
+</body>
+</html>

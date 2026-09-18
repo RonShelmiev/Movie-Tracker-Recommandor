@@ -1,0 +1,37 @@
+/* Neon Rain — the palette and type ramp from the design canvas, verbatim. */
+:root {
+  color-scheme: dark;
+
+  --void: #04060a;
+  --panel: rgba(9, 14, 22, 0.55);
+  --panel-solid: rgba(8, 13, 20, 0.97);
+  --rail: rgba(6, 10, 16, 0.55);
+
+  --ink-hi: #eaf6fa;
+  --ink: #d7e6ed;
+  --ink-2: #a8bcc7;
+  --ink-3: #8fa3af;
+  --ink-4: #7c919e;
+  --ink-5: #6e8492;
+  --ink-6: #5a6e7b;
+  --ink-7: #4a5c68;
+  --ink-8: #3e5460;
+
+  --cyan: #4ee2f2;
+  --cyan-hi: #9af0fa;
+  --magenta: #ff4d9e;
+  --magenta-hi: #ff8fc4;
+  --amber: #ffb454;
+
+  --edge: rgba(126, 214, 232, 0.13);
+  --edge-2: rgba(126, 214, 232, 0.16);
+  --edge-3: rgba(126, 214, 232, 0.24);
+  --edge-soft: rgba(126, 214, 232, 0.08);
+  --hairline: rgba(126, 214, 232, 0.1);
+
+  --sans: 'Chakra Petch', 'Saira Condensed', system-ui, sans-serif;
+  --mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --rail-w: 236px;
+  --bar-h: 76px;
+}
