@@ -67,15 +67,22 @@ export function Browse() {
         </div>
       </div>
 
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
-        <Chip label="ALL" on={!genre && decade === null && !unseenOnly && !collection} onClick={() => { setGenre(null); setDecade(null); setUnseenOnly(false); setParams({}); }} />
-        {GENRES.map((g) => (
-          <Chip key={g} label={g} on={genre === g} onClick={() => setGenre(genre === g ? null : g)} />
-        ))}
-        {DECADES.map((d) => (
-          <Chip key={d} label={`${d}s`} on={decade === d} onClick={() => setDecade(decade === d ? null : d)} />
-        ))}
-        <Chip label="Unseen only" on={unseenOnly} onClick={() => setUnseenOnly(!unseenOnly)} />
+      {/* Two rows rather than one flat list: on a phone these wrap into seven
+          rows and push every film below the fold, so each row scrolls
+          sideways instead (see .filter-row in layout.css). */}
+      <div className="filter-rows">
+        <div className="filter-row">
+          <Chip label="ALL" on={!genre && decade === null && !unseenOnly && !collection} onClick={() => { setGenre(null); setDecade(null); setUnseenOnly(false); setParams({}); }} />
+          {GENRES.map((g) => (
+            <Chip key={g} label={g} on={genre === g} onClick={() => setGenre(genre === g ? null : g)} />
+          ))}
+        </div>
+        <div className="filter-row">
+          {DECADES.map((d) => (
+            <Chip key={d} label={`${d}s`} on={decade === d} onClick={() => setDecade(decade === d ? null : d)} />
+          ))}
+          <Chip label="Unseen only" on={unseenOnly} onClick={() => setUnseenOnly(!unseenOnly)} />
+        </div>
       </div>
 
       {films.length === 0 ? (

@@ -475,3 +475,37 @@
   .screen p { font-size: 14px !important; }
   .meta { font-size: 10.5px; }
 }
+
+/* ── filter rows ─────────────────────────────────────────────────────
+   On a desktop these wrap freely. On a phone 21 chips wrapped into seven
+   rows — 310px of filters before the first film — so each row becomes a
+   sideways scroller instead. */
+.filter-rows { display: flex; flex-direction: column; gap: 10px; }
+.filter-row { display: flex; flex-wrap: wrap; gap: 10px; }
+
+@media (max-width: 860px) {
+  .filter-row {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    /* Bleed to the screen edges so it reads as scrollable. */
+    margin: 0 -18px;
+    padding: 2px 18px;
+  }
+  .filter-row::-webkit-scrollbar { display: none; }
+  .filter-row > .chip { flex: 0 0 auto; }
+
+  /* Three columns at 393px left ~110px per poster, so titles ran to three
+     lines. Two columns give the art room and the titles a fighting chance. */
+  .grid-posters { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 14px; }
+}
+
+/* Never more than two lines of title on a poster. */
+.poster > .cap b {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
