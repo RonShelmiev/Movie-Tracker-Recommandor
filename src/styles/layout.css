@@ -804,3 +804,51 @@
   .focus-row > .filter-row { margin: 0 -12px; padding: 2px 12px; }
   .rec-title { margin-top: 10px; font-size: 17px; }
 }
+
+/* ── cloud account panel ──────────────────────────────────────────────
+   Setup is a few steps on someone else's site, so the panel explains
+   itself rather than presenting two bare fields. */
+.cloud-copy {
+  margin: 12px 0 0;
+  font: 300 13px var(--sans);
+  line-height: 1.6;
+  color: var(--ink-4);
+}
+.cloud-steps {
+  margin: 12px 0 0;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  font: 300 12.5px var(--sans);
+  line-height: 1.55;
+  color: var(--ink-4);
+}
+.cloud-steps::marker, .cloud-steps li::marker { color: var(--cyan); }
+
+.cloud-sql {
+  margin: 12px 0 0;
+  padding: 12px;
+  max-height: 210px;
+  overflow: auto;
+  border: 1px solid var(--edge-2);
+  background: rgba(4, 6, 10, 0.75);
+  font: 400 10.5px/1.6 var(--mono);
+  color: var(--ink-3);
+  white-space: pre;
+  -webkit-overflow-scrolling: touch;
+}
+
+.cloud-note {
+  margin-top: 12px;
+  padding: 11px 13px;
+  font: 300 12.5px var(--sans);
+  line-height: 1.55;
+}
+.cloud-note.is-ok { border: 1px solid rgba(78, 226, 242, 0.3); background: rgba(78, 226, 242, 0.06); color: var(--ink-2); }
+.cloud-note.is-bad { border: 1px solid rgba(255, 77, 158, 0.3); background: rgba(255, 77, 158, 0.06); color: var(--magenta-hi); }
+
+@media (max-width: 480px) {
+  .cloud-copy, .cloud-steps { font-size: 12px; }
+  .cloud-sql { font-size: 9.5px; max-height: 170px; }
+}

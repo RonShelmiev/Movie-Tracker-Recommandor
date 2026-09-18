@@ -50,6 +50,12 @@ export function FirstRun() {
           </p>
         </div>
 
+        <div style={{ marginTop: 18, textAlign: 'center' }}>
+          <Link to="/settings" className="meta" style={{ fontSize: 10.5, color: 'var(--cyan)', letterSpacing: '0.12em' }}>
+            ALREADY HAVE AN ACCOUNT? SIGN IN AND PULL YOUR LIBRARY →
+          </Link>
+        </div>
+
         {installedApp() && (
           <div className="starter-note" style={{ marginTop: 26 }}>
             <span className="starter-dot" aria-hidden="true" />

@@ -40,6 +40,13 @@ export interface LogEntry {
   /** 0-10, one decimal. */
   score: number;
   note?: string;
+  /**
+   * When this entry was last written, ISO with time. Sync needs it: with two
+   * copies of the same entry and no timestamp, the merge can only prefer one
+   * side by position, which silently drops whichever edit it did not pick.
+   * Absent on entries written before sync existed — treated as oldest.
+   */
+  updatedAt?: string;
 }
 
 export interface WatchlistEntry {
@@ -77,6 +84,12 @@ export interface AppState {
   watchlist: WatchlistEntry[];
   /** Film ids the user said "not for me" to. Never recommended again. */
   dismissed: string[];
+  /**
+   * Ids of log entries that were deleted. A union merge cannot tell "removed
+   * on the other device" from "not seen yet", so without these a film you
+   * unlogged on your phone reappears the next time the laptop syncs.
+   */
+  deletedLogIds: string[];
   collections: Collection[];
   settings: Settings;
   /** Set once the first-run flow is done, so an emptied library does not bounce back to onboarding. */

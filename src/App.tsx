@@ -15,9 +15,13 @@ export function App() {
   const { state } = useStore();
   const location = useLocation();
 
-  // A brand new library goes to onboarding, but only until it has been dismissed once.
+  // A brand new library goes to onboarding, but only until it has been
+  // dismissed once. Settings stays reachable throughout: on a new device the
+  // whole point may be to sign in and pull a library that already exists, and
+  // bouncing that back to "mark five films you have seen" is a dead end.
   const needsOnboarding = !state.onboarded && state.log.length === 0;
-  if (needsOnboarding && location.pathname !== '/welcome') {
+  const allowedBeforeOnboarding = ['/welcome', '/settings'];
+  if (needsOnboarding && !allowedBeforeOnboarding.includes(location.pathname)) {
     return <Navigate to="/welcome" replace />;
   }
 

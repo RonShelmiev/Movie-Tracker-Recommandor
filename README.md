@@ -105,10 +105,65 @@ derived from TMDB *keywords* via a hand-written mapping in `src/lib/tmdb.ts`. Th
 is the honest weak point: films with sparse keywords come through under-tagged and
 score lower than they deserve. The bundled 89 are tagged by hand and behave better.
 
+## Cloud sync (optional)
+
+Without it Flick keeps everything in one browser's `localStorage` — which is also
+why a home-screen install starts empty: iOS gives an installed web app its own
+storage container.
+
+Turning it on means bringing your own [Supabase](https://supabase.com) project;
+there is no server behind this app and nothing is hosted centrally. Your films
+go into your project, and nobody else — including whoever wrote this — can read
+them.
+
+1. Create a free project.
+2. Run this once in its SQL editor:
+
+```sql
+create table if not exists flick_state (
+  user_id uuid primary key references auth.users on delete cascade,
+  state jsonb not null,
+  films jsonb not null default '[]',
+  updated_at timestamptz not null default now()
+);
+
+alter table flick_state enable row level security;
+
+create policy "own row" on flick_state
+  for all using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
+```
+
+3. Paste the Project URL and the **anon public** key into *Tune my taste →
+   Your account*, then create an account.
+
+The anon key is designed to ship in a browser; what keeps rows private is the
+policy above, which limits every read and write to `auth.uid()`. Row-level
+security is the whole protection here — without that `create policy` line the
+table is readable by anyone holding the anon key.
+
+`src/lib/cloud.ts` talks to Supabase's REST endpoints directly rather than
+through the SDK: the surface needed is four auth calls and two table calls, and
+the build is deliberately a single file.
+
+### How merging works
+
+Both devices hold the same library at different moments, so `mergeForSync` in
+`src/lib/backup.ts` matches log entries on `id` and keeps whichever carries the
+later `updatedAt`. Deletions are recorded as tombstones (`deletedLogIds`),
+because a union merge otherwise cannot tell "deleted on the other device" from
+"not seen here yet" and quietly puts the film back.
+
+Edits made on two devices while both are offline still resolve last-write-wins
+per entry, which for one person is the right trade.
+
 ## Known gaps
 
-- Single user, single device. No sync, no accounts — use Export / Import in
-  *Tune my taste* to move between browsers.
+- Cloud sync is written against Supabase's documented contract but has **not**
+  been exercised against a live project — the sandbox it was built in blocks
+  egress to `supabase.co`. It is covered end to end by a mock
+  (two devices, merge, deletion, token refresh, wrong password); `Test project`
+  in Settings checks a real one in a tap.
 - The TMDB integration is written but unverified against the live API.
 - Recommendations score a local candidate pool, not all of TMDB — with a key set,
   `expandPool()` pulls candidates by your strongest genres.

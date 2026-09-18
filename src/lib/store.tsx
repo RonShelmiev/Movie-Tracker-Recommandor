@@ -22,6 +22,7 @@ const INITIAL: AppState = {
   log: [],
   watchlist: [],
   dismissed: [],
+  deletedLogIds: [],
   collections: DEFAULT_COLLECTIONS,
   settings: DEFAULT_SETTINGS,
   onboarded: false,
@@ -49,11 +50,14 @@ const today = () => new Date().toISOString().slice(0, 10);
 export const newId = () =>
   `e${Date.now().toString(36)}${Math.random().toString(36).slice(2, 7)}`;
 
+/** Marks when an entry was written, so sync can tell two copies of it apart. */
+const stamp = (e: LogEntry): LogEntry => ({ ...e, updatedAt: new Date().toISOString() });
+
 function reducer(state: AppState, action: Action): AppState {
   switch (action.type) {
     case 'log': {
       // Logging something clears it off the to-see list; that is the whole point of the list.
-      const log = [action.entry, ...state.log].sort((a, b) => b.watchedOn.localeCompare(a.watchedOn));
+      const log = [stamp(action.entry), ...state.log].sort((a, b) => b.watchedOn.localeCompare(a.watchedOn));
       const collections = action.collections
         ? state.collections.map((c) =>
             action.collections!.includes(c.id) && !c.filmIds.includes(action.entry.filmId)
@@ -72,11 +76,16 @@ function reducer(state: AppState, action: Action): AppState {
       return {
         ...state,
         log: state.log
-          .map((e) => (e.id === action.entry.id ? action.entry : e))
+          .map((e) => (e.id === action.entry.id ? stamp(action.entry) : e))
           .sort((a, b) => b.watchedOn.localeCompare(a.watchedOn)),
       };
     case 'unlog':
-      return { ...state, log: state.log.filter((e) => e.id !== action.id) };
+      return {
+        ...state,
+        log: state.log.filter((e) => e.id !== action.id),
+        // Bounded: a tombstone only has to outlive the other device's next sync.
+        deletedLogIds: [action.id, ...state.deletedLogIds.filter((id) => id !== action.id)].slice(0, 500),
+      };
     case 'watchlist/add': {
       if (state.watchlist.some((w) => w.filmId === action.filmId)) return state;
       const entry: WatchlistEntry = { filmId: action.filmId, addedOn: today(), source: action.source };
@@ -167,6 +176,7 @@ function load(): AppState {
       },
       collections: parsed.collections?.length ? parsed.collections : DEFAULT_COLLECTIONS,
       dismissed: parsed.dismissed ?? [],
+      deletedLogIds: parsed.deletedLogIds ?? [],
       // Entries saved before ids existed get one now, so older logs stay editable.
       log: (parsed.log ?? []).map((e) => (e.id ? e : { ...e, id: newId() })),
     };
