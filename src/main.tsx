@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import { HashRouter } from 'react-router-dom';
 import { App } from './App';
 import { CatalogueProvider } from './lib/catalogue';
+import { CloudProvider } from './lib/cloudsync';
 import { StoreProvider } from './lib/store';
 // Order matters and is load-bearing. global.css used to @import layout.css
 // at the top, which put every layout.css media query BEHIND global.css's
@@ -17,9 +18,12 @@ createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <CatalogueProvider>
       <StoreProvider>
-        <HashRouter>
-          <App />
-        </HashRouter>
+        {/* Inside both: sync reads the store and writes the film cache. */}
+        <CloudProvider>
+          <HashRouter>
+            <App />
+          </HashRouter>
+        </CloudProvider>
       </StoreProvider>
     </CatalogueProvider>
   </StrictMode>,

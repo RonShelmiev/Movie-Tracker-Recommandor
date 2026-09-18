@@ -104,13 +104,15 @@ export function mergeStates(current: AppState, incoming: AppState): AppState {
     ...incoming.watchlist.filter((w) => !listed.has(w.filmId)),
   ];
 
-  const collections = [...current.collections];
+  // Copied rather than edited in place: `current` is live React state, and
+  // mutating a collection on it skips the re-render.
+  const collections = current.collections.map((c) => ({ ...c, filmIds: [...c.filmIds] }));
   for (const inc of incoming.collections) {
     const existing = collections.find((c) => c.id === inc.id);
     if (existing) {
       existing.filmIds = [...new Set([...existing.filmIds, ...inc.filmIds])];
     } else {
-      collections.push(inc);
+      collections.push({ ...inc, filmIds: [...inc.filmIds] });
     }
   }
 
@@ -119,8 +121,37 @@ export function mergeStates(current: AppState, incoming: AppState): AppState {
     watchlist,
     collections,
     dismissed: [...new Set([...current.dismissed, ...incoming.dismissed])],
+    deletedLogIds: [...new Set([...current.deletedLogIds, ...(incoming.deletedLogIds ?? [])])].slice(0, 500),
     // Settings are a preference, not data to merge — the importing device keeps its own.
     settings: current.settings,
     onboarded: true,
+  };
+}
+
+/**
+ * Merge for cloud sync. Unlike an imported file, both sides here are the same
+ * library at different moments, so entries are matched on their id and a
+ * deletion recorded on either side wins over the copy the other still holds.
+ * Without that, removing a film on one device and syncing on another simply
+ * puts it back.
+ */
+export function mergeForSync(local: AppState, remote: AppState): AppState {
+  const merged = mergeStates(local, remote);
+  const tombstoned = new Set(merged.deletedLogIds);
+
+  // Same entry on both sides: the one written later wins. Preferring a side
+  // instead — local, say — silently drops whatever was edited on the other
+  // device, which is the whole thing sync is for. Entries from before
+  // timestamps existed count as oldest.
+  const byId = new Map<string, (typeof merged.log)[number]>();
+  for (const e of [...remote.log, ...local.log]) {
+    if (tombstoned.has(e.id)) continue;
+    const held = byId.get(e.id);
+    if (!held || (e.updatedAt ?? '') >= (held.updatedAt ?? '')) byId.set(e.id, e);
+  }
+
+  return {
+    ...merged,
+    log: [...byId.values()].sort((a, b) => b.watchedOn.localeCompare(a.watchedOn)),
   };
 }

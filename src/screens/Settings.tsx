@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import { useCatalogue } from '../lib/catalogue';
 import { Thumb } from '../components/Poster';
+import { CloudPanel } from '../components/CloudPanel';
 import { Chip, Slider, ToggleRow } from '../components/ui';
 import { Icon } from '../components/Icon';
 import { backupFilename, buildBackup, download, mergeStates, parseBackup } from '../lib/backup';
@@ -195,6 +196,8 @@ export function Settings() {
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
+          <CloudPanel />
+
           <div className="panel" style={{ padding: 20 }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
               <span className="h3">CATALOGUE</span>
