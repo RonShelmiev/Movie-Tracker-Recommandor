@@ -60,3 +60,10 @@ path. Google Fonts is blocked too; inject the faces inline for screenshots.
 Assets are content-hashed and old builds are deleted on deploy, so a cached
 `index.html` can point at a bundle that no longer exists. `index.html` carries
 a boot guard for exactly that — do not remove it.
+
+**Vite `base` must stay absolute** (`/Movie-Tracker-Recommandor/`). A relative
+base (`./`) looks harmless and works from the canonical URL, but any URL that
+loses its trailing slash — `/Movie-Tracker-Recommandor?v=1`, which the boot
+guard itself used to produce — resolves `./assets/...` against the domain root,
+404s every script and stylesheet, and gives a blank white page. Test new URL
+shapes (no slash, query string, hash route) before trusting a deploy.

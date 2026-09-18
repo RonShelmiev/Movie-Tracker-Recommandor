@@ -51,8 +51,11 @@
           try { tried = sessionStorage.getItem(FLAG); } catch (e) { tried = '1'; }
           if (!tried) {
             try { sessionStorage.setItem(FLAG, '1'); } catch (e) {}
-            var u = location.pathname + '?v=' + Date.now() + location.hash;
-            location.replace(u);
+            // Keep the trailing slash: without it, relative URLs resolve
+            // against the domain root and everything 404s.
+            var path = location.pathname;
+            if (path.charAt(path.length - 1) !== '/') path += '/';
+            location.replace(path + '?v=' + Date.now() + location.hash);
             return;
           }
           var boot = document.getElementById('boot');
