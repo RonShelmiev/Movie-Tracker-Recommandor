@@ -1,6 +1,8 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useCatalogue } from '../lib/catalogue';
+import { useLogModal } from '../components/AppShell';
+import { Icon } from '../components/Icon';
 import { Thumb } from '../components/Poster';
 import { Chip, Meter, SectionHead } from '../components/ui';
 import { computeStats, genreCounts, groupByMonth, loggedYears, perMonth } from '../lib/stats';
@@ -9,6 +11,7 @@ import { useStore } from '../lib/store';
 export function Seen() {
   const { getFilm } = useCatalogue();
   const { state } = useStore();
+  const { editLog } = useLogModal();
   const stats = computeStats(state, getFilm);
   const years = loggedYears(state.log);
   const [year, setYear] = useState<number | 'all'>(years[0] ?? 'all');
@@ -79,26 +82,35 @@ export function Seen() {
                 if (!f) return null;
                 return (
                   <div key={`${e.filmId}-${e.watchedOn}-${i}`} className="log-row">
-                    <span className="meta" style={{ width: 30, color: 'var(--ink-7)', fontSize: 10.5 }}>
-                      {e.watchedOn.slice(8, 10)}
+                    <span className="log-day meta">{e.watchedOn.slice(8, 10)}</span>
+                    <span className="log-art">
+                      <Thumb film={f} w={34} h={48} />
                     </span>
-                    <Thumb film={f} w={34} h={48} />
-                    <div style={{ width: 230 }}>
-                      <Link to={`/film/${f.id}`} style={{ font: '500 15px var(--sans)', letterSpacing: '0.03em', color: 'var(--ink)' }}>{f.title}</Link>
-                      <div className="meta" style={{ marginTop: 4, fontSize: 10 }}>{f.year} / {f.director.toUpperCase()}</div>
+                    <div className="log-main">
+                      <Link to={`/film/${f.id}`} className="log-title">{f.title}</Link>
+                      <div className="meta log-sub">{f.year} / {f.director.toUpperCase()}</div>
                     </div>
-                    <span className="meta" style={{ width: 96, fontSize: 10, color: e.rewatch ? 'var(--amber)' : 'var(--ink-8)' }}>
+                    <span className="log-kind meta" style={{ color: e.rewatch ? 'var(--amber)' : 'var(--ink-8)' }}>
                       {e.rewatch ? 'REWATCH' : 'FIRST WATCH'}
                     </span>
-                    <span style={{ flexGrow: 1 }} />
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                      <div style={{ width: 92 }}>
+                    {/* The score is the thing people come here to change, so it
+                        is the control — this screen used to be read-only, which
+                        left deleting and re-logging as the only way to fix a
+                        rating. */}
+                    <button
+                      type="button"
+                      className="score-edit"
+                      onClick={() => editLog(e)}
+                      aria-label={`Edit the score for ${f.title}`}
+                    >
+                      <span className="score-meter">
                         <Meter pct={e.score * 10} />
-                      </div>
+                      </span>
                       <span style={{ width: 30, textAlign: 'right', font: '500 14px var(--mono)', color: 'var(--ink)' }}>
                         {e.score.toFixed(1)}
                       </span>
-                    </div>
+                      <Icon name="pencil" size={13} width={1.6} colour="var(--ink-6)" />
+                    </button>
                   </div>
                 );
               })}

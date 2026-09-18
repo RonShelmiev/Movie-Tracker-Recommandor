@@ -1,5 +1,4 @@
-@import './tokens.css';
-@import './layout.css';
+/* Imported from main.tsx in explicit order — see the note there. */
 
 * { box-sizing: border-box; }
 
