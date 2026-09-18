@@ -88,4 +88,10 @@ export interface Recommendation {
   /** 0-100. */
   match: number;
   reasons: string[];
+  /**
+   * Set when a "more like this" focus is what put this here. It reads the
+   * same for every result in that list, so it belongs on a card once rather
+   * than repeated down a column.
+   */
+  seedReason?: string;
 }

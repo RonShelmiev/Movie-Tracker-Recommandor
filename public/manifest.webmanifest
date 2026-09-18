@@ -1,0 +1,17 @@
+{
+  "name": "Flick — film tracker",
+  "short_name": "Flick",
+  "description": "Log the films you have seen, keep a list of what is next, and get recommendations that explain themselves.",
+  "start_url": "/Movie-Tracker-Recommandor/",
+  "scope": "/Movie-Tracker-Recommandor/",
+  "id": "/Movie-Tracker-Recommandor/",
+  "display": "standalone",
+  "background_color": "#04060a",
+  "theme_color": "#04060a",
+  "categories": ["entertainment", "lifestyle"],
+  "icons": [
+    { "src": "/Movie-Tracker-Recommandor/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/Movie-Tracker-Recommandor/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/Movie-Tracker-Recommandor/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
