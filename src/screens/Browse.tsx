@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useCatalogue } from '../lib/catalogue';
 import { Poster } from '../components/Poster';
+import { StarterBanner } from '../components/StarterBanner';
 import { Chip } from '../components/ui';
 import { useStore } from '../lib/store';
 import type { Genre } from '../lib/types';
@@ -43,6 +44,8 @@ export function Browse() {
 
   return (
     <div className="screen" style={{ gap: 22 }}>
+      <StarterBanner />
+
       <div className="screen-head">
         <div>
           <h1 className="h1">{collection ? collection.name.toUpperCase() : 'BROWSE ALL'}</h1>
