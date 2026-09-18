@@ -59,7 +59,7 @@ export function Dashboard() {
               <span className="meta" style={{ color: 'var(--cyan)', letterSpacing: '0.14em' }}>{top.match}% MATCH</span>
             </div>
 
-            <Link to={`/film/${top.film.id}`} style={{ marginTop: 16, font: '600 44px var(--sans)', letterSpacing: '0.03em', lineHeight: 1.02, color: 'var(--ink-hi)', textWrap: 'pretty' }}>
+            <Link to={`/film/${top.film.id}`} className="hero-title">
               {top.film.title.toUpperCase()}
             </Link>
             <div className="meta" style={{ marginTop: 10 }}>

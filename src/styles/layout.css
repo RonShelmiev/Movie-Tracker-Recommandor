@@ -107,7 +107,10 @@
 }
 .topbar .field { flex-grow: 1; max-width: 520px; }
 
-.screen { flex-grow: 1; padding: 30px 40px 40px; display: flex; flex-direction: column; }
+/* The side gutter is a variable because the filter rows bleed to the screen
+   edges by negating it. When the two drifted apart the page gained 4px of
+   horizontal scroll. */
+.screen { --gutter: 40px; flex-grow: 1; padding: 30px var(--gutter) 40px; display: flex; flex-direction: column; }
 .screen-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; }
 .screen-head .meta { margin-top: 8px; }
 
@@ -155,6 +158,12 @@
 
 .log-row { display: flex; align-items: center; gap: 18px; height: 62px; border-bottom: 1px solid rgba(126, 214, 232, 0.07); }
 .log-row:last-child { border-bottom: none; }
+.log-day { width: 30px; flex-shrink: 0; color: var(--ink-7); font-size: 10.5px; }
+.log-art { flex-shrink: 0; display: flex; }
+.log-main { flex-grow: 1; min-width: 0; }
+.log-title { font: 500 15px var(--sans); letter-spacing: 0.03em; color: var(--ink); }
+.log-sub { margin-top: 4px; font-size: 10px; }
+.log-kind { width: 96px; flex-shrink: 0; font-size: 10px; }
 
 .empty-note {
   padding: 40px;
@@ -334,7 +343,7 @@
   .btn-icon-sm,
   .topbar .btn { padding: 0 14px; gap: 0; }
 
-  .screen { padding: 22px 16px 30px; }
+  .screen { --gutter: 16px; padding: 22px var(--gutter) 30px; }
 
   /* The to-see table stops being a table and becomes stacked cards. */
   .list-head { display: none; }
@@ -347,8 +356,37 @@
   .list-row > * { width: auto !important; }
   .list-row > span[class='meta'] { order: 5; }
 
-  .log-row { flex-wrap: wrap; height: auto; gap: 10px 14px; padding: 14px 0; }
-  .log-row > div[style*='width: 230px'] { width: auto !important; flex-grow: 1; }
+  /* Four flexible columns wrapped into a ragged three-line block, with the
+     score landing in a different place on every row. A phone gets a fixed
+     two-line card instead: art, then title over date, with the rating held
+     on the right where it can be tapped. */
+  .log-row {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    column-gap: 12px;
+    row-gap: 2px;
+    height: auto;
+    padding: 11px 0;
+  }
+  .log-art { grid-column: 1; grid-row: 1; }
+  .log-main { grid-column: 2; grid-row: 1; }
+  .log-title { font-size: 14px; }
+  .log-sub { margin-top: 2px; }
+  .score-edit { grid-column: 3; grid-row: 1 / span 2; margin-right: 0; }
+
+  /* The day sits under its poster like a date stamp; the first-watch flag
+     takes the line under the title. Each has its own cell, so nothing
+     depends on one being narrow enough to clear the other. */
+  .log-day {
+    grid-column: 1;
+    grid-row: 2;
+    width: auto;
+    justify-self: center;
+    padding-top: 4px;
+    font-size: 9.5px;
+  }
+  .log-kind { grid-column: 2; grid-row: 2; width: auto; font-size: 9.5px; }
 
   .keyart { height: auto; min-height: 300px; }
   .keyart .inner { padding: 20px 16px 24px; }
@@ -452,7 +490,7 @@
   .main { padding-bottom: 72px; }
 
   /* Give the content room to breathe — this is the "clingy" fix. */
-  .screen { padding: 24px 18px 36px; gap: 26px; }
+  .screen { --gutter: 18px; padding: 24px var(--gutter) 36px; gap: 26px; }
   .panel { padding-top: 2px; }
   .h1 { font-size: 26px; letter-spacing: 0.05em; }
   .h2, .h3 { font-size: 13px; }
@@ -490,14 +528,17 @@
     scrollbar-width: none;
     -webkit-overflow-scrolling: touch;
     /* Bleed to the screen edges so it reads as scrollable. */
-    margin: 0 -18px;
-    padding: 2px 18px;
+    margin: 0 calc(-1 * var(--gutter));
+    padding: 2px var(--gutter);
   }
   .filter-row::-webkit-scrollbar { display: none; }
   .filter-row > .chip { flex: 0 0 auto; }
 
-  /* Three columns at 393px left ~110px per poster, so titles ran to three
-     lines. Two columns give the art room and the titles a fighting chance. */
+}
+
+/* Two across suits a small tablet. Phones get three — see the 480px block,
+   which this rule used to override purely by sitting later in the file. */
+@media (min-width: 481px) and (max-width: 860px) {
   .grid-posters { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 14px; }
 }
 
@@ -552,4 +593,118 @@
 @media (max-width: 860px) {
   /* The chevron label is the least useful thing here at phone width. */
   .starter-go { display: none; }
+}
+
+
+/* ── phone scale ──────────────────────────────────────────────────────
+   Everything above is sized for a small tablet. A 390px phone needs the
+   ramp brought down again, or three things fill the screen: posters went
+   two across at ~170px each, the hero title ran to 44px, and the section
+   headings to 26px. */
+@media (max-width: 480px) {
+  .grid-posters {
+    /* Three across, the density a phone film grid is normally read at. */
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 10px;
+  }
+  .poster > .cap { padding: 9px 8px; gap: 2px; }
+  .poster > .cap b {
+    font-size: 11.5px;
+    letter-spacing: 0.02em;
+    /* A title with no space in it (Annihilation) is wider than the card.
+       Left alone it was sliced mid-word, since line-clamp only ellipsises
+       where it has a line break to work with; `anywhere` broke it into
+       "Annihilatio / n". Hyphenate instead, and only when it has to. */
+    overflow-wrap: break-word;
+    hyphens: auto;
+  }
+  .poster > .cap span {
+    font-size: 9px;
+    letter-spacing: 0.04em;
+    /* "1968 / 2H29" wrapped to two lines and pushed the title off the art. */
+    white-space: nowrap;
+  }
+
+  /* The chips were sized for thumbs on a tablet; at this width they cost a
+     third of the row each. */
+  .chip { height: 34px; padding: 0 13px; font-size: 11px; }
+  .filter-rows { gap: 8px; }
+  .filter-row { gap: 8px; }
+
+  .screen { --gutter: 14px; padding: 16px var(--gutter) 28px; }
+  /* The gaps between sections are set inline per screen, so they need
+     overriding here rather than at the source. */
+  .screen { gap: 18px !important; }
+  .screen-head { gap: 10px; }
+
+  .h1 { font-size: 21px; letter-spacing: 0.04em; }
+  .h2, .h3 { font-size: 12px; }
+  .meta { font-size: 10px; }
+  .lbl { font-size: 9.5px; }
+
+  .panel { padding: 16px; }
+  .hero-body { padding: 16px 14px; }
+  .keyart { min-height: 220px; }
+
+  .starter-note { padding: 12px 13px; gap: 10px; }
+  .starter-note b + span { font-size: 12px; }
+}
+
+/* ── tonight's pick ───────────────────────────────────────────────────
+   Was an inline 44px, which no media query could reach. */
+.hero-title {
+  margin-top: 16px;
+  font: 600 44px var(--sans);
+  letter-spacing: 0.03em;
+  line-height: 1.02;
+  color: var(--ink-hi);
+  text-wrap: pretty;
+}
+
+@media (max-width: 860px) { .hero-title { font-size: 34px; } }
+@media (max-width: 480px) { .hero-title { margin-top: 12px; font-size: 27px; } }
+
+/* ── the score on Seen, as an edit control ────────────────────────────
+   Mirrors .log-entry on the film page: tap the rating to change it. */
+.score-edit {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 0 8px;
+  margin-right: -8px;
+  border: 1px solid transparent;
+  background: none;
+  cursor: pointer;
+}
+.score-edit:hover { border-color: var(--edge-2); background: rgba(78, 226, 242, 0.04); }
+.score-meter { width: 92px; }
+
+@media (max-width: 480px) {
+  /* A full-width meter pushed the director's name onto a second line; the
+     number beside it carries the reading anyway. */
+  .score-meter { width: 44px; }
+  .score-edit { gap: 8px; padding: 0 4px; }
+}
+
+/* ── very narrow phones ───────────────────────────────────────────────
+   Five tabs at their natural width need 370px, and because the bar spans
+   the document that became the floor for every route — a 360px Android
+   scrolled sideways everywhere, not just on one screen. Let the labels
+   shrink rather than let the bar set the page width. */
+@media (max-width: 389px) {
+  /* An <input> carries a default intrinsic width of about 170px that
+     flex-grow cannot shrink past, so the top bar — search field plus two
+     buttons — was the thing holding the document at 370px. */
+  .topbar .field, .topbar .field input { min-width: 0; }
+
+  .rail-nav { min-width: 0; }
+  .nav-item { padding: 0 2px; gap: 4px; font-size: 8.5px; letter-spacing: 0.02em; }
+  .nav-item > span {
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
 }
