@@ -61,6 +61,14 @@ Assets are content-hashed and old builds are deleted on deploy, so a cached
 `index.html` can point at a bundle that no longer exists. `index.html` carries
 a boot guard for exactly that — do not remove it.
 
+**The build is single-file.** `scripts/inline.mjs` folds the JS and CSS into
+`index.html` after `vite build`, and `dist/` ends up holding that one file. This
+is deliberate: a separate `/assets/*.js` request has too many ways to fail on a
+real device — a cached HTML pointing at a deleted hash, a path resolving wrong,
+an intermediary dropping it — and each one shows as a blank page. Inlined, if
+the HTML arrives the app runs. Do not "optimise" it back into separate chunks
+without a much better reason than bundle hygiene.
+
 **Vite `base` must stay absolute** (`/Movie-Tracker-Recommandor/`). A relative
 base (`./`) looks harmless and works from the canonical URL, but any URL that
 loses its trailing slash — `/Movie-Tracker-Recommandor?v=1`, which the boot
