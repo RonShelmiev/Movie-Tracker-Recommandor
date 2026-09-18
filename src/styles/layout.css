@@ -605,11 +605,11 @@
   .grid-posters {
     /* Three across, the density a phone film grid is normally read at. */
     grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-    gap: 10px;
+    gap: 8px;
   }
-  .poster > .cap { padding: 9px 8px; gap: 2px; }
+  .poster > .cap { padding: 8px 7px; gap: 1px; }
   .poster > .cap b {
-    font-size: 11.5px;
+    font-size: 11px;
     letter-spacing: 0.02em;
     /* A title with no space in it (Annihilation) is wider than the card.
        Left alone it was sliced mid-word, since line-clamp only ellipsises
@@ -627,27 +627,45 @@
 
   /* The chips were sized for thumbs on a tablet; at this width they cost a
      third of the row each. */
-  .chip { height: 34px; padding: 0 13px; font-size: 11px; }
-  .filter-rows { gap: 8px; }
-  .filter-row { gap: 8px; }
+  .chip { height: 31px; padding: 0 11px; font-size: 10.5px; }
+  .filter-rows { gap: 7px; }
+  .filter-row { gap: 7px; }
 
-  .screen { --gutter: 14px; padding: 16px var(--gutter) 28px; }
+  .screen { --gutter: 12px; padding: 13px var(--gutter) 26px; }
   /* The gaps between sections are set inline per screen, so they need
      overriding here rather than at the source. */
-  .screen { gap: 18px !important; }
-  .screen-head { gap: 10px; }
+  .screen { gap: 15px !important; }
+  .screen-head { gap: 9px; }
 
-  .h1 { font-size: 21px; letter-spacing: 0.04em; }
-  .h2, .h3 { font-size: 12px; }
-  .meta { font-size: 10px; }
-  .lbl { font-size: 9.5px; }
+  .h1 { font-size: 19px; letter-spacing: 0.04em; }
+  .h2, .h3 { font-size: 11.5px; }
+  .meta { font-size: 9.5px; }
+  .lbl { font-size: 9px; }
 
-  .panel { padding: 16px; }
-  .hero-body { padding: 16px 14px; }
-  .keyart { min-height: 220px; }
+  .panel { padding: 14px; }
+  .hero-body { padding: 14px 12px; }
+  .keyart { min-height: 190px; }
 
-  .starter-note { padding: 12px 13px; gap: 10px; }
-  .starter-note b + span { font-size: 12px; }
+  /* The bar is fixed at the top of every screen, so its height is the one
+     size that costs on every route. */
+  .topbar { height: 58px; padding: 0 12px; gap: 8px; }
+  .topbar .field { height: 40px; }
+  .topbar .btn, .topbar .btn-icon-sm { height: 40px; padding: 0 11px; }
+
+  .nav-item { height: 54px; }
+  .main { padding-bottom: 54px; }
+
+  .stat { min-height: 66px; padding: 10px 12px; gap: 8px; }
+  .stat b { font-size: 21px; }
+
+  .btn { height: 42px; font-size: 12px; }
+  .btn-sm { height: 36px; }
+
+  .list-row { padding: 12px; gap: 10px 12px; }
+  .empty-note { padding: 26px 18px; font-size: 13px; }
+
+  .starter-note { padding: 11px 12px; gap: 9px; }
+  .starter-note b + span { font-size: 11.5px; }
 }
 
 /* ── tonight's pick ───────────────────────────────────────────────────
@@ -662,7 +680,7 @@
 }
 
 @media (max-width: 860px) { .hero-title { font-size: 34px; } }
-@media (max-width: 480px) { .hero-title { margin-top: 12px; font-size: 27px; } }
+@media (max-width: 480px) { .hero-title { margin-top: 10px; font-size: 24px; } }
 
 /* ── the score on Seen, as an edit control ────────────────────────────
    Mirrors .log-entry on the film page: tap the rating to change it. */
@@ -707,4 +725,29 @@
     text-overflow: ellipsis;
     white-space: nowrap;
   }
+}
+
+/* ── removing a watch ─────────────────────────────────────────────────
+   Quiet until armed, then unmistakably the destructive one. */
+.btn-danger {
+  border: 1px solid rgba(255, 77, 158, 0.32);
+  background: none;
+  color: var(--magenta);
+}
+.btn-danger:hover { border-color: var(--magenta); background: rgba(255, 77, 158, 0.08); }
+.btn-danger.is-armed {
+  border-color: var(--magenta);
+  background: var(--magenta);
+  color: var(--void);
+  font-weight: 500;
+}
+
+.modal-foot .foot-note { flex-grow: 1; }
+
+@media (max-width: 640px) {
+  /* Four things do not fit on one line at this width; the note takes its
+     own row above the buttons rather than squeezing them. */
+  .modal-foot { flex-wrap: wrap; gap: 10px; padding: 16px 18px; }
+  .modal-foot .foot-note { flex: 1 0 100%; line-height: 1.5; }
+  .modal-foot .btn { flex: 1 1 auto; }
 }

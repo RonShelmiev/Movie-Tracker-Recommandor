@@ -33,6 +33,9 @@ export function LogModal({
   const [score, setScore] = useState(editing ? Math.round(editing.score * 10) : 75);
   const [note, setNote] = useState(editing?.note ?? '');
   const [collections, setCollections] = useState<string[]>([]);
+  /* Removing a watch cannot be undone, so it takes two taps rather than a
+     confirm dialog — which on a phone lands under your thumb mid-scroll. */
+  const [armed, setArmed] = useState(false);
 
   const alreadySeen = useMemo(
     () => (picked ? state.log.some((e) => e.filmId === picked.id) : false),
@@ -43,6 +46,13 @@ export function LogModal({
   useEffect(() => {
     if (!editing) setRewatch(alreadySeen);
   }, [alreadySeen, editing]);
+
+  // Never leave the delete armed: step away and it goes back to safe.
+  useEffect(() => {
+    if (!armed) return;
+    const t = setTimeout(() => setArmed(false), 5000);
+    return () => clearTimeout(t);
+  }, [armed]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -83,6 +93,12 @@ export function LogModal({
     };
     if (editing) dispatch({ type: 'editLog', entry });
     else dispatch({ type: 'log', entry, collections });
+    onClose();
+  }
+
+  function remove() {
+    if (!editing) return;
+    dispatch({ type: 'unlog', id: editing.id });
     onClose();
   }
 
@@ -212,13 +228,27 @@ export function LogModal({
         </div>
 
         <div className="modal-foot">
-          <span className="meta" style={{ flexGrow: 1, fontSize: 10, color: 'var(--ink-7)' }}>
-            {!picked
-              ? 'PICK A FILM TO CONTINUE'
-              : editing
-                ? 'UPDATES YOUR SCORE AND YOUR PICKS'
-                : `THIS WILL BE FILM ${state.log.length + 1} AND UPDATES YOUR PICKS`}
+          <span
+            className="meta foot-note"
+            style={{ fontSize: 10, color: armed ? 'var(--magenta-hi)' : 'var(--ink-7)' }}
+          >
+            {armed
+              ? 'THIS DELETES THE WATCH AND ITS SCORE — THERE IS NO UNDO'
+              : !picked
+                ? 'PICK A FILM TO CONTINUE'
+                : editing
+                  ? 'UPDATES YOUR SCORE AND YOUR PICKS'
+                  : `THIS WILL BE FILM ${state.log.length + 1} AND UPDATES YOUR PICKS`}
           </span>
+          {editing && (
+            <button
+              type="button"
+              className={armed ? 'btn btn-danger is-armed' : 'btn btn-danger'}
+              onClick={() => (armed ? remove() : setArmed(true))}
+            >
+              {armed ? 'TAP AGAIN' : 'REMOVE'}
+            </button>
+          )}
           <button type="button" className="btn btn-ghost" onClick={onClose}>CANCEL</button>
           <button type="button" className="btn btn-primary" disabled={!picked} onClick={save}>
             <Icon name="check" size={15} width={2.2} colour="var(--void)" />
