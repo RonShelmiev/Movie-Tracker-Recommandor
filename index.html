@@ -58,14 +58,42 @@
             location.replace(path + '?v=' + Date.now() + location.hash);
             return;
           }
+          // Second failure: stop guessing and report what actually happened.
+          // A screenshot of this is a diagnosis.
           var boot = document.getElementById('boot');
-          if (boot) {
+          if (!boot) return;
+          var script = document.querySelector('script[type="module"]');
+          var link = document.querySelector('link[rel="stylesheet"][href*="assets"]');
+          var cssOn = false;
+          try {
+            cssOn = getComputedStyle(document.body).backgroundColor === 'rgb(4, 6, 10)';
+          } catch (e) {}
+
+          function line(k, v) {
+            return '<div style="margin-top:6px"><b style="color:#7c919e">' + k + '</b> ' + v + '</div>';
+          }
+          function render(status) {
             boot.innerHTML =
-              '<div style="max-width:320px;text-align:center;line-height:1.7">' +
-              'FLICK COULD NOT START.<br><br>' +
-              'Close the tab and reopen it, or clear this site\'s data.<br><br>' +
-              'Your logged films are safe — they are stored separately.' +
+              '<div style="max-width:340px;padding:24px;text-align:left;line-height:1.7;font-size:12px;' +
+              'font-family:ui-monospace,monospace;word-break:break-all">' +
+              '<div style="font-size:14px;letter-spacing:.14em;margin-bottom:14px">FLICK COULD NOT START</div>' +
+              line('page', location.href) +
+              line('script', script ? script.src : 'MISSING FROM HTML') +
+              line('script http', status) +
+              line('stylesheet', link ? link.href : 'MISSING FROM HTML') +
+              line('css applied', cssOn ? 'yes' : 'no') +
+              '<div style="margin-top:16px;color:#7c919e">Send this screen to Claude.</div>' +
+              '<div style="margin-top:10px;color:#7c919e">Your logged films are stored separately and are safe.</div>' +
               '</div>';
+          }
+
+          render('checking…');
+          if (script && window.fetch) {
+            fetch(script.src, { cache: 'no-store' })
+              .then(function (r) { render(r.status + ' ' + r.statusText); })
+              .catch(function (e) { render('request failed — ' + (e && e.message ? e.message : 'blocked')); });
+          } else {
+            render('cannot check');
           }
         }, 10000);
       })();
