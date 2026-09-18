@@ -23,7 +23,8 @@ export function App() {
 
   return (
     <Routes>
-      <Route path="/welcome" element={<FirstRun />} />
+      {/* Onboarded already? /welcome is a dead end — send them home. */}
+      <Route path="/welcome" element={needsOnboarding ? <FirstRun /> : <Navigate to="/" replace />} />
       <Route element={<AppShell />}>
         <Route index element={<Dashboard />} />
         <Route path="browse" element={<Browse />} />
