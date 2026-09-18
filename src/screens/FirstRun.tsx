@@ -1,11 +1,27 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { FIRST_RUN_PICKS } from '../data/catalogue';
 import { useCatalogue } from '../lib/catalogue';
 import { Icon } from '../components/Icon';
 import { useStore } from '../lib/store';
 
 const NEEDED = 5;
+
+/**
+ * iOS gives a home-screen web app a storage container of its own, separate
+ * from Safari's. The library does not follow it across, which looks like the
+ * app has lost everything rather than like a fresh install.
+ */
+function installedApp(): boolean {
+  try {
+    return (
+      (navigator as Navigator & { standalone?: boolean }).standalone === true ||
+      window.matchMedia('(display-mode: standalone)').matches
+    );
+  } catch {
+    return false;
+  }
+}
 
 export function FirstRun() {
   const { getFilm } = useCatalogue();
@@ -33,6 +49,20 @@ export function FirstRun() {
             guess — the more you log, the sharper it gets.
           </p>
         </div>
+
+        {installedApp() && (
+          <div className="starter-note" style={{ marginTop: 26 }}>
+            <span className="starter-dot" aria-hidden="true" />
+            <span>
+              <b>ADDED TO YOUR HOME SCREEN</b>
+              <span>
+                An installed app gets its own storage, so anything you logged in the browser is not here.
+                Export a backup from Settings in the browser, then <Link to="/settings">import it</Link> —
+                your TMDB key needs entering again too.
+              </span>
+            </span>
+          </div>
+        )}
 
         <div style={{ marginTop: 40, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
           <span className="h3">TAP THE ONES YOU HAVE SEEN</span>

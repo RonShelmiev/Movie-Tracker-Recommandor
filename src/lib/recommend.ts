@@ -117,7 +117,11 @@ function components(film: Film, taste: Taste): Components {
   for (const t of film.tags) affSum += taste.tag.get(t) ?? 0;
   for (const g of film.genres) affSum += (taste.genre.get(g) ?? 0) * 1.4;
   const affDenom = film.tags.length + film.genres.length * 1.4;
-  const affinity = clamp01(0.5 + affSum / (affDenom * 2));
+  // A film with neither tags nor genres divides 0 by 0, and NaN then
+  // propagates through the weighted sum all the way to the displayed match.
+  // `isRecommendable` keeps those out, but the guard stays: a NaN here is
+  // invisible until it reaches the screen as "NaN% MATCH".
+  const affinity = affDenom > 0 ? clamp01(0.5 + affSum / (affDenom * 2)) : 0.5;
 
   const z = (film.runtime - taste.runtimeMean) / taste.runtimeSd;
   const runtimeFit = Math.exp(-(z * z) / 2);
@@ -168,6 +172,23 @@ function overlap(a: Film, b: Film): number {
   let n = 0;
   for (const t of [...a.tags, ...a.genres]) if (bt.has(t)) n += 1;
   return n;
+}
+
+/**
+ * How much a candidate looks like the films you pointed at, 0..1. Measured
+ * against the smaller of the two tag sets so a sparsely tagged film is not
+ * punished for having less to match with.
+ */
+function seedAffinity(film: Film, seeds: Film[]): number {
+  let best = 0;
+  for (const s of seeds) {
+    const denom = Math.max(
+      1,
+      Math.min(film.tags.length + film.genres.length, s.tags.length + s.genres.length),
+    );
+    best = Math.max(best, overlap(film, s) / denom);
+  }
+  return clamp01(best);
 }
 
 /** The logged film that most explains this recommendation. */
@@ -248,7 +269,9 @@ function reasonsFor(
     out.push(`${formatRuntime(film.runtime)} is the length you actually finish`);
   }
 
-  if (settings.surfaceObscure && film.ratingsK < 120) {
+  // Zero here means "TMDB gave us no count", not "nobody has seen it", so it
+  // is not something to claim.
+  if (settings.surfaceObscure && film.ratingsK > 0 && film.ratingsK < 120) {
     out.push(`Only ${film.ratingsK}k ratings — off the beaten path`);
   }
 
@@ -259,8 +282,29 @@ export function formatRuntime(min: number): string {
   return `${Math.floor(min / 60)}h ${String(min % 60).padStart(2, '0')}m`;
 }
 
+/**
+ * Not everything that reaches the film cache is a film. Searching TMDB
+ * remembers every result, so a query for a title also drags in its trailers,
+ * featurettes and unauthorised making-ofs — and those then competed for a
+ * place in the recommendations.
+ *
+ * Two things disqualify a candidate. Carrying neither a genre nor a tag means
+ * there is nothing to compare against a taste profile, so any score would be
+ * invented. Running under twenty minutes means it is an extra rather than an
+ * evening — La Jetee is 28 minutes and stays, a nine-minute behind-the-scenes
+ * reel does not.
+ */
+const MIN_RUNTIME = 20;
+
+export function isRecommendable(film: Film): boolean {
+  if (film.genres.length === 0 && film.tags.length === 0) return false;
+  if (!film.runtime || film.runtime < MIN_RUNTIME) return false;
+  return true;
+}
+
 function passesRules(film: Film, state: AppState, seen: Set<string>, listed: Set<string>): boolean {
   const { settings } = state;
+  if (!isRecommendable(film)) return false;
   if (listed.has(film.id)) return false;
   if (state.dismissed.includes(film.id)) return false;
   if (seen.has(film.id)) {
@@ -275,11 +319,33 @@ function passesRules(film: Film, state: AppState, seen: Set<string>, listed: Set
   return true;
 }
 
+/**
+ * What the person is in the mood for right now, as opposed to the standing
+ * settings in Tune My Taste. Nothing here is saved — it steers this visit.
+ */
+export interface Focus {
+  /** Minutes. Nothing longer is offered. */
+  maxRuntime?: number | null;
+  /** Logged films to pull the ranking toward: "more like these". */
+  seedIds?: string[];
+  /** A candidate must carry at least one of these. */
+  tags?: Tag[];
+  /** Restrict to one decade. */
+  decade?: number | null;
+}
+
+const EMPTY_FOCUS: Focus = {};
+
+export function focusIsActive(f: Focus): boolean {
+  return Boolean(f.maxRuntime || f.seedIds?.length || f.tags?.length || f.decade);
+}
+
 export function recommend(
   state: AppState,
   catalogue: Film[],
   getFilm: (id: string) => Film | undefined,
   limit = 12,
+  focus: Focus = EMPTY_FOCUS,
 ): Recommendation[] {
   const taste = buildTaste(state.log, getFilm);
   const seen = new Set(state.log.map((e) => e.filmId));
@@ -288,11 +354,22 @@ export function recommend(
   const w = state.settings.weights;
   const total = w.people + w.affinity + w.runtimeFit + w.era + w.community || 1;
 
+  const seedFilms = (focus.seedIds ?? [])
+    .map((id) => getFilm(id))
+    .filter((f): f is Film => Boolean(f));
+  const wantTags = new Set(focus.tags ?? []);
+
   const scored = catalogue
     .filter((f) => passesRules(f, state, seen, listed))
+    .filter((f) => {
+      if (focus.maxRuntime && f.runtime > focus.maxRuntime) return false;
+      if (focus.decade && Math.floor(f.year / 10) * 10 !== focus.decade) return false;
+      if (wantTags.size && !f.tags.some((t) => wantTags.has(t))) return false;
+      return true;
+    })
     .map((film) => {
       const c = components(film, taste);
-      const raw =
+      let raw =
         (c.people * w.people +
           c.affinity * w.affinity +
           c.runtimeFit * w.runtimeFit +
@@ -300,16 +377,27 @@ export function recommend(
           c.community * w.community) /
         total;
 
+      // Pointing at a film is an explicit instruction, so it outweighs the
+      // standing profile rather than nudging it.
+      const like = seedFilms.length ? seedAffinity(film, seedFilms) : 0;
+      if (seedFilms.length) raw = raw * 0.4 + like * 0.6;
+
       // Spread the top of the range out; raw rarely exceeds 0.8 in practice.
       const match = Math.round(clamp01(raw * 1.12) * 100);
-      return {
-        film,
-        match,
-        reasons: reasonsFor(film, taste, c, state.log, getFilm, state.settings),
-      };
+      const reasons = reasonsFor(film, taste, c, state.log, getFilm, state.settings);
+      let seedReason: string | undefined;
+      if (seedFilms.length && like > 0.3) {
+        const nearest = seedFilms.reduce((a, b) =>
+          seedAffinity(film, [a]) >= seedAffinity(film, [b]) ? a : b,
+        );
+        seedReason = `Close to ${nearest.title} on tone and subject`;
+      }
+      return { film, match, reasons, seedReason };
     });
 
-  scored.sort((a, b) => b.match - a.match || a.film.title.localeCompare(b.film.title));
+  // A NaN comparison returns NaN, which sorts as equal — which is how the
+  // broken entry came to sit at the top of the list rather than the bottom.
+  scored.sort((a, b) => (b.match || 0) - (a.match || 0) || a.film.title.localeCompare(b.film.title));
   return scored.slice(0, limit);
 }
 

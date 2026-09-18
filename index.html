@@ -13,6 +13,18 @@
       rel="icon"
       href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2304060A'/%3E%3Crect x='6' y='9' width='20' height='14' fill='none' stroke='%234EE2F2' stroke-width='2'/%3E%3Cpath d='M6 14h20M6 18h20M12 9v14M20 9v14' stroke='%234EE2F2' stroke-width='1.5' opacity='.55'/%3E%3C/svg%3E"
     />
+    <!-- Installed-app behaviour. The paths are absolute for the same reason
+         Vite's base is: a URL that loses its trailing slash resolves a
+         relative path against the domain root and 404s. -->
+    <link rel="manifest" href="/Movie-Tracker-Recommandor/manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="/Movie-Tracker-Recommandor/apple-touch-icon.png" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Flick" />
+    <!-- "black" rather than "black-translucent": translucent puts the page
+         under the clock and the top bar would need its own inset. -->
+    <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       rel="stylesheet"
