@@ -4,6 +4,12 @@ import { CATALOGUE } from '../data/catalogue';
 import * as tmdb from './tmdb';
 import type { Film, Genre } from './types';
 
+/** Lookups per batch, and the gap between batches — TMDB is rate-limited. */
+const BATCH = 5;
+const PACE = 120;
+
+const pause = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
 const CACHE_KEY = 'flick.films.v1';
 const KEY_KEY = 'flick.tmdb.v1';
 const POSTER_KEY = 'flick.posters.v1';
@@ -11,7 +17,12 @@ const POSTER_KEY = 'flick.posters.v1';
 /**
  * Posters found for bundled films, kept separately from the film cache: the
  * bundled metadata ships with the app, so only the artwork needs persisting.
- * `""` records "searched, nothing found" so we do not ask again every load.
+ *
+ * A key is only ever written for an answer TMDB actually gave: a path when it
+ * has artwork, `""` when it genuinely has none. A *failed request* is left
+ * unrecorded, so the next load asks again. Recording failures here used to
+ * mean one rate-limited moment mid-backfill blanked most of the catalogue
+ * for good, with no way back short of clearing site data.
  */
 function loadPosters(): Record<string, string> {
   try {
@@ -78,15 +89,19 @@ export interface CatalogueApi {
   /** The bundled set only — what Browse can page through without a network. */
   bundled: Film[];
   search: (query: string) => Promise<Film[]>;
-  /** Progress of the one-off poster backfill for the bundled catalogue. */
+  /** Progress of the poster backfill for the bundled catalogue. */
   hydrating: { done: number; total: number } | null;
   hydratePosters: () => Promise<void>;
+  /** How much of the bundled catalogue has artwork, for the Settings readout. */
+  posterStats: { found: number; total: number };
   /** Pull a candidate pool matching the user's strongest genres. */
   expandPool: (genres: Genre[], decade?: number) => Promise<number>;
   remember: (films: Film[]) => void;
   tmdbKey: string;
   setTmdbKey: (key: string) => void;
-  probe: () => Promise<tmdb.Probe>;
+  /** Check a key. Pass the one being typed — waiting for it to land in state
+   *  is what used to make a good key report "No key set." */
+  probe: (keyOverride?: string) => Promise<tmdb.Probe>;
   busy: boolean;
   lastError: string | null;
 }
@@ -100,7 +115,7 @@ export function CatalogueProvider({ children }: { children: ReactNode }) {
   const [busy, setBusy] = useState(false);
   const [lastError, setLastError] = useState<string | null>(null);
   const [hydrating, setHydrating] = useState<{ done: number; total: number } | null>(null);
-  const hydratedOnce = useRef(false);
+  const runningRef = useRef(false);
 
   const cfg = useMemo<tmdb.TmdbConfig | null>(
     () => (tmdbKey.trim() ? { key: tmdbKey.trim(), kind: tmdb.detectKeyKind(tmdbKey) } : null),
@@ -173,46 +188,73 @@ export function CatalogueProvider({ children }: { children: ReactNode }) {
   );
 
   /**
-   * Give the bundled films real artwork. One search per film, run in small
-   * batches so a cold start does not fire 89 requests at once. Results are
-   * remembered, including misses, so this only ever runs once.
+   * Give the bundled films real artwork. One search per film, in small batches
+   * with a breather between them so a cold start does not fire 89 requests at
+   * TMDB's rate limiter all at once.
+   *
+   * Anything that fails is simply not recorded, which leaves it in `todo` for
+   * the next run — the effect below re-runs on every load until the catalogue
+   * is complete, so a flaky moment costs a reload rather than the artwork.
    */
   const hydratePosters = useCallback(async () => {
-    if (!cfg) return;
-    const posters = loadPosters();
-    const todo = CATALOGUE.filter((f) => posters[f.id] === undefined);
-    if (todo.length === 0) return;
+    if (!cfg || runningRef.current) return;
+    runningRef.current = true;
+    try {
+      const posters = loadPosters();
+      const todo = CATALOGUE.filter((f) => posters[f.id] === undefined);
+      if (todo.length === 0) return;
 
-    setHydrating({ done: 0, total: todo.length });
-    let done = 0;
+      setHydrating({ done: 0, total: todo.length });
+      let done = 0;
+      let backoff = 0;
 
-    for (let i = 0; i < todo.length; i += 5) {
-      const batch = todo.slice(i, i + 5);
-      const results = await Promise.allSettled(
-        batch.map((f) => tmdb.findPoster(f.title, f.year, cfg)),
-      );
+      for (let i = 0; i < todo.length; i += BATCH) {
+        const batch = todo.slice(i, i + BATCH);
+        const results = await Promise.allSettled(
+          batch.map((f) => tmdb.findPoster(f.title, f.year, cfg)),
+        );
 
-      results.forEach((r, j) => {
-        const film = batch[j];
-        // A miss is recorded as "" so we do not retry it on every load.
-        posters[film.id] = r.status === 'fulfilled' ? (r.value?.posterPath ?? '') : '';
-        const path = posters[film.id];
-        if (path) cacheRef.current.set(film.id, { ...film, posterPath: path });
-      });
+        let throttled = false;
+        results.forEach((r, j) => {
+          const film = batch[j];
+          if (r.status === 'rejected') {
+            // No answer came back. Leave the slot empty so it is retried.
+            if (r.reason instanceof tmdb.TmdbError && (r.reason.status === 429 || r.reason.status === 0)) {
+              throttled = true;
+            }
+            return;
+          }
+          // "" means TMDB answered and has no artwork — settled, never re-ask.
+          const path = r.value?.posterPath ?? '';
+          posters[film.id] = path;
+          if (path) cacheRef.current.set(film.id, { ...film, posterPath: path });
+        });
 
-      done += batch.length;
-      persistPosters(posters);
-      setHydrating({ done, total: todo.length });
-      setVersion((v) => v + 1);
+        done += batch.length;
+        persistPosters(posters);
+        setHydrating({ done, total: todo.length });
+        setVersion((v) => v + 1);
+
+        // Ease off when TMDB pushes back, rather than burning the whole run
+        // against a closed door.
+        backoff = throttled ? Math.min(backoff ? backoff * 2 : 1000, 8000) : 0;
+        if (backoff) await pause(backoff);
+        else if (i + BATCH < todo.length) await pause(PACE);
+      }
+
+      setHydrating(null);
+    } finally {
+      runningRef.current = false;
     }
-
-    setHydrating(null);
   }, [cfg]);
 
-  // Kick the backfill off as soon as a working key exists.
+  /**
+   * Kick the backfill off whenever a key is present and anything is still
+   * outstanding. Unlike a run-once guard, this picks up where a failed run
+   * left off on the next visit.
+   */
   useEffect(() => {
-    if (!cfg || hydratedOnce.current) return;
-    hydratedOnce.current = true;
+    if (!cfg) return;
     void hydratePosters();
   }, [cfg, hydratePosters]);
 
@@ -226,19 +268,35 @@ export function CatalogueProvider({ children }: { children: ReactNode }) {
     setKeyState(key.trim());
   }, []);
 
-  const probe = useCallback(async () => {
-    if (!cfg) return { ok: false, message: 'No key set.' };
-    setBusy(true);
-    try {
-      return await tmdb.probeTmdb(cfg);
-    } finally {
-      setBusy(false);
-    }
-  }, [cfg]);
+  const probe = useCallback(
+    async (keyOverride?: string) => {
+      // Tested against the key as typed, not as stored: a React state update
+      // has not landed yet when the button's own handler calls this, so
+      // reading `cfg` here reported "No key set." for a perfectly good key.
+      const raw = (keyOverride ?? tmdbKey).trim();
+      if (!raw) return { ok: false, message: 'No key set.' };
+      setBusy(true);
+      try {
+        return await tmdb.probeTmdb({ key: raw, kind: tmdb.detectKeyKind(raw) });
+      } finally {
+        setBusy(false);
+      }
+    },
+    [tmdbKey],
+  );
 
   useEffect(() => {
     persistCache(cacheRef.current);
   }, []);
+
+  const posterStats = useMemo(
+    () => ({
+      found: CATALOGUE.filter((f) => cacheRef.current.get(f.id)?.posterPath).length,
+      total: CATALOGUE.length,
+    }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [version],
+  );
 
   const value = useMemo<CatalogueApi>(
     () => ({
@@ -249,6 +307,7 @@ export function CatalogueProvider({ children }: { children: ReactNode }) {
       search,
       hydrating,
       hydratePosters,
+      posterStats,
       expandPool,
       remember,
       tmdbKey,
@@ -257,7 +316,7 @@ export function CatalogueProvider({ children }: { children: ReactNode }) {
       busy,
       lastError,
     }),
-    [cfg, getFilm, candidates, search, hydrating, hydratePosters, expandPool, remember, tmdbKey, setTmdbKey, probe, busy, lastError],
+    [cfg, getFilm, candidates, search, hydrating, hydratePosters, posterStats, expandPool, remember, tmdbKey, setTmdbKey, probe, busy, lastError],
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

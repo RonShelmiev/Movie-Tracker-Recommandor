@@ -4,6 +4,7 @@ import { useLogModal } from '../components/AppShell';
 import { Icon } from '../components/Icon';
 import { Poster, Thumb } from '../components/Poster';
 import { posterUrl } from '../lib/tmdb';
+import { StarterBanner } from '../components/StarterBanner';
 import { Meter, SectionHead, Stat } from '../components/ui';
 import { buildTaste, formatRuntime, recommend } from '../lib/recommend';
 import { computeStats } from '../lib/stats';
@@ -47,6 +48,8 @@ export function Dashboard() {
 
   return (
     <div className="screen" style={{ gap: 28 }}>
+      <StarterBanner />
+
       {top && (
         <section className="panel hero">
           <div className="hero-body">

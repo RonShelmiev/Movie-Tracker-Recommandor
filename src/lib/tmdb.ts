@@ -3,10 +3,11 @@ import type { Film, Genre, Tag } from './types';
 /**
  * TMDB adapter.
  *
- * ⚠️ UNVERIFIED AGAINST THE LIVE API. The sandbox this was written in blocks
- * egress to api.themoviedb.org, so the request shapes below come from TMDB's
- * documented v3 contract rather than an observed response. Run it locally with
- * a key before trusting it; `probeTmdb()` exists for exactly that.
+ * Verified against the live API from a real device (a v3 key round-tripped
+ * Fight Club through `probeTmdb()` with the right runtime and director). It
+ * still cannot be exercised from the sandbox this is developed in, which
+ * blocks egress to api.themoviedb.org — changes here are tested against a
+ * mocked `page.route`, and `probeTmdb()` remains the way to check a real key.
  *
  * Auth: a v3 API key (`?api_key=`) or a v4 read token (`Authorization: Bearer`).
  * Both are read-only. Whichever you use ends up visible to anyone who opens the
@@ -34,13 +35,33 @@ function url(path: string, cfg: TmdbConfig, params: Record<string, string | numb
   return u.toString();
 }
 
+/**
+ * Carries the HTTP status so callers can tell a real answer from a failed
+ * question — a 429 means "ask again later", not "this film has no poster".
+ * `status` is 0 when the request never reached TMDB at all.
+ */
+export class TmdbError extends Error {
+  readonly status: number;
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = 'TmdbError';
+    this.status = status;
+  }
+}
+
 async function get<T>(path: string, cfg: TmdbConfig, params?: Record<string, string | number>): Promise<T> {
-  const res = await fetch(url(path, cfg, params), {
-    headers: cfg.kind === 'v4' ? { Authorization: `Bearer ${cfg.key}` } : {},
-  });
+  let res: Response;
+  try {
+    res = await fetch(url(path, cfg, params), {
+      headers: cfg.kind === 'v4' ? { Authorization: `Bearer ${cfg.key}` } : {},
+    });
+  } catch (e) {
+    // Offline, DNS, a dropped mobile connection — no answer came back.
+    throw new TmdbError(e instanceof Error ? e.message : `Could not reach TMDB`, 0);
+  }
   if (!res.ok) {
     const body = await res.text().catch(() => '');
-    throw new Error(`TMDB ${res.status} on ${path}${body ? `: ${body.slice(0, 160)}` : ''}`);
+    throw new TmdbError(`TMDB ${res.status} on ${path}${body ? `: ${body.slice(0, 160)}` : ''}`, res.status);
   }
   return (await res.json()) as T;
 }
@@ -270,7 +291,7 @@ export async function probeTmdb(cfg: TmdbConfig): Promise<Probe> {
     return {
       ok: true,
       message: `Connected. Mapped ${film.title} (${film.year}), ${film.runtime} min, dir. ${film.director}.`,
-      sample: `${film.genres.join(', ') || 'no genres mapped'} · ${film.tags.length} tags derived`,
+      sample: `${film.genres.join(', ') || 'no genres mapped'} · ${film.tags.length} ${film.tags.length === 1 ? 'tag' : 'tags'} derived`,
     };
   } catch (e) {
     return { ok: false, message: e instanceof Error ? e.message : 'Unknown error' };

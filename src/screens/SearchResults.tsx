@@ -3,6 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { useCatalogue } from '../lib/catalogue';
 import { Icon } from '../components/Icon';
 import { Thumb } from '../components/Poster';
+import { StarterBanner } from '../components/StarterBanner';
 import { SectionHead } from '../components/ui';
 import { formatRuntime } from '../lib/recommend';
 import { useStore } from '../lib/store';
@@ -74,6 +75,8 @@ export function SearchResults() {
           </div>
         </div>
       </div>
+
+      <StarterBanner />
 
       {!q && <div className="empty-note">Type something in the search box above.</div>}
 

@@ -509,3 +509,47 @@
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
+
+/* ── starter-catalogue notice ─────────────────────────────────────────
+   Shown when no TMDB key is set. Without it the fallback is silent, and
+   an unconfigured app is indistinguishable from a broken one. */
+.starter-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1px solid rgba(255, 77, 158, 0.3);
+  background: linear-gradient(100deg, rgba(255, 77, 158, 0.08), rgba(255, 77, 158, 0.02));
+}
+.starter-note > span:nth-child(2) { display: flex; flex-direction: column; gap: 5px; flex-grow: 1; min-width: 0; }
+.starter-note b {
+  font: 400 10px var(--mono);
+  letter-spacing: 0.18em;
+  color: var(--magenta-hi);
+}
+.starter-note b + span {
+  font: 300 12.5px var(--sans);
+  line-height: 1.55;
+  color: var(--ink-4);
+}
+.starter-dot {
+  width: 7px;
+  height: 7px;
+  flex: 0 0 auto;
+  /* Beside the label, not floating in the middle of the wrapped text. */
+  margin-top: 4px;
+  background: var(--magenta);
+  box-shadow: 0 0 10px var(--magenta);
+}
+.starter-go {
+  flex: 0 0 auto;
+  margin-top: 1px;
+  font: 400 10px var(--mono);
+  letter-spacing: 0.16em;
+  color: var(--magenta);
+}
+
+@media (max-width: 860px) {
+  /* The chevron label is the least useful thing here at phone width. */
+  .starter-go { display: none; }
+}

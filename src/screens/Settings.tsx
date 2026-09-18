@@ -18,7 +18,7 @@ const CEILINGS: { label: string; value: number | null }[] = [
 const EXCLUDABLE: Genre[] = ['Horror', 'Action', 'Romance', 'Comedy', 'War', 'Animation'];
 
 export function Settings() {
-  const { candidates, getFilm, mode, tmdbKey, setTmdbKey, probe, busy, remember, hydrating, hydratePosters } = useCatalogue();
+  const { candidates, getFilm, mode, tmdbKey, setTmdbKey, probe, busy, remember, hydrating, hydratePosters, posterStats } = useCatalogue();
   const { state, dispatch } = useStore();
   const [keyDraft, setKeyDraft] = useState(tmdbKey);
   const [probeResult, setProbeResult] = useState<{ ok: boolean; message: string; sample?: string } | null>(null);
@@ -242,7 +242,7 @@ export function Settings() {
                 disabled={busy || !keyDraft.trim()}
                 onClick={async () => {
                   setTmdbKey(keyDraft);
-                  setProbeResult(await probe());
+                  setProbeResult(await probe(keyDraft));
                 }}
               >
                 {busy ? 'TESTING…' : 'TEST CONNECTION'}
@@ -298,11 +298,17 @@ export function Settings() {
                   </>
                 ) : (
                   <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-                    <span className="meta" style={{ fontSize: 10, color: 'var(--ink-6)' }}>
-                      ARTWORK FOR THE STARTER CATALOGUE
+                    <span
+                      className="meta"
+                      style={{
+                        fontSize: 10,
+                        color: posterStats.found === posterStats.total ? 'var(--cyan)' : 'var(--ink-6)',
+                      }}
+                    >
+                      ARTWORK — {posterStats.found} / {posterStats.total} FILMS
                     </span>
                     <button type="button" className="btn btn-sm" onClick={() => void hydratePosters()}>
-                      FETCH POSTERS
+                      {posterStats.found === posterStats.total ? 'FETCH POSTERS' : 'FETCH THE REST'}
                     </button>
                   </div>
                 )}
