@@ -31,6 +31,8 @@ export interface Film {
 }
 
 export interface LogEntry {
+  /** Stable handle, so an entry can be edited without matching on film + date. */
+  id: string;
   filmId: string;
   /** ISO date, day precision. */
   watchedOn: string;

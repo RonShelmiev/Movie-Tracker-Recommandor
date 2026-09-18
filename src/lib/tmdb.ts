@@ -188,6 +188,32 @@ export async function searchFilms(query: string, cfg: TmdbConfig, limit = 8): Pr
     .map((s) => s.value);
 }
 
+/**
+ * Cheap poster lookup for a film we already have metadata for: one search
+ * request, no detail fetch. Used to give the bundled catalogue real artwork
+ * without replacing its hand-written tags.
+ */
+export async function findPoster(
+  title: string,
+  year: number,
+  cfg: TmdbConfig,
+): Promise<{ posterPath?: string; tmdbId?: number } | null> {
+  const list = await get<{ results: TmdbListItem[] }>('/search/movie', cfg, {
+    query: title,
+    include_adult: 'false',
+    ...(year ? { year } : {}),
+  });
+
+  const norm = (t: string) => t.toLowerCase().replace(/[^a-z0-9]+/g, '');
+  const target = norm(title);
+
+  // Prefer an exact title match; fall back to the first result TMDB ranked.
+  const exact = list.results.find((r) => norm(r.title) === target);
+  const best = exact ?? list.results[0];
+  if (!best) return null;
+  return { posterPath: best.poster_path ?? undefined, tmdbId: best.id };
+}
+
 export interface DiscoverOptions {
   genreIds?: number[];
   decade?: number;

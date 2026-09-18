@@ -6,19 +6,28 @@ import { useStore } from '../lib/store';
 import { Icon } from './Icon';
 import type { IconName } from './Icon';
 import { LogModal } from './LogModal';
+import type { LogEntry } from '../lib/types';
 
 interface LogControl {
   openLog: (filmId?: string) => void;
+  editLog: (entry: LogEntry) => void;
 }
-const LogCtx = createContext<LogControl>({ openLog: () => {} });
+const LogCtx = createContext<LogControl>({ openLog: () => {}, editLog: () => {} });
 export const useLogModal = () => useContext(LogCtx);
 
-const NAV: { to: string; label: string; icon: IconName; count?: 'toSee' | 'seen'; dot?: boolean }[] = [
-  { to: '/', label: 'DASHBOARD', icon: 'dashboard' },
-  { to: '/browse', label: 'BROWSE ALL', icon: 'browse' },
-  { to: '/to-see', label: 'TO SEE', icon: 'tosee', count: 'toSee' },
-  { to: '/seen', label: 'SEEN', icon: 'seen', count: 'seen' },
-  { to: '/for-you', label: 'FOR YOU', icon: 'foryou', dot: true },
+const NAV: {
+  to: string;
+  label: string;
+  short: string;
+  icon: IconName;
+  count?: 'toSee' | 'seen';
+  dot?: boolean;
+}[] = [
+  { to: '/', label: 'DASHBOARD', short: 'HOME', icon: 'dashboard' },
+  { to: '/browse', label: 'BROWSE ALL', short: 'BROWSE', icon: 'browse' },
+  { to: '/to-see', label: 'TO SEE', short: 'TO SEE', icon: 'tosee', count: 'toSee' },
+  { to: '/seen', label: 'SEEN', short: 'SEEN', icon: 'seen', count: 'seen' },
+  { to: '/for-you', label: 'FOR YOU', short: 'FOR YOU', icon: 'foryou', dot: true },
 ];
 
 export function AppShell() {
@@ -27,12 +36,20 @@ export function AppShell() {
   const navigate = useNavigate();
   const stats = computeStats(state, getFilm);
   const [logFor, setLogFor] = useState<string | null | undefined>(undefined);
+  const [editingEntry, setEditingEntry] = useState<LogEntry | undefined>(undefined);
   const [query, setQuery] = useState('');
 
-  const openLog = (filmId?: string) => setLogFor(filmId ?? null);
+  const openLog = (filmId?: string) => {
+    setEditingEntry(undefined);
+    setLogFor(filmId ?? null);
+  };
+  const editLog = (entry: LogEntry) => {
+    setEditingEntry(entry);
+    setLogFor(entry.filmId);
+  };
 
   return (
-    <LogCtx.Provider value={{ openLog }}>
+    <LogCtx.Provider value={{ openLog, editLog }}>
       <div className="atmo" />
       <div className="grain" />
       <div className="scan" />
@@ -58,7 +75,8 @@ export function AppShell() {
                 {({ isActive }) => (
                   <>
                     <Icon name={item.icon} colour={isActive ? 'var(--cyan)' : 'var(--ink-4)'} />
-                    <span>{item.label}</span>
+                    <span className="nav-full">{item.label}</span>
+                    <span className="nav-short">{item.short}</span>
                     {item.count && <span className="count">{item.count === 'toSee' ? stats.toSee : stats.seen}</span>}
                     {item.dot && stats.seen > 0 && <span className="nav-dot" />}
                   </>
@@ -139,7 +157,16 @@ export function AppShell() {
         </div>
       </div>
 
-      {logFor !== undefined && <LogModal filmId={logFor} onClose={() => setLogFor(undefined)} />}
+      {logFor !== undefined && (
+        <LogModal
+          filmId={logFor}
+          editing={editingEntry}
+          onClose={() => {
+            setLogFor(undefined);
+            setEditingEntry(undefined);
+          }}
+        />
+      )}
     </LogCtx.Provider>
   );
 }

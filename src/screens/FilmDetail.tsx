@@ -27,7 +27,7 @@ export function FilmDetail() {
   const { id } = useParams();
   const { candidates, getFilm } = useCatalogue();
   const { state, dispatch } = useStore();
-  const { openLog } = useLogModal();
+  const { openLog, editLog } = useLogModal();
   const film = id ? getFilm(id) : undefined;
 
   if (!film) {
@@ -146,6 +146,11 @@ export function FilmDetail() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
           <div className="panel" style={{ padding: 20 }}>
             <span className="h3">YOUR LOG</span>
+            {entries.length > 0 && (
+              <div className="meta" style={{ marginTop: 10, fontSize: 9.5, color: 'var(--ink-8)' }}>
+                TAP AN ENTRY TO CHANGE THE SCORE, DATE OR NOTE
+              </div>
+            )}
             {entries.length === 0 ? (
               <div style={{ marginTop: 14, font: '300 13.5px var(--sans)', color: 'var(--ink-5)' }}>
                 You have not logged this yet.
@@ -153,20 +158,33 @@ export function FilmDetail() {
             ) : (
               <div style={{ marginTop: 18, display: 'flex', flexDirection: 'column', gap: 14 }}>
                 {entries.map((e, i) => (
-                  <div key={e.watchedOn + i}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                      <span style={{ width: 6, height: 6, background: i === 0 ? 'var(--cyan)' : 'rgba(126,214,232,0.35)' }} />
-                      <span style={{ flexGrow: 1, font: '300 13.5px var(--sans)', color: 'var(--ink-2)' }}>
-                        {new Date(e.watchedOn).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
-                      </span>
-                      <span className="meta" style={{ fontSize: 10, color: 'var(--ink-6)' }}>{e.rewatch ? 'REWATCH' : 'FIRST'}</span>
-                      <span style={{ font: '500 13px var(--mono)', color: 'var(--cyan)' }}>{e.score.toFixed(1)}</span>
-                      <button type="button" aria-label="Remove this entry" onClick={() => dispatch({ type: 'unlog', filmId: film.id, watchedOn: e.watchedOn })}>
-                        <Icon name="close" size={13} width={1.8} colour="var(--ink-7)" />
+                  <div key={e.id}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <button
+                        type="button"
+                        className="log-entry"
+                        onClick={() => editLog(e)}
+                        aria-label={`Edit entry from ${e.watchedOn}`}
+                      >
+                        <span style={{ width: 6, height: 6, flexShrink: 0, background: i === 0 ? 'var(--cyan)' : 'rgba(126,214,232,0.35)' }} />
+                        <span style={{ flexGrow: 1, minWidth: 0, font: '300 13.5px var(--sans)', color: 'var(--ink-2)' }}>
+                          {new Date(e.watchedOn).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                        </span>
+                        <span className="meta" style={{ fontSize: 10, color: 'var(--ink-6)' }}>{e.rewatch ? 'REWATCH' : 'FIRST'}</span>
+                        <span style={{ font: '500 15px var(--mono)', color: 'var(--cyan)' }}>{e.score.toFixed(1)}</span>
+                        <Icon name="pencil" size={14} width={1.6} colour="var(--ink-6)" />
+                      </button>
+                      <button
+                        type="button"
+                        className="icon-btn"
+                        aria-label="Remove this entry"
+                        onClick={() => dispatch({ type: 'unlog', id: e.id })}
+                      >
+                        <Icon name="close" size={14} width={1.8} colour="var(--ink-7)" />
                       </button>
                     </div>
                     {e.note && (
-                      <div style={{ marginTop: 8, paddingLeft: 18, font: '300 13px var(--sans)', lineHeight: 1.6, color: 'var(--ink-4)' }}>
+                      <div style={{ marginTop: 8, paddingLeft: 16, font: '300 13px var(--sans)', lineHeight: 1.6, color: 'var(--ink-4)' }}>
                         {e.note}
                       </div>
                     )}

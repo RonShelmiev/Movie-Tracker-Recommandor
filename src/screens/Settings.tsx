@@ -18,7 +18,7 @@ const CEILINGS: { label: string; value: number | null }[] = [
 const EXCLUDABLE: Genre[] = ['Horror', 'Action', 'Romance', 'Comedy', 'War', 'Animation'];
 
 export function Settings() {
-  const { candidates, getFilm, mode, tmdbKey, setTmdbKey, probe, busy, remember } = useCatalogue();
+  const { candidates, getFilm, mode, tmdbKey, setTmdbKey, probe, busy, remember, hydrating, hydratePosters } = useCatalogue();
   const { state, dispatch } = useStore();
   const [keyDraft, setKeyDraft] = useState(tmdbKey);
   const [probeResult, setProbeResult] = useState<{ ok: boolean; message: string; sample?: string } | null>(null);
@@ -74,7 +74,7 @@ export function Settings() {
 
           <div className="lbl" style={{ display: 'block', marginTop: 34 }}>Hard rules</div>
 
-          <div style={{ marginTop: 16, display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
+          <div className="setting-row" style={{ marginTop: 16, display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
             <span style={{ width: 150, flexShrink: 0, font: '400 14px var(--sans)', color: 'var(--ink-3)' }}>Runtime ceiling</span>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
               {CEILINGS.map((c) => (
@@ -88,7 +88,7 @@ export function Settings() {
             </div>
           </div>
 
-          <div style={{ marginTop: 16, display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
+          <div className="setting-row" style={{ marginTop: 16, display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
             <span style={{ width: 150, flexShrink: 0, font: '400 14px var(--sans)', color: 'var(--ink-3)' }}>Never recommend</span>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
               {EXCLUDABLE.map((g) => {
@@ -278,6 +278,32 @@ export function Settings() {
                 {probeResult.sample && (
                   <div className="meta" style={{ marginTop: 8, fontSize: 10, color: 'var(--ink-6)' }}>
                     {probeResult.sample.toUpperCase()}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {mode === 'tmdb' && (
+              <div style={{ marginTop: 14, paddingTop: 14, borderTop: '1px solid var(--hairline)' }}>
+                {hydrating ? (
+                  <>
+                    <div className="meta" style={{ fontSize: 10, color: 'var(--cyan)' }}>
+                      FETCHING POSTERS — {hydrating.done} / {hydrating.total}
+                    </div>
+                    <div style={{ marginTop: 8 }}>
+                      <div className="meter">
+                        <i style={{ width: `${(hydrating.done / hydrating.total) * 100}%` }} />
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+                    <span className="meta" style={{ fontSize: 10, color: 'var(--ink-6)' }}>
+                      ARTWORK FOR THE STARTER CATALOGUE
+                    </span>
+                    <button type="button" className="btn btn-sm" onClick={() => void hydratePosters()}>
+                      FETCH POSTERS
+                    </button>
                   </div>
                 )}
               </div>
