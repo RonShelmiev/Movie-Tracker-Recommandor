@@ -359,14 +359,18 @@
 
   .scrim { padding: 0; place-items: stretch; }
   .modal { width: 100%; min-height: 100%; border: none; }
-  .modal-head { position: sticky; top: 0; background: var(--panel-solid); z-index: 2; }
-  .modal-body { padding: 20px 16px; }
+  /* Both bars float over the scrolling body, so they must be fully opaque —
+     a translucent footer let the collection chips show through it. */
+  .modal-head { position: sticky; top: 0; z-index: 3; background: #080d14; }
+  .modal-body { padding: 20px 16px 28px; }
   .modal-foot {
     position: sticky;
     bottom: 0;
+    z-index: 3;
     flex-wrap: wrap;
     padding: 16px;
-    background: var(--panel-solid);
+    background: #080d14;
+    box-shadow: 0 -12px 20px rgba(4, 6, 10, 0.75);
   }
   .modal-foot > span.meta { width: 100%; order: -1; }
 
@@ -398,4 +402,76 @@
 
   .rec-card { min-height: 0; }
   .rec-art { width: 104px; }
+}
+
+/* A log entry is a control now — tapping it reopens the modal to edit. */
+.log-entry {
+  flex-grow: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 44px;
+  padding: 0 10px;
+  margin-left: -10px;
+  text-align: left;
+  border: 1px solid transparent;
+}
+.log-entry:hover { border-color: var(--edge-2); background: rgba(78, 226, 242, 0.04); }
+
+.icon-btn {
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  border: 1px solid transparent;
+}
+.icon-btn:hover { border-color: var(--edge-2); }
+
+/* ══ mobile refinements ══════════════════════════════════════════════ */
+
+.nav-short { display: none; }
+
+@media (max-width: 860px) {
+  /* Header rows carry a title and a control; on a phone they need to wrap
+     rather than push the page sideways (the Browse sort select did). */
+  .screen-head { flex-wrap: wrap; align-items: flex-start; gap: 14px; }
+  .screen-head > * { min-width: 0; max-width: 100%; }
+  .screen-head select,
+  .screen select { max-width: 100%; }
+
+  /* Nothing may make the document wider than the screen. */
+  .main, .screen, .panel, .list { max-width: 100%; }
+  .screen > *, .split > *, .dash > * { min-width: 0; }
+
+  .nav-full { display: none; }
+  .nav-short { display: inline; }
+  .nav-item { height: 64px; font-size: 10px; letter-spacing: 0.05em; }
+  .rail { padding-bottom: max(env(safe-area-inset-bottom, 0px), 2px); }
+  .main { padding-bottom: 72px; }
+
+  /* Give the content room to breathe — this is the "clingy" fix. */
+  .screen { padding: 24px 18px 36px; gap: 26px; }
+  .panel { padding-top: 2px; }
+  .h1 { font-size: 26px; letter-spacing: 0.05em; }
+  .h2, .h3 { font-size: 13px; }
+
+  /* Settings pairs a fixed-width label with a row of chips; stack them. */
+  .setting-row { flex-direction: column; align-items: stretch !important; gap: 10px !important; }
+  .setting-row > span:first-child { width: auto !important; }
+
+  /* Comfortable hit targets throughout. */
+  .chip { height: 40px; padding: 0 16px; font-size: 12px; }
+  .btn { height: 46px; }
+  .btn-sm { height: 40px; }
+  .slider { height: 32px; }
+  .slider::-webkit-slider-thumb { width: 22px; height: 22px; margin-top: -9px; }
+  .slider::-moz-range-thumb { width: 20px; height: 20px; }
+  .toggle { width: 52px; height: 28px; }
+  .toggle > i { width: 20px; height: 20px; }
+
+  /* Body copy a touch larger than the desktop ramp. */
+  .screen p { font-size: 14px !important; }
+  .meta { font-size: 10.5px; }
 }

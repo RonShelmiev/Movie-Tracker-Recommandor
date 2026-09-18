@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useCatalogue } from '../lib/catalogue';
-import { useStore } from '../lib/store';
-import type { Film } from '../lib/types';
+import { newId, useStore } from '../lib/store';
+import type { Film, LogEntry } from '../lib/types';
 import { Icon } from './Icon';
 import { Thumb } from './Poster';
 
@@ -12,16 +12,26 @@ const shiftISO = (days: number) => {
   return d.toISOString().slice(0, 10);
 };
 
-export function LogModal({ filmId, onClose }: { filmId: string | null; onClose: () => void }) {
+export function LogModal({
+  filmId,
+  editing,
+  onClose,
+}: {
+  filmId: string | null;
+  editing?: LogEntry;
+  onClose: () => void;
+}) {
   const { getFilm, search, mode, busy } = useCatalogue();
   const { state, dispatch } = useStore();
   const [query, setQuery] = useState('');
   const [matches, setMatches] = useState<Film[]>([]);
-  const [picked, setPicked] = useState<Film | null>(filmId ? getFilm(filmId) ?? null : null);
-  const [watchedOn, setWatchedOn] = useState(todayISO());
-  const [rewatch, setRewatch] = useState(false);
-  const [score, setScore] = useState(75);
-  const [note, setNote] = useState('');
+  const [picked, setPicked] = useState<Film | null>(
+    editing ? getFilm(editing.filmId) ?? null : filmId ? getFilm(filmId) ?? null : null,
+  );
+  const [watchedOn, setWatchedOn] = useState(editing?.watchedOn ?? todayISO());
+  const [rewatch, setRewatch] = useState(editing?.rewatch ?? false);
+  const [score, setScore] = useState(editing ? Math.round(editing.score * 10) : 75);
+  const [note, setNote] = useState(editing?.note ?? '');
   const [collections, setCollections] = useState<string[]>([]);
 
   const alreadySeen = useMemo(
@@ -29,7 +39,10 @@ export function LogModal({ filmId, onClose }: { filmId: string | null; onClose: 
     [picked, state.log],
   );
 
-  useEffect(() => setRewatch(alreadySeen), [alreadySeen]);
+  // Only infer "rewatch" for a brand new entry; an edit keeps what was saved.
+  useEffect(() => {
+    if (!editing) setRewatch(alreadySeen);
+  }, [alreadySeen, editing]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -60,17 +73,16 @@ export function LogModal({ filmId, onClose }: { filmId: string | null; onClose: 
 
   function save() {
     if (!picked) return;
-    dispatch({
-      type: 'log',
-      entry: {
-        filmId: picked.id,
-        watchedOn,
-        rewatch,
-        score: Math.round(score) / 10,
-        note: note.trim() || undefined,
-      },
-      collections,
-    });
+    const entry: LogEntry = {
+      id: editing?.id ?? newId(),
+      filmId: picked.id,
+      watchedOn,
+      rewatch,
+      score: Math.round(score) / 10,
+      note: note.trim() || undefined,
+    };
+    if (editing) dispatch({ type: 'editLog', entry });
+    else dispatch({ type: 'log', entry, collections });
     onClose();
   }
 
@@ -80,7 +92,9 @@ export function LogModal({ filmId, onClose }: { filmId: string | null; onClose: 
         <div className="modal-head">
           <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
             <span style={{ width: 7, height: 7, background: 'var(--cyan)', boxShadow: '0 0 10px rgba(78,226,242,0.9)' }} />
-            <span style={{ font: "600 16px var(--sans)", letterSpacing: '0.2em', color: 'var(--ink-hi)' }}>LOG A FILM</span>
+            <span style={{ font: "600 16px var(--sans)", letterSpacing: '0.2em', color: 'var(--ink-hi)' }}>
+            {editing ? 'EDIT ENTRY' : 'LOG A FILM'}
+          </span>
           </div>
           <button type="button" onClick={onClose} aria-label="Close">
             <Icon name="close" size={17} width={1.8} colour="var(--ink-5)" />
@@ -199,14 +213,16 @@ export function LogModal({ filmId, onClose }: { filmId: string | null; onClose: 
 
         <div className="modal-foot">
           <span className="meta" style={{ flexGrow: 1, fontSize: 10, color: 'var(--ink-7)' }}>
-            {picked
-              ? `THIS WILL BE FILM ${state.log.length + 1} AND UPDATES YOUR PICKS`
-              : 'PICK A FILM TO CONTINUE'}
+            {!picked
+              ? 'PICK A FILM TO CONTINUE'
+              : editing
+                ? 'UPDATES YOUR SCORE AND YOUR PICKS'
+                : `THIS WILL BE FILM ${state.log.length + 1} AND UPDATES YOUR PICKS`}
           </span>
           <button type="button" className="btn btn-ghost" onClick={onClose}>CANCEL</button>
           <button type="button" className="btn btn-primary" disabled={!picked} onClick={save}>
             <Icon name="check" size={15} width={2.2} colour="var(--void)" />
-            SAVE TO LOG
+            {editing ? 'SAVE CHANGES' : 'SAVE TO LOG'}
           </button>
         </div>
       </div>

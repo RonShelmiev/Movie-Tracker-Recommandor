@@ -1,7 +1,7 @@
 export type IconName =
   | 'dashboard' | 'browse' | 'tosee' | 'seen' | 'foryou' | 'search' | 'filters'
   | 'plus' | 'close' | 'check' | 'chevron-down' | 'chevron-left' | 'arrow-right'
-  | 'calendar' | 'upload';
+  | 'calendar' | 'upload' | 'pencil';
 
 const PATHS: Record<IconName, JSX.Element> = {
   dashboard: (
@@ -79,6 +79,12 @@ const PATHS: Record<IconName, JSX.Element> = {
       <line x1="3.5" y1="10" x2="20.5" y2="10" />
       <line x1="8" y1="2.5" x2="8" y2="6" />
       <line x1="16" y1="2.5" x2="16" y2="6" />
+    </>
+  ),
+  pencil: (
+    <>
+      <path d="M4 20h4l10.5-10.5a2.1 2.1 0 0 0-3-3L5 17v3z" />
+      <path d="M14.5 6.5l3 3" />
     </>
   ),
   upload: (

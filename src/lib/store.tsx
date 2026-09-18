@@ -29,7 +29,8 @@ const INITIAL: AppState = {
 
 export type Action =
   | { type: 'log'; entry: LogEntry; collections?: string[] }
-  | { type: 'unlog'; filmId: string; watchedOn: string }
+  | { type: 'editLog'; entry: LogEntry }
+  | { type: 'unlog'; id: string }
   | { type: 'watchlist/add'; filmId: string; source: string }
   | { type: 'watchlist/remove'; filmId: string }
   | { type: 'dismiss'; filmId: string }
@@ -44,6 +45,9 @@ export type Action =
   | { type: 'reset' };
 
 const today = () => new Date().toISOString().slice(0, 10);
+
+export const newId = () =>
+  `e${Date.now().toString(36)}${Math.random().toString(36).slice(2, 7)}`;
 
 function reducer(state: AppState, action: Action): AppState {
   switch (action.type) {
@@ -64,13 +68,15 @@ function reducer(state: AppState, action: Action): AppState {
         watchlist: state.watchlist.filter((w) => w.filmId !== action.entry.filmId),
       };
     }
-    case 'unlog':
+    case 'editLog':
       return {
         ...state,
-        log: state.log.filter(
-          (e) => !(e.filmId === action.filmId && e.watchedOn === action.watchedOn),
-        ),
+        log: state.log
+          .map((e) => (e.id === action.entry.id ? action.entry : e))
+          .sort((a, b) => b.watchedOn.localeCompare(a.watchedOn)),
       };
+    case 'unlog':
+      return { ...state, log: state.log.filter((e) => e.id !== action.id) };
     case 'watchlist/add': {
       if (state.watchlist.some((w) => w.filmId === action.filmId)) return state;
       const entry: WatchlistEntry = { filmId: action.filmId, addedOn: today(), source: action.source };
@@ -129,6 +135,7 @@ function reducer(state: AppState, action: Action): AppState {
       // Seeded films get a neutral score — enough to place them, not enough to pretend we know.
       const day = today();
       const entries: LogEntry[] = action.filmIds.map((filmId) => ({
+        id: newId(),
         filmId,
         watchedOn: day,
         rewatch: false,
@@ -160,6 +167,8 @@ function load(): AppState {
       },
       collections: parsed.collections?.length ? parsed.collections : DEFAULT_COLLECTIONS,
       dismissed: parsed.dismissed ?? [],
+      // Entries saved before ids existed get one now, so older logs stay editable.
+      log: (parsed.log ?? []).map((e) => (e.id ? e : { ...e, id: newId() })),
     };
   } catch {
     // Private windows, cleared site data, corrupt JSON — start clean rather than crash.
