@@ -157,6 +157,19 @@ because a union merge otherwise cannot tell "deleted on the other device" from
 Edits made on two devices while both are offline still resolve last-write-wins
 per entry, which for one person is the right trade.
 
+## Updating
+
+The app updates itself. A service worker (`public/sw.js`) fetches the page from
+the network on every launch and falls back to its cache only when offline or
+when the network is too slow to wait for, so opening Flick gets you the current
+build — including when it has been added to a home screen, which previously
+pinned it to the build it was installed with.
+
+A deploy that lands while the app is already open shows a reload bar rather
+than pulling the page out from under you. *Tune my taste → Version* shows the
+running build id and has a Force refresh that drops the offline copy and
+refetches; it does not touch logged films, the list or any keys.
+
 ## Known gaps
 
 - Cloud sync is written against Supabase's documented contract but has **not**

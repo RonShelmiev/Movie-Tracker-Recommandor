@@ -852,3 +852,46 @@
   .cloud-copy, .cloud-steps { font-size: 12px; }
   .cloud-sql { font-size: 9.5px; max-height: 170px; }
 }
+
+/* ── new build available ──────────────────────────────────────────────
+   Only ever seen when a deploy lands while the app is already open; a
+   launch picks the new build up on its own. */
+.update-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 16px;
+  padding-top: calc(11px + env(safe-area-inset-top, 0px));
+  border-bottom: 1px solid rgba(78, 226, 242, 0.35);
+  background: rgba(6, 18, 24, 0.97);
+  backdrop-filter: blur(12px);
+  font: 300 13px var(--sans);
+  color: var(--ink-2);
+}
+.update-bar > span:nth-child(2) { flex-grow: 1; min-width: 0; }
+.update-dot {
+  width: 7px;
+  height: 7px;
+  flex: 0 0 auto;
+  background: var(--cyan);
+  box-shadow: 0 0 10px var(--cyan);
+}
+.update-dismiss {
+  flex: 0 0 auto;
+  width: 30px;
+  height: 30px;
+  border: none;
+  background: none;
+  color: var(--ink-6);
+  font-size: 15px;
+  cursor: pointer;
+}
+
+@media (max-width: 480px) {
+  .update-bar { gap: 9px; padding-left: 12px; padding-right: 12px; font-size: 12px; }
+}

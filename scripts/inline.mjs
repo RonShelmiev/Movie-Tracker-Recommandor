@@ -38,11 +38,32 @@ if (cssMatch && cssMatch[1].includes('/assets/')) {
   html = html.replace(linkRe, () => `<style>\n${guard(css)}\n</style>`);
 }
 
+/* One build id, stamped into the page and the service worker together. The
+   worker's bytes must change every deploy or an open app cannot tell that a
+   new build exists — see the note at the top of sw.js. */
+const BUILD = new Date().toISOString().replace(/[-:]/g, '').replace('T', '-').slice(0, 13);
+// Not a shared /g regex: `test` on one of those advances lastIndex and the
+// next call starts mid-string.
+const TOKEN = '__FLICK_BUILD__';
+const stamp = (text) => text.split(TOKEN).join(BUILD);
+
+if (!html.includes(TOKEN)) throw new Error('inline: no build placeholder in index.html');
+html = stamp(html);
+
+const swPath = join(DIST, 'sw.js');
+if (existsSync(swPath)) {
+  const sw = readFileSync(swPath, 'utf8');
+  if (!sw.includes(TOKEN)) throw new Error('inline: no build placeholder in sw.js');
+  writeFileSync(swPath, stamp(sw));
+} else {
+  throw new Error('inline: sw.js missing from the build');
+}
+
 writeFileSync(htmlPath, html);
 if (existsSync(join(DIST, 'assets'))) rmSync(join(DIST, 'assets'), { recursive: true });
 
 const kb = (n) => `${(n / 1024).toFixed(0)} KB`;
-console.log(`inlined into a single index.html — ${kb(Buffer.byteLength(html))}`);
+console.log(`inlined into a single index.html — ${kb(Buffer.byteLength(html))} — build ${BUILD}`);
 if (/src="[^"]*\/assets\//.test(html) || /href="[^"]*\/assets\//.test(html)) {
   throw new Error('inline: index.html still references /assets/');
 }

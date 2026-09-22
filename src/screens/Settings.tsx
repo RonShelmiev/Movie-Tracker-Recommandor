@@ -2,6 +2,7 @@ import { useRef, useState } from 'react';
 import { useCatalogue } from '../lib/catalogue';
 import { Thumb } from '../components/Poster';
 import { CloudPanel } from '../components/CloudPanel';
+import { VersionPanel } from '../components/VersionPanel';
 import { Chip, Slider, ToggleRow } from '../components/ui';
 import { Icon } from '../components/Icon';
 import { backupFilename, buildBackup, download, mergeStates, parseBackup } from '../lib/backup';
@@ -197,6 +198,8 @@ export function Settings() {
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
           <CloudPanel />
+
+          <VersionPanel />
 
           <div className="panel" style={{ padding: 20 }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
