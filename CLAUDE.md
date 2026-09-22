@@ -61,6 +61,18 @@ Assets are content-hashed and old builds are deleted on deploy, so a cached
 `index.html` can point at a bundle that no longer exists. `index.html` carries
 a boot guard for exactly that — do not remove it.
 
+**A service worker keeps installed copies current.** `public/sw.js` is network
+first, always: every launch asks the server for the page and the cache is only
+a fallback for offline or a slow connection. It exists because a home-screen
+app was pinned to whatever build it was installed with. `scripts/inline.mjs`
+stamps one build id into both `index.html` and `sw.js`, and the worker is
+registered at a *constant* URL — the browser decides a worker is new by
+comparing bytes at the same URL, so putting the version in the query string
+leaves an open app re-fetching its own version and never noticing a newer one.
+A cache-first worker would recreate the original bug; do not "optimise" the
+ordering. The boot guard's recovery path unregisters the worker before
+retrying, so a bad cached page cannot survive a reload.
+
 **The build is single-file.** `scripts/inline.mjs` folds the JS and CSS into
 `index.html` after `vite build`, and `dist/` ends up holding that one file. This
 is deliberate: a separate `/assets/*.js` request has too many ways to fail on a

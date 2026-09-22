@@ -67,7 +67,22 @@
             // against the domain root and everything 404s.
             var path = location.pathname;
             if (path.charAt(path.length - 1) !== '/') path += '/';
-            location.replace(path + '?v=' + Date.now() + location.hash);
+            var url = path + '?v=' + Date.now() + location.hash;
+            // A service worker serving a broken page would otherwise keep
+            // serving it through the reload. Clear it out first, then retry.
+            try {
+              if (navigator.serviceWorker) {
+                navigator.serviceWorker.getRegistrations().then(function (rs) {
+                  return Promise.all(rs.map(function (r) { return r.unregister(); }));
+                }).then(function () {
+                  return window.caches ? caches.keys().then(function (ks) {
+                    return Promise.all(ks.map(function (k) { return caches.delete(k); }));
+                  }) : null;
+                }).catch(function () {}).then(function () { location.replace(url); });
+                return;
+              }
+            } catch (e) {}
+            location.replace(url);
             return;
           }
           // Second failure: stop guessing and report what actually happened.

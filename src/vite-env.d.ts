@@ -1,10 +1,5 @@
 /// <reference types="vite/client" />
 
-interface ImportMetaEnv {
-  /** Optional build-time TMDB key. A key entered in Settings overrides it. */
-  readonly VITE_TMDB_KEY?: string;
-}
-
-interface ImportMeta {
-  readonly env: ImportMetaEnv;
-}
+/** Injected by vite.config.ts — see BUILD_ID there. */
+declare const __BUILD_ID__: string;
+declare const __BASE_PATH__: string;
