@@ -108,9 +108,9 @@ export function Settings() {
           <div style={{ marginTop: 22 }}>
             <ToggleRow
               label="Include rewatches in picks"
-              sub="SUGGEST FILMS YOU HAVE ALREADY LOGGED"
-              on={settings.includeRewatches}
-              onChange={(v) => dispatch({ type: 'settings/patch', patch: { includeRewatches: v } })}
+              sub="FILMS YOU RATED WELL, 6+ MONTHS ON — AT MOST 1 IN 8"
+              on={settings.offerRewatches}
+              onChange={(v) => dispatch({ type: 'settings/patch', patch: { offerRewatches: v } })}
             />
             <ToggleRow
               label="Surface the obscure"

@@ -64,8 +64,12 @@ collaborate with — and every number it shows is derived from what you have log
    community acclaim up genuinely reorders the list toward the canon; turning it
    down surfaces the obscure.
 4. **Hard rules** filter before scoring: runtime ceiling, excluded genres,
-   dismissed films, anything already on your list, and films logged in the last
-   180 days (so a rewatch has had time to become one).
+   dismissed films, anything already on your list, and **anything you have
+   seen**. A film counts as seen under every id it goes by — the bundled copy
+   and a TMDB copy of the same title and year are one film. Rewatches are off
+   by default; switched on, they are limited to films you rated well (7.5+ and
+   above your own average) at least 180 days ago, one per eight picks, never in
+   the top three.
 5. **Reasons** are generated from whichever axis actually drove the score, and
    each recommendation is traced back to the logged film with the strongest tag
    overlap — that is what "where these came from" on `/for-you` is showing.

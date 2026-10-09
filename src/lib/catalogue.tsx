@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import type { ReactNode } from 'react';
 import { CATALOGUE } from '../data/catalogue';
 import * as tmdb from './tmdb';
+import { filmKey } from './recommend';
 import type { Film, Genre } from './types';
 
 /** Lookups per batch, and the gap between batches — TMDB is rate-limited. */
@@ -171,11 +172,19 @@ export function CatalogueProvider({ children }: { children: ReactNode }) {
       setBusy(true);
       setLastError(null);
       try {
-        const remote = await tmdb.searchFilms(query, cfg);
-        remember(remote);
+        const found = await tmdb.searchFilms(query, cfg);
+        // A TMDB hit for a film the bundled catalogue already has is the same
+        // film. Hand back the bundled copy, so a log lands on one id and the
+        // recommender does not see the other as unwatched.
+        const bundledByKey = new Map(CATALOGUE.map((f) => [filmKey(f), f] as const));
+        const remote = found.map((f) => {
+          const b = bundledByKey.get(filmKey(f));
+          return b ? cacheRef.current.get(b.id) ?? b : f;
+        });
+        remember(remote.filter((f) => tmdb.isTmdbId(f.id)));
         // Local hits first — they are the ones you have a history with.
         const seen = new Set(local.map((f) => f.id));
-        return [...local, ...remote.filter((f) => !seen.has(f.id))];
+        return [...local, ...remote.filter((f, i, all) => !seen.has(f.id) && all.findIndex((g) => g.id === f.id) === i)];
       } catch (e) {
         setLastError(e instanceof Error ? e.message : 'Search failed');
         return local;
