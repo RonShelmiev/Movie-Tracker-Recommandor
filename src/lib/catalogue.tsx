@@ -97,6 +97,12 @@ export interface CatalogueApi {
   /** Pull a candidate pool matching the user's strongest genres. */
   expandPool: (genres: Genre[], decade?: number) => Promise<number>;
   remember: (films: Film[]) => void;
+  /**
+   * Fetch one TMDB film that is not cached yet — a shared link, or a device
+   * that never searched for it. Resolves undefined when there is no key, the
+   * id is not a TMDB one, or TMDB could not be reached.
+   */
+  load: (id: string) => Promise<Film | undefined>;
   tmdbKey: string;
   setTmdbKey: (key: string) => void;
   /** Check a key. Pass the one being typed — waiting for it to land in state
@@ -130,6 +136,21 @@ export function CatalogueProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const getFilm = useCallback((id: string) => cacheRef.current.get(id), []);
+
+  const load = useCallback(
+    async (id: string): Promise<Film | undefined> => {
+      const cached = cacheRef.current.get(id);
+      if (cached || !cfg || !tmdb.isTmdbId(id)) return cached;
+      try {
+        const film = await tmdb.fetchFilm(tmdb.rawTmdbId(id), cfg);
+        remember([film]);
+        return film;
+      } catch {
+        return undefined;
+      }
+    },
+    [cfg, remember],
+  );
 
   const candidates = useMemo(
     () => [...cacheRef.current.values()],
@@ -310,13 +331,14 @@ export function CatalogueProvider({ children }: { children: ReactNode }) {
       posterStats,
       expandPool,
       remember,
+      load,
       tmdbKey,
       setTmdbKey,
       probe,
       busy,
       lastError,
     }),
-    [cfg, getFilm, candidates, search, hydrating, hydratePosters, posterStats, expandPool, remember, tmdbKey, setTmdbKey, probe, busy, lastError],
+    [cfg, getFilm, candidates, search, hydrating, hydratePosters, posterStats, expandPool, remember, load, tmdbKey, setTmdbKey, probe, busy, lastError],
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

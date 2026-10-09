@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useCatalogue } from '../lib/catalogue';
 import { useLogModal } from '../components/AppShell';
@@ -25,15 +26,30 @@ function similar(film: Film, pool: Film[], limit = 5): Film[] {
 
 export function FilmDetail() {
   const { id } = useParams();
-  const { candidates, getFilm } = useCatalogue();
+  const { candidates, getFilm, load } = useCatalogue();
   const { state, dispatch } = useStore();
   const { openLog, editLog } = useLogModal();
   const film = id ? getFilm(id) : undefined;
 
+  // A TMDB film nobody has searched for on this device is not cached yet.
+  // Ask for it rather than declaring it missing.
+  const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    if (!id || film) return;
+    let live = true;
+    setLoading(true);
+    void load(id).finally(() => live && setLoading(false));
+    return () => {
+      live = false;
+    };
+  }, [id, film, load]);
+
   if (!film) {
     return (
       <div className="screen">
-        <div className="empty-note">That film is not in the catalogue. <Link to="/browse">Browse everything</Link>.</div>
+        <div className="empty-note">
+          {loading ? 'Fetching that film from TMDB…' : <>That film is not in the catalogue. <Link to="/browse">Browse everything</Link>.</>}
+        </div>
       </div>
     );
   }

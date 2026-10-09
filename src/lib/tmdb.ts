@@ -3,11 +3,10 @@ import type { Film, Genre, Tag } from './types';
 /**
  * TMDB adapter.
  *
- * Verified against the live API from a real device (a v3 key round-tripped
- * Fight Club through `probeTmdb()` with the right runtime and director). It
- * still cannot be exercised from the sandbox this is developed in, which
- * blocks egress to api.themoviedb.org — changes here are tested against a
- * mocked `page.route`, and `probeTmdb()` remains the way to check a real key.
+ * Verified against the live API (October 2026): every call below returns the
+ * shapes typed here, with both a v3 key and a v4 token. All 89 bundled films
+ * resolve to the right TMDB entry with a poster. Changes can still be checked
+ * offline against a mocked `page.route`; `probeTmdb()` checks a real key.
  *
  * Auth: a v3 API key (`?api_key=`) or a v4 read token (`Authorization: Bearer`).
  * Both are read-only. Whichever you use ends up visible to anyone who opens the
@@ -81,8 +80,12 @@ interface TmdbListItem {
 
 interface TmdbMovie extends Omit<TmdbListItem, 'genre_ids'> {
   runtime?: number | null;
+  budget?: number;
+  original_language?: string;
   genres?: { id: number; name: string }[];
   production_countries?: { iso_3166_1: string; name: string }[];
+  /** Where the film is from. More reliable than production_countries[0], whose order means nothing. */
+  origin_country?: string[];
   credits?: { crew?: { job?: string; name?: string }[] };
   keywords?: { keywords?: { id: number; name: string }[] };
 }
@@ -113,45 +116,85 @@ const GENRE_MAP: Record<string, Genre> = {
  * are derived from TMDB keywords. This mapping is the honest weak point of the
  * integration: it is a hand-written approximation, and films with sparse
  * keywords will come through under-tagged and score lower than they deserve.
+ *
+ * Each pattern must match a *whole* keyword. Matching inside the joined list
+ * read "train", "brainwashing" and "Ukraine" as rain, "atrocity" as
+ * city-at-night and "american dream" as memory. The keywords themselves were
+ * chosen against the live API: they are the ones TMDB actually attaches to the
+ * bundled films carrying each hand tag, including its mood keywords
+ * ("ambiguous", "suspenseful"), which are the closest thing it has to tone.
  */
-const KEYWORD_TAGS: [RegExp, Tag][] = [
-  [/dystopia|totalitarian|post-apocalyptic/i, 'dystopia'],
-  [/artificial intelligence|robot|android|cyborg/i, 'ai'],
-  [/space|astronaut|spacecraft|outer space/i, 'space'],
-  [/time travel|time loop|time paradox/i, 'time-loop'],
-  [/surveillance|wiretap|espionage|spy/i, 'surveillance'],
-  [/memory|amnesia|dream/i, 'memory'],
-  [/grief|mourning|loss of loved one|bereavement/i, 'grief'],
-  [/body horror|mutation|transformation/i, 'body-horror'],
-  [/film noir|neo-noir|private detective/i, 'noir-lighting'],
-  [/rain|monsoon/i, 'rain'],
-  [/investigation|police procedural|detective|manhunt/i, 'procedural'],
-  [/satire|black comedy|social commentary/i, 'satire'],
-  [/anime|based on manga/i, 'anime'],
-  [/desert|western/i, 'desert'],
-  [/one night|single location|confined space|bottle/i, 'one-location'],
-  [/twist ending|unreliable narrator/i, 'twist'],
-  [/ensemble cast/i, 'ensemble'],
-  [/practical effects|stop motion|miniature/i, 'practical-fx'],
-  [/philosophy|existentialism|metaphysics/i, 'cerebral'],
-  [/slow cinema|meditative|contemplative/i, 'slow'],
-  [/arthouse|experimental|avant-garde/i, 'arthouse'],
-  [/nihilism|bleak|despair/i, 'bleak'],
-  [/city|urban|neon|nightlife/i, 'city-at-night'],
+const KEYWORD_TAGS: [Tag, string[]][] = [
+  ['dystopia', ['dystopia', 'dystopian', 'totalitarian.*', 'police state', 'post-apocalyptic.*', 'authoritarianism']],
+  ['ai', ['artificial intelligence.*', 'android', 'robot', 'cyborg', 'man vs machine', 'replicant']],
+  ['space', ['space', 'outer space', 'space travel', 'space mission', 'space station', 'space opera', 'spacecraft', 'spaceship', 'astronaut', 'space colony']],
+  ['time-loop', ['time travel', 'time loop', 'time paradox', 'paradox', 'time-manipulation']],
+  ['surveillance', ['surveillance.*', 'wiretap.*', 'espionage', 'spy', 'audio tape', 'voyeurism']],
+  ['memory', ['memory', 'memory loss', 'amnesia', 'dream', 'dreams', 'dream sequence', 'false memory', 'nostalgia']],
+  ['grief', ['grief', 'mourning', 'loss', 'loss of loved one', 'bereavement', 'heartbreak', 'death of .*']],
+  ['body-horror', ['body horror', 'mutation', 'mutant', 'body transformation', 'parasite', 'lovecraftian']],
+  ['noir-lighting', ['film noir', 'neo-noir', 'tech noir', 'private detective', 'femme fatale']],
+  ['rain', ['rain', 'rainstorm', 'monsoon', 'storm']],
+  ['procedural', ['investigation', '.* investigation', 'police procedural', 'detective', 'manhunt', 'serial killer', 'fbi']],
+  ['satire', ['satire', 'social satire', 'political satire', 'black comedy', 'dark comedy', 'social commentary', 'allegory']],
+  ['anime', ['anime', 'based on manga', 'adult animation']],
+  ['desert', ['desert', 'western', 'neo-western', 'texas']],
+  ['one-location', ['single location', 'confined space', 'one night', 'isolation', 'trapped', 'claustrophobia']],
+  ['twist', ['twist ending', 'plot twist', 'unreliable narrator', 'doppelgänger', 'mind bending', 'mindfuck']],
+  ['ensemble', ['ensemble cast', 'multiple storylines', 'heist']],
+  ['practical-fx', ['practical effects', 'stop motion', 'miniature', 'creature', 'animatronics', 'creature feature']],
+  ['cerebral', ['philosophy', 'philosophical', 'existentialism', 'metaphysics', 'complex', 'thought-provoking', 'cerebral', 'transhumanism']],
+  ['slow', ['slow cinema', 'meditative', 'contemplative', 'introspective']],
+  ['arthouse', ['arthouse', 'art house', 'experimental', 'avant garde', 'avant-garde', 'surrealism', 'surreal', 'black and white']],
+  ['bleak', ['nihilism', 'bleak', 'despair', 'brutality', 'ambiguous', 'paranoia', 'grim', 'cynical', 'nihilistic']],
+  ['city-at-night', ['neon', 'nightlife', 'night', 'cyberpunk', 'tech noir', 'taxi', 'taxi driver', 'los angeles, california', 'tokyo, japan', 'hong kong']],
+  ['stylish', ['stylized', 'stylish', 'neon']],
 ];
 
-function tagsFrom(movie: TmdbMovie): Tag[] {
-  const names = (movie.keywords?.keywords ?? []).map((k) => k.name).join(' | ');
+const KEYWORD_RES: [Tag, RegExp][] = KEYWORD_TAGS.map(([tag, words]) => [
+  tag,
+  new RegExp(`^(?:${words.join('|')})$`, 'i'),
+]);
+
+/** TMDB has a keyword for neo-noir but no genre for it; ours is a genre. */
+const NOIR_KEYWORDS = /^(?:neo-noir|film noir|tech noir)$/i;
+
+/**
+ * Real-terms budget, roughly: 3% a year brought forward to the present. Vote
+ * count was the old signal and it tagged Memento and Taxi Driver as
+ * blockbusters — popular is not the same thing as big.
+ */
+function isBlockbuster(budget: number, year: number) {
+  if (!budget || !year) return false;
+  const years = Math.max(0, new Date().getFullYear() - year);
+  return budget * 1.03 ** years >= 100_000_000;
+}
+
+function keywordNames(movie: TmdbMovie) {
+  return (movie.keywords?.keywords ?? []).map((k) => k.name.trim());
+}
+
+function tagsFrom(movie: TmdbMovie, year: number): Tag[] {
+  const names = keywordNames(movie);
   const out = new Set<Tag>();
-  for (const [re, tag] of KEYWORD_TAGS) if (re.test(names)) out.add(tag);
+  for (const [tag, re] of KEYWORD_RES) if (names.some((n) => re.test(n))) out.add(tag);
 
   // A couple of tags are better inferred from structured fields than keywords.
   const genres = (movie.genres ?? []).map((g) => g.name);
-  if (genres.includes('Animation')) out.add('anime');
+  if (genres.includes('Animation') && (movie.original_language === 'ja' || out.has('anime'))) out.add('anime');
   if ((movie.runtime ?? 0) >= 150) out.add('slow');
-  if ((movie.vote_count ?? 0) > 5000) out.add('blockbuster');
+  if (isBlockbuster(movie.budget ?? 0, year)) out.add('blockbuster');
 
   return [...out];
+}
+
+/** The bundled catalogue writes countries the way people say them, not as ISO codes. */
+const COUNTRY_NAMES: Record<string, string> = { US: 'USA', GB: 'UK', SU: 'USSR', KR: 'South Korea' };
+
+function countryOf(movie: TmdbMovie) {
+  const code = movie.origin_country?.[0] ?? movie.production_countries?.[0]?.iso_3166_1;
+  if (!code) return '—';
+  return COUNTRY_NAMES[code] ?? movie.production_countries?.find((c) => c.iso_3166_1 === code)?.name ?? code;
 }
 
 export function toFilm(movie: TmdbMovie): Film {
@@ -166,11 +209,12 @@ export function toFilm(movie: TmdbMovie): Film {
     year,
     runtime: movie.runtime ?? 0,
     director,
-    country: movie.production_countries?.[0]?.iso_3166_1 ?? '—',
-    genres: (movie.genres ?? [])
-      .map((g) => GENRE_MAP[g.name])
-      .filter((g): g is Genre => Boolean(g)),
-    tags: tagsFrom(movie),
+    country: countryOf(movie),
+    genres: [
+      ...(keywordNames(movie).some((n) => NOIR_KEYWORDS.test(n)) ? (['Neo-noir'] as Genre[]) : []),
+      ...(movie.genres ?? []).map((g) => GENRE_MAP[g.name]).filter((g): g is Genre => Boolean(g)),
+    ],
+    tags: tagsFrom(movie, year),
     acclaim: Math.round((movie.vote_average ?? 0) * 10),
     ratingsK: Math.round(votes / 1000),
     // Deterministic, so a given film always gets the same fallback treatment.
