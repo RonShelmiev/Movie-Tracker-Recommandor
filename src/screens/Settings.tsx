@@ -217,7 +217,10 @@ export function Settings() {
               <a href="https://www.themoviedb.org/settings/api" target="_blank" rel="noreferrer noopener">
                 TMDB key
               </a>{' '}
-              opens the full index, with real posters.
+              opens the full index, so you can search and log any film.
+            </p>
+            <p className="meta" style={{ margin: '10px 0 0', fontSize: 9.5, lineHeight: 1.6, color: 'var(--ink-7)' }}>
+              POSTERS AND FILM DATA FROM TMDB. THIS PRODUCT USES THE TMDB API BUT IS NOT ENDORSED OR CERTIFIED BY TMDB.
             </p>
 
             <div className="field" style={{ marginTop: 14 }}>

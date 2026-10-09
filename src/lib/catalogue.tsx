@@ -231,7 +231,8 @@ export function CatalogueProvider({ children }: { children: ReactNode }) {
     runningRef.current = true;
     try {
       const posters = loadPosters();
-      const todo = CATALOGUE.filter((f) => posters[f.id] === undefined);
+      // Films that ship with a poster need no lookup.
+      const todo = CATALOGUE.filter((f) => !f.posterPath && posters[f.id] === undefined);
       if (todo.length === 0) return;
 
       setHydrating({ done: 0, total: todo.length });
