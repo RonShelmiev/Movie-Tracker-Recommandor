@@ -80,12 +80,13 @@ Two sources, behind one provider (`src/lib/catalogue.tsx`).
 
 **Bundled (default).** `src/data/catalogue.ts` holds 89 hand-curated films. Years,
 directors and runtimes are real; **`acclaim` and `ratingsK` are editorial
-estimates, not real ratings data**, and the `tags` are my own vocabulary. Posters
-are procedural — eight CSS gradient treatments. Nothing is fetched, so it works
-offline with no key.
+estimates, not real ratings data**, and the `tags` are my own vocabulary. Their TMDB
+poster paths ship in `src/data/posters.ts`, so real artwork shows with no key (the
+images are public; only the lookup API needs one). Offline, or if an image fails,
+each tile falls back to one of eight procedural CSS gradient treatments.
 
 **TMDB (optional).** Paste a free [TMDB key](https://www.themoviedb.org/settings/api)
-into *Tune my taste* and the whole index opens up, with real posters. The key is
+into *Tune my taste* and the whole index opens up. The key is
 kept in `localStorage`, never committed. `VITE_TMDB_KEY` works too, but a key baked
 into the bundle is visible to anyone who opens the site — use one you do not mind
 exposing, and prefer the in-app field.

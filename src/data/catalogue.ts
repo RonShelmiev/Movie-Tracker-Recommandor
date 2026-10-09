@@ -1,4 +1,5 @@
 import type { Film, Genre, Tag } from '../lib/types';
+import { BUNDLED_POSTERS } from './posters';
 
 /**
  * A starter catalogue, hand-curated rather than fetched.
@@ -122,6 +123,7 @@ function parse(row: Row): Film {
     ratingsK,
     art,
     synopsis,
+    posterPath: BUNDLED_POSTERS[id],
   };
 }
 
