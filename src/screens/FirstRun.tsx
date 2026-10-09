@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { FIRST_RUN_PICKS } from '../data/catalogue';
 import { useCatalogue } from '../lib/catalogue';
+import { posterUrl } from '../lib/tmdb';
 import { Icon } from '../components/Icon';
 import { useStore } from '../lib/store';
 
@@ -83,6 +84,7 @@ export function FirstRun() {
             return (
               <button key={f.id} type="button" className="seed-tile" aria-pressed={on} onClick={() => toggle(f.id)}>
                 <span className={`poster art-${f.art}`} style={{ display: 'block' }}>
+                  {f.posterPath && <img className="art-img" src={posterUrl(f.posterPath, 'w342')} alt="" loading="lazy" />}
                   <span className="fade" />
                 </span>
                 {on && (
