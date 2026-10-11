@@ -18,8 +18,8 @@ Until that is set, the workflow runs and the deploy step fails.
 
 Routing uses `HashRouter` (`/#/browse`), because GitHub Pages has no SPA
 fallback — a path-based route would 404 on refresh or on a shared deep link.
-The build uses a relative base, so the same artefact works at a domain root or
-under `/repo-name/` with no rebuild.
+The build uses an absolute base (`/Movie-Tracker-Recommandor/`) — see
+`CLAUDE.md` for why a relative one gave blank pages.
 
 ## Running it
 
@@ -30,8 +30,8 @@ npm run build    # typecheck + production bundle
 npm run typecheck
 ```
 
-No backend, no accounts, no API keys. Everything you log is kept in `localStorage`
-under `flick.v1` and never leaves the browser.
+No backend and no API keys required. Everything you log is kept in `localStorage`
+under `flick.v1`; a TMDB key and cloud sync are both optional (below).
 
 ## What is here
 
@@ -64,8 +64,12 @@ collaborate with — and every number it shows is derived from what you have log
    community acclaim up genuinely reorders the list toward the canon; turning it
    down surfaces the obscure.
 4. **Hard rules** filter before scoring: runtime ceiling, excluded genres,
-   dismissed films, anything already on your list, and films logged in the last
-   180 days (so a rewatch has had time to become one).
+   dismissed films, anything already on your list, and **anything you have
+   seen**. A film counts as seen under every id it goes by — the bundled copy
+   and a TMDB copy of the same title and year are one film. Rewatches are off
+   by default; switched on, they are limited to films you rated well (7.5+ and
+   above your own average) at least 180 days ago, one per eight picks, never in
+   the top three.
 5. **Reasons** are generated from whichever axis actually drove the score, and
    each recommendation is traced back to the logged film with the strongest tag
    overlap — that is what "where these came from" on `/for-you` is showing.
@@ -76,12 +80,13 @@ Two sources, behind one provider (`src/lib/catalogue.tsx`).
 
 **Bundled (default).** `src/data/catalogue.ts` holds 89 hand-curated films. Years,
 directors and runtimes are real; **`acclaim` and `ratingsK` are editorial
-estimates, not real ratings data**, and the `tags` are my own vocabulary. Posters
-are procedural — eight CSS gradient treatments. Nothing is fetched, so it works
-offline with no key.
+estimates, not real ratings data**, and the `tags` are my own vocabulary. Their TMDB
+poster paths ship in `src/data/posters.ts`, so real artwork shows with no key (the
+images are public; only the lookup API needs one). Offline, or if an image fails,
+each tile falls back to one of eight procedural CSS gradient treatments.
 
 **TMDB (optional).** Paste a free [TMDB key](https://www.themoviedb.org/settings/api)
-into *Tune my taste* and the whole index opens up, with real posters. The key is
+into *Tune my taste* and the whole index opens up. The key is
 kept in `localStorage`, never committed. `VITE_TMDB_KEY` works too, but a key baked
 into the bundle is visible to anyone who opens the site — use one you do not mind
 exposing, and prefer the in-app field.
@@ -89,10 +94,10 @@ exposing, and prefer the in-app field.
 Hit **Test connection** in Settings to round-trip a known film and see exactly what
 came back and how it mapped.
 
-> ⚠️ **The TMDB layer has not been run against the live API.** It was written in a
-> sandbox that blocks egress to `api.themoviedb.org`, so the request shapes come
-> from TMDB's documented v3 contract rather than an observed response. Test it
-> locally with a real key before relying on it.
+Verified against the live API in October 2026, with both a v3 key and a v4
+read token: every endpoint returns the shapes the adapter expects, and all 89
+bundled films resolve to the right TMDB entry with a poster. A direct link to a
+TMDB film that is not cached yet is fetched on open.
 
 Every film you touch is cached in `localStorage` under `flick.films.v1`. That is not
 an optimisation: the log stores ids, and stats and recommendations need the metadata
@@ -101,9 +106,17 @@ synchronously and offline.
 ### Where TMDB data is weaker
 
 TMDB has no notion of "slow" or "bleak", so the recommender's editorial tags are
-derived from TMDB *keywords* via a hand-written mapping in `src/lib/tmdb.ts`. This
-is the honest weak point: films with sparse keywords come through under-tagged and
-score lower than they deserve. The bundled 89 are tagged by hand and behave better.
+derived from TMDB *keywords* via a hand-written mapping in `src/lib/tmdb.ts`.
+Each pattern must match a whole keyword — substring matching used to read
+"train" and "Ukraine" as *rain*. The keywords were chosen from what TMDB actually
+attaches to the bundled films carrying each hand tag. Measured against those 89
+hand-tagged films, the derived tags agree 63% of the time and recover 47% of the
+hand tags. Most of the misses are tags TMDB has no keyword for at all
+(`long-take`, `minimal-score`, `rain`), so films from TMDB still come through
+under-tagged compared with the bundled ones. *Neo-noir* is a genre here but only
+a keyword on TMDB, so it is mapped from the keyword. *Blockbuster* comes from the
+budget in today's money (over about $100M), not from vote count, which used to
+make Memento and Taxi Driver blockbusters.
 
 ## Cloud sync (optional)
 
@@ -177,9 +190,9 @@ refetches; it does not touch logged films, the list or any keys.
   egress to `supabase.co`. It is covered end to end by a mock
   (two devices, merge, deletion, token refresh, wrong password); `Test project`
   in Settings checks a real one in a tap.
-- The TMDB integration is written but unverified against the live API.
-- Recommendations score a local candidate pool, not all of TMDB — with a key set,
-  `expandPool()` pulls candidates by your strongest genres.
+- Recommendations score a local candidate pool: the bundled films plus every
+  film you have touched. `expandPool()` can pull more by your strongest genres,
+  but **nothing in the UI calls it yet**.
 - CSV / Letterboxd import is designed but not implemented; JSON backup
   export/import is.
 - No automated tests. Behaviour is verified by driving the real app in a browser

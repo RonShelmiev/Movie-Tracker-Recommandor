@@ -8,7 +8,7 @@ export const DEFAULT_SETTINGS: Settings = {
   weights: { people: 82, affinity: 74, runtimeFit: 56, era: 38, community: 20 },
   runtimeCeiling: 180,
   excludedGenres: [],
-  includeRewatches: true,
+  offerRewatches: false,
   surfaceObscure: true,
 };
 

@@ -200,10 +200,12 @@ export function nearestSeed(
 ): { film: Film; entry: LogEntry } | null {
   let best: { film: Film; entry: LogEntry } | null = null;
   let bestScore = 0;
+  const self = new Set(keysOf(film));
   for (const entry of log) {
     if (entry.filmId === film.id) continue; // a film cannot be its own reason
     const seed = getFilm(entry.filmId);
     if (!seed || entry.score < meanScore) continue;
+    if (self.has(filmKey(seed))) continue; // nor can its other copy
     const s = overlap(film, seed) * (1 + (entry.score - meanScore) / 5);
     if (s > bestScore) {
       bestScore = s;
@@ -213,16 +215,42 @@ export function nearestSeed(
   return bestScore >= 2 ? best : null;
 }
 
+/**
+ * One film can sit in the cache under two ids: the bundled `collateral` and
+ * the `tmdb:1538` that a search brought back. Logging one left the other
+ * looking unseen, and it was then recommended. Title and year identify a film
+ * across both sources; accents and punctuation differ between them, so they
+ * are stripped.
+ */
+export function filmKey(f: Pick<Film, 'title' | 'year'>): string {
+  const title = f.title.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '');
+  return `${title}|${f.year}`;
+}
+
+/** Release years drift by one between sources (festival vs. general release). */
+function keysOf(f: Film): string[] {
+  return [filmKey(f), filmKey({ title: f.title, year: f.year - 1 }), filmKey({ title: f.title, year: f.year + 1 })];
+}
+
 const REWATCH_AFTER_DAYS = 180;
 
-/** The most recent time this film was logged, or null. */
-function lastWatched(film: Film, log: LogEntry[]): LogEntry | null {
-  let best: LogEntry | null = null;
+/** The most recent log entry for each film, under every id it goes by. */
+function lastWatchedIndex(log: LogEntry[], getFilm: (id: string) => Film | undefined): Map<string, LogEntry> {
+  const out = new Map<string, LogEntry>();
+  const put = (k: string, e: LogEntry) => {
+    const prev = out.get(k);
+    if (!prev || e.watchedOn > prev.watchedOn) out.set(k, e);
+  };
   for (const e of log) {
-    if (e.filmId !== film.id) continue;
-    if (!best || e.watchedOn > best.watchedOn) best = e;
+    put(e.filmId, e);
+    const f = getFilm(e.filmId);
+    if (f) put(filmKey(f), e);
   }
-  return best;
+  return out;
+}
+
+function lastWatched(film: Film, index: Map<string, LogEntry>): LogEntry | null {
+  return index.get(film.id) ?? keysOf(film).map((k) => index.get(k)).find(Boolean) ?? null;
 }
 
 function daysSince(iso: string): number {
@@ -236,10 +264,11 @@ function reasonsFor(
   log: LogEntry[],
   getFilm: (id: string) => Film | undefined,
   settings: Settings,
+  watched: Map<string, LogEntry>,
 ): string[] {
   const out: string[] = [];
 
-  const own = lastWatched(film, log);
+  const own = lastWatched(film, watched);
   if (own) {
     out.push(
       `You rated this ${own.score.toFixed(1)} in ${own.watchedOn.slice(0, 4)} — due a rewatch`,
@@ -302,17 +331,30 @@ export function isRecommendable(film: Film): boolean {
   return true;
 }
 
-function passesRules(film: Film, state: AppState, seen: Set<string>, listed: Set<string>): boolean {
+interface RuleContext {
+  watched: Map<string, LogEntry>;
+  /** Ids and title keys of everything on the list or dismissed. */
+  blocked: Set<string>;
+  meanScore: number;
+}
+
+/**
+ * A rewatch is offered only when asked for, only once it has had time to
+ * become one, and only for a film you liked. Before, any film logged with a
+ * date over six months back came straight back as a suggestion — so
+ * backfilling a history filled the picks with films already seen, including
+ * ones rated badly.
+ */
+function isRewatchWorthy(last: LogEntry, meanScore: number) {
+  return daysSince(last.watchedOn) >= REWATCH_AFTER_DAYS && last.score >= Math.max(7.5, meanScore + 0.5);
+}
+
+function passesRules(film: Film, state: AppState, ctx: RuleContext): boolean {
   const { settings } = state;
   if (!isRecommendable(film)) return false;
-  if (listed.has(film.id)) return false;
-  if (state.dismissed.includes(film.id)) return false;
-  if (seen.has(film.id)) {
-    // Only offer a rewatch once it has had time to become one.
-    if (!settings.includeRewatches) return false;
-    const last = lastWatched(film, state.log);
-    if (last && daysSince(last.watchedOn) < REWATCH_AFTER_DAYS) return false;
-  }
+  if (ctx.blocked.has(film.id) || keysOf(film).some((k) => ctx.blocked.has(k))) return false;
+  const last = lastWatched(film, ctx.watched);
+  if (last && !(settings.offerRewatches && isRewatchWorthy(last, ctx.meanScore))) return false;
   if (settings.runtimeCeiling !== null && film.runtime > settings.runtimeCeiling) return false;
   if (film.genres.some((g) => settings.excludedGenres.includes(g))) return false;
   if (!settings.surfaceObscure && film.ratingsK < 200) return false;
@@ -385,14 +427,34 @@ export function scoreFilm(
   state: AppState,
   film: Film,
   getFilm: (id: string) => Film | undefined,
-  taste: Taste = buildTaste(state.log, getFilm),
+  ctx: MatchContext = matchContext(state, getFilm),
 ): Score | null {
-  if (!isRecommendable(film) || !matchIsMeaningful(taste)) return null;
-  const components_ = components(film, taste);
+  if (!isRecommendable(film) || !matchIsMeaningful(ctx.taste)) return null;
+  const components_ = components(film, ctx.taste);
   return {
     match: toMatch(rawScore(components_, state.settings)),
     components: components_,
-    reasons: reasonsFor(film, taste, components_, state.log, getFilm, state.settings),
+    reasons: reasonsFor(film, ctx.taste, components_, state.log, getFilm, state.settings, ctx.watched),
+  };
+}
+
+/**
+ * The per-library work `scoreFilm` would otherwise repeat. A grid scoring
+ * eighty-nine posters should build the profile and the watched index once,
+ * not once per poster.
+ */
+export interface MatchContext {
+  taste: Taste;
+  watched: Map<string, LogEntry>;
+}
+
+export function matchContext(
+  state: AppState,
+  getFilm: (id: string) => Film | undefined,
+): MatchContext {
+  return {
+    taste: buildTaste(state.log, getFilm),
+    watched: lastWatchedIndex(state.log, getFilm),
   };
 }
 
@@ -404,16 +466,31 @@ export function recommend(
   focus: Focus = EMPTY_FOCUS,
 ): Recommendation[] {
   const taste = buildTaste(state.log, getFilm);
-  const seen = new Set(state.log.map((e) => e.filmId));
-  const listed = new Set(state.watchlist.map((w) => w.filmId));
+  const watched = lastWatchedIndex(state.log, getFilm);
+  const blocked = new Set<string>();
+  for (const id of [...state.watchlist.map((w) => w.filmId), ...state.dismissed]) {
+    blocked.add(id);
+    const f = getFilm(id);
+    if (f) blocked.add(filmKey(f));
+  }
+  const ctx: RuleContext = { watched, blocked, meanScore: taste.meanScore };
+
+  // Two copies of one film would otherwise both be ranked. Keep the bundled
+  // one: its tags are written by hand.
+  const unique = new Map<string, Film>();
+  for (const f of catalogue) {
+    const k = filmKey(f);
+    const prev = unique.get(k);
+    if (!prev || (prev.id.startsWith('tmdb:') && !f.id.startsWith('tmdb:'))) unique.set(k, f);
+  }
 
   const seedFilms = (focus.seedIds ?? [])
     .map((id) => getFilm(id))
     .filter((f): f is Film => Boolean(f));
   const wantTags = new Set(focus.tags ?? []);
 
-  const scored = catalogue
-    .filter((f) => passesRules(f, state, seen, listed))
+  const scored = [...unique.values()]
+    .filter((f) => passesRules(f, state, ctx))
     .filter((f) => {
       if (focus.maxRuntime && f.runtime > focus.maxRuntime) return false;
       if (focus.decade && Math.floor(f.year / 10) * 10 !== focus.decade) return false;
@@ -430,7 +507,7 @@ export function recommend(
       if (seedFilms.length) raw = raw * 0.4 + like * 0.6;
 
       const match = toMatch(raw);
-      const reasons = reasonsFor(film, taste, c, state.log, getFilm, state.settings);
+      const reasons = reasonsFor(film, taste, c, state.log, getFilm, state.settings, watched);
       let seedReason: string | undefined;
       if (seedFilms.length && like > 0.3) {
         const nearest = seedFilms.reduce((a, b) =>
@@ -438,13 +515,32 @@ export function recommend(
         );
         seedReason = `Close to ${nearest.title} on tone and subject`;
       }
-      return { film, match, reasons, seedReason };
+      return { film, match, reasons, seedReason, rewatch: Boolean(lastWatched(film, watched)) };
     });
 
   // A NaN comparison returns NaN, which sorts as equal — which is how the
   // broken entry came to sit at the top of the list rather than the bottom.
   scored.sort((a, b) => (b.match || 0) - (a.match || 0) || a.film.title.localeCompare(b.film.title));
-  return scored.slice(0, limit);
+
+  // These are suggestions for something new. A film you loved always matches
+  // your own taste best, so left alone rewatches would take the top of every
+  // list. They get one place per eight picks, never in the top three.
+  const TOP_FOR_NEW = 3;
+  const rewatchesLeft = Math.max(1, Math.floor(limit / 8));
+  const fresh = scored.filter((r) => !r.rewatch);
+  const again = scored.filter((r) => r.rewatch).slice(0, rewatchesLeft);
+  const out: Recommendation[] = [];
+  let i = 0;
+  let j = 0;
+  while (out.length < limit && (i < fresh.length || j < again.length)) {
+    const takeAgain =
+      j < again.length &&
+      out.length >= Math.min(TOP_FOR_NEW, fresh.length) &&
+      (i >= fresh.length || (again[j].match || 0) >= (fresh[i].match || 0));
+    const { rewatch: _, ...rec } = takeAgain ? again[j++] : fresh[i++];
+    out.push(rec);
+  }
+  return out;
 }
 
 export interface SeedCluster {

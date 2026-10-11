@@ -4,7 +4,7 @@ import { useCatalogue } from '../lib/catalogue';
 import { Poster } from '../components/Poster';
 import { StarterBanner } from '../components/StarterBanner';
 import { Chip } from '../components/ui';
-import { buildTaste, matchIsMeaningful, scoreFilm } from '../lib/recommend';
+import { matchContext, matchIsMeaningful, scoreFilm } from '../lib/recommend';
 import { useStore } from '../lib/store';
 import type { Genre } from '../lib/types';
 
@@ -24,18 +24,18 @@ export function Browse() {
   const collectionId = params.get('collection');
   const collection = state.collections.find((c) => c.id === collectionId) ?? null;
 
-  // One taste build for the whole grid rather than one per poster.
-  const taste = useMemo(() => buildTaste(state.log, getFilm), [state.log, getFilm]);
-  const showMatch = matchIsMeaningful(taste);
+  // Built once for the whole grid rather than once per poster.
+  const ctx = useMemo(() => matchContext(state, getFilm), [state, getFilm]);
+  const showMatch = matchIsMeaningful(ctx.taste);
   const matches = useMemo(() => {
     const m = new Map<string, number>();
     if (!showMatch) return m;
     for (const f of candidates) {
-      const s = scoreFilm(state, f, getFilm, taste);
+      const s = scoreFilm(state, f, getFilm, ctx);
       if (s) m.set(f.id, s.match);
     }
     return m;
-  }, [candidates, state, getFilm, taste, showMatch]);
+  }, [candidates, state, getFilm, ctx, showMatch]);
 
   const seen = useMemo(() => new Set(state.log.map((e) => e.filmId)), [state.log]);
   const listed = useMemo(() => new Set(state.watchlist.map((w) => w.filmId)), [state.watchlist]);

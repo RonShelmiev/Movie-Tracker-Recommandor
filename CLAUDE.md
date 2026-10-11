@@ -54,8 +54,9 @@ path. Google Fonts is blocked too; inject the faces inline for screenshots.
   offline.
 - `src/data/catalogue.ts` — years, directors and runtimes are real. `acclaim`
   and `ratingsK` are editorial estimates and should be described as such.
-- Posters are procedural CSS gradients, backfilled with real TMDB artwork when
-  a key is present.
+- The bundled films ship their TMDB poster paths (`src/data/posters.ts`), so
+  real artwork shows with no key; procedural CSS gradients sit underneath as
+  the fallback. A key backfills posters only for films outside that list.
 
 Assets are content-hashed and old builds are deleted on deploy, so a cached
 `index.html` can point at a bundle that no longer exists. `index.html` carries

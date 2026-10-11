@@ -75,7 +75,14 @@ export interface Settings {
   /** Minutes, or null for no ceiling. */
   runtimeCeiling: number | null;
   excludedGenres: Genre[];
-  includeRewatches: boolean;
+  /**
+   * Offer films already logged, once six months have passed and only ones you
+   * rated well. Replaces `includeRewatches`, which defaulted on — nobody had
+   * chosen it, and it filled the picks with films already seen. A new name is
+   * what turns it off for existing libraries: stored settings are merged over
+   * the defaults, so changing the old default alone would not have reached them.
+   */
+  offerRewatches: boolean;
   surfaceObscure: boolean;
 }
 

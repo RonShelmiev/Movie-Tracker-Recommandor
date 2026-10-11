@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import type { ReactNode } from 'react';
 import { CATALOGUE } from '../data/catalogue';
 import * as tmdb from './tmdb';
+import { filmKey } from './recommend';
 import type { Film, Genre } from './types';
 
 /** Lookups per batch, and the gap between batches — TMDB is rate-limited. */
@@ -97,6 +98,12 @@ export interface CatalogueApi {
   /** Pull a candidate pool matching the user's strongest genres. */
   expandPool: (genres: Genre[], decade?: number) => Promise<number>;
   remember: (films: Film[]) => void;
+  /**
+   * Fetch one TMDB film that is not cached yet — a shared link, or a device
+   * that never searched for it. Resolves undefined when there is no key, the
+   * id is not a TMDB one, or TMDB could not be reached.
+   */
+  load: (id: string) => Promise<Film | undefined>;
   tmdbKey: string;
   setTmdbKey: (key: string) => void;
   /** Check a key. Pass the one being typed — waiting for it to land in state
@@ -131,6 +138,21 @@ export function CatalogueProvider({ children }: { children: ReactNode }) {
 
   const getFilm = useCallback((id: string) => cacheRef.current.get(id), []);
 
+  const load = useCallback(
+    async (id: string): Promise<Film | undefined> => {
+      const cached = cacheRef.current.get(id);
+      if (cached || !cfg || !tmdb.isTmdbId(id)) return cached;
+      try {
+        const film = await tmdb.fetchFilm(tmdb.rawTmdbId(id), cfg);
+        remember([film]);
+        return film;
+      } catch {
+        return undefined;
+      }
+    },
+    [cfg, remember],
+  );
+
   const candidates = useMemo(
     () => [...cacheRef.current.values()],
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -150,11 +172,19 @@ export function CatalogueProvider({ children }: { children: ReactNode }) {
       setBusy(true);
       setLastError(null);
       try {
-        const remote = await tmdb.searchFilms(query, cfg);
-        remember(remote);
+        const found = await tmdb.searchFilms(query, cfg);
+        // A TMDB hit for a film the bundled catalogue already has is the same
+        // film. Hand back the bundled copy, so a log lands on one id and the
+        // recommender does not see the other as unwatched.
+        const bundledByKey = new Map(CATALOGUE.map((f) => [filmKey(f), f] as const));
+        const remote = found.map((f) => {
+          const b = bundledByKey.get(filmKey(f));
+          return b ? cacheRef.current.get(b.id) ?? b : f;
+        });
+        remember(remote.filter((f) => tmdb.isTmdbId(f.id)));
         // Local hits first — they are the ones you have a history with.
         const seen = new Set(local.map((f) => f.id));
-        return [...local, ...remote.filter((f) => !seen.has(f.id))];
+        return [...local, ...remote.filter((f, i, all) => !seen.has(f.id) && all.findIndex((g) => g.id === f.id) === i)];
       } catch (e) {
         setLastError(e instanceof Error ? e.message : 'Search failed');
         return local;
@@ -201,7 +231,8 @@ export function CatalogueProvider({ children }: { children: ReactNode }) {
     runningRef.current = true;
     try {
       const posters = loadPosters();
-      const todo = CATALOGUE.filter((f) => posters[f.id] === undefined);
+      // Films that ship with a poster need no lookup.
+      const todo = CATALOGUE.filter((f) => !f.posterPath && posters[f.id] === undefined);
       if (todo.length === 0) return;
 
       setHydrating({ done: 0, total: todo.length });
@@ -310,13 +341,14 @@ export function CatalogueProvider({ children }: { children: ReactNode }) {
       posterStats,
       expandPool,
       remember,
+      load,
       tmdbKey,
       setTmdbKey,
       probe,
       busy,
       lastError,
     }),
-    [cfg, getFilm, candidates, search, hydrating, hydratePosters, posterStats, expandPool, remember, tmdbKey, setTmdbKey, probe, busy, lastError],
+    [cfg, getFilm, candidates, search, hydrating, hydratePosters, posterStats, expandPool, remember, load, tmdbKey, setTmdbKey, probe, busy, lastError],
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

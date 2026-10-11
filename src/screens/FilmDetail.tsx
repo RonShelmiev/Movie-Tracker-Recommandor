@@ -1,10 +1,11 @@
+import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useCatalogue } from '../lib/catalogue';
 import { useLogModal } from '../components/AppShell';
 import { Icon } from '../components/Icon';
 import { Poster } from '../components/Poster';
 import { SectionHead } from '../components/ui';
-import { buildTaste, formatRuntime, scoreFilm } from '../lib/recommend';
+import { formatRuntime, matchContext, scoreFilm } from '../lib/recommend';
 import { useStore } from '../lib/store';
 import type { Film } from '../lib/types';
 
@@ -25,15 +26,30 @@ function similar(film: Film, pool: Film[], limit = 5): Film[] {
 
 export function FilmDetail() {
   const { id } = useParams();
-  const { candidates, getFilm } = useCatalogue();
+  const { candidates, getFilm, load } = useCatalogue();
   const { state, dispatch } = useStore();
   const { openLog, editLog } = useLogModal();
   const film = id ? getFilm(id) : undefined;
 
+  // A TMDB film nobody has searched for on this device is not cached yet.
+  // Ask for it rather than declaring it missing.
+  const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    if (!id || film) return;
+    let live = true;
+    setLoading(true);
+    void load(id).finally(() => live && setLoading(false));
+    return () => {
+      live = false;
+    };
+  }, [id, film, load]);
+
   if (!film) {
     return (
       <div className="screen">
-        <div className="empty-note">That film is not in the catalogue. <Link to="/browse">Browse everything</Link>.</div>
+        <div className="empty-note">
+          {loading ? 'Fetching that film from TMDB…' : <>That film is not in the catalogue. <Link to="/browse">Browse everything</Link>.</>}
+        </div>
       </div>
     );
   }
@@ -41,10 +57,11 @@ export function FilmDetail() {
   const entries = state.log.filter((e) => e.filmId === film.id).sort((a, b) => b.watchedOn.localeCompare(a.watchedOn));
   const listed = state.watchlist.some((w) => w.filmId === film.id);
   const myScore = entries.length ? entries.reduce((s, e) => s + e.score, 0) / entries.length : null;
-  const taste = buildTaste(state.log, getFilm);
   // Independent of whether the engine would *offer* this film — seen, listed
   // and over-the-ceiling titles all still have an honest fit.
-  const score = scoreFilm(state, film, getFilm, taste);
+  const ctx = matchContext(state, getFilm);
+  const taste = ctx.taste;
+  const score = scoreFilm(state, film, getFilm, ctx);
   const dir = taste.director.get(film.director);
   const seen = new Set(state.log.map((e) => e.filmId));
   const listedIds = new Set(state.watchlist.map((w) => w.filmId));

@@ -21,8 +21,8 @@ export function StarterBanner() {
       <span>
         <b>STARTER CATALOGUE</b>
         <span>
-          Searching {candidates.length} built-in films, with drawn artwork. Add a free TMDB key for the
-          full index and real posters.
+          Searching {candidates.length} built-in films. Add a free TMDB key to search and log any
+          film.
         </span>
       </span>
       <span className="starter-go" aria-hidden="true">
