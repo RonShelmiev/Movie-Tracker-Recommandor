@@ -68,6 +68,8 @@ export interface Settings {
   weights: {
     people: number;
     affinity: number;
+    /** How close a film is to the ones you rated highest. */
+    similarity: number;
     runtimeFit: number;
     era: number;
     community: number;

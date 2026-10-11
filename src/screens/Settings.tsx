@@ -67,8 +67,9 @@ export function Settings() {
         <div>
           <div className="lbl">Signal weights</div>
           <div style={{ marginTop: 18, display: 'flex', flexDirection: 'column', gap: 22 }}>
-            <Slider label="People you rate highly" note="DIRECTORS YOU KEEP COMING BACK TO" value={settings.weights.people} onChange={set('people')} />
+            <Slider label="Like the films you rate highest" note="THE WHOLE FILM, NOT ITS PARTS" value={settings.weights.similarity} onChange={set('similarity')} />
             <Slider label="Genre and mood affinity" note="FROM YOUR SCORES, NOT YOUR TAGS" value={settings.weights.affinity} onChange={set('affinity')} />
+            <Slider label="People you rate highly" note="DIRECTORS YOU KEEP COMING BACK TO" value={settings.weights.people} onChange={set('people')} />
             <Slider label="Runtime that fits your habits" note="LENGTHS YOU ACTUALLY FINISH" value={settings.weights.runtimeFit} onChange={set('runtimeFit')} />
             <Slider label="Era and period" note="THE DECADES YOU SKEW TOWARD" value={settings.weights.era} onChange={set('era')} />
             <Slider label="What everyone else scores" note="KEEP LOW TO STAY OFF THE BEATEN PATH" value={settings.weights.community} onChange={set('community')} />

@@ -57,9 +57,22 @@ collaborate with — and every number it shows is derived from what you have log
    weighted by `score − yourMeanScore`. Rating something below your own average
    counts *against* its tags, which is what stops the profile drifting toward
    whatever you happen to watch a lot of.
-2. **Five axes**, each normalised to 0–1: people you rate highly, genre/mood
-   affinity, runtime fit (a gaussian around the runtimes you actually finish),
-   era, and community acclaim.
+2. **Six axes**, each normalised to 0–1: how close a film is to the ones you
+   rated highest, genre/mood affinity, people you rate highly, runtime fit (a
+   gaussian around the runtimes you actually finish), era, and community
+   acclaim.
+
+   The first carries the most weight, and is the one that makes the picks
+   resemble the ratings. Averages over tags cannot express a *combination*:
+   "slow" and "space" both score well one at a time without ever saying that
+   slow space films are the point. Comparing a candidate against whole films
+   you loved — Jaccard over tags and genres, weighted by how far above your
+   average you rated each — keeps that.
+
+   Affinity rewards a few strong hits over broad lukewarm overlap, so a film
+   with three tags you love and five you have no opinion on is not dragged
+   below a thin film with one. People is neutral for a director you have never
+   rated, and moves further the more films your verdict rests on.
 3. **Your weights** from `/settings` combine those into a match score. Turning
    community acclaim up genuinely reorders the list toward the canon; turning it
    down surfaces the obscure.
@@ -182,6 +195,24 @@ A deploy that lands while the app is already open shows a reload bar rather
 than pulling the page out from under you. *Tune my taste → Version* shows the
 running build id and has a Force refresh that drops the offline copy and
 refetches; it does not touch logged films, the list or any keys.
+
+### How it is measured
+
+Changing the scoring is checked against a leave-one-out bench rather than by
+eyeballing one list: hide a film someone rated, ask the engine how well it
+matches them, and see whether what they rated highly comes back higher.
+Spearman rho over four synthetic personas with a stated preference.
+
+| | mean rho |
+|---|---|
+| before the October 2026 rewrite | 0.485 |
+| after | 0.811 |
+
+The bench also prints each axis's `sd × weight` across the catalogue, which is
+what influence actually means. That is how the original problem showed up:
+`people` had the heaviest weight and only eight distinct values across 89
+films, `community` had almost no spread at all, and the axis that knew what a
+film was *about* had the least influence of any of them.
 
 ## Known gaps
 

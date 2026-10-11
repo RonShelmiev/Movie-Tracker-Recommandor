@@ -20,6 +20,13 @@ export interface Taste {
   runtimeMean: number;
   runtimeSd: number;
   decade: Map<number, number>;
+  /**
+   * The films you rated above your own average, with how far above. Tag
+   * averages lose what a film *is*: "slow" and "space" both score well
+   * separately without ever saying that slow space films are the point.
+   * Comparing a candidate against whole films you loved keeps that.
+   */
+  favourites: { film: Film; weight: number }[];
 }
 
 const EMPTY_TASTE: Taste = {
@@ -31,6 +38,7 @@ const EMPTY_TASTE: Taste = {
   runtimeMean: 115,
   runtimeSd: 35,
   decade: new Map(),
+  favourites: [],
 };
 
 function normalise<K>(m: Map<K, number>): Map<K, number> {
@@ -86,6 +94,14 @@ export function buildTaste(log: LogEntry[], getFilm: (id: string) => Film | unde
     director.set(d, { mean: scores.reduce((a, b) => a + b, 0) / scores.length, n: scores.length });
   }
 
+  // Everything you liked more than your own average, best first. Capped: a
+  // long tail of barely-above-average films would drown the real signal.
+  const favourites = rated
+    .filter((x) => x.e.score > meanScore)
+    .map((x) => ({ film: x.f, weight: x.e.score - meanScore }))
+    .sort((a, b) => b.weight - a.weight)
+    .slice(0, 12);
+
   return {
     n: rated.length,
     meanScore,
@@ -95,6 +111,7 @@ export function buildTaste(log: LogEntry[], getFilm: (id: string) => Film | unde
     runtimeMean,
     runtimeSd: Math.max(20, Math.sqrt(variance)),
     decade: normalise(decade),
+    favourites,
   };
 }
 
@@ -102,26 +119,74 @@ export function buildTaste(log: LogEntry[], getFilm: (id: string) => Film | unde
 export interface Components {
   people: number;
   affinity: number;
+  similarity: number;
   runtimeFit: number;
   era: number;
   community: number;
 }
 
+/**
+ * How much two films are the same kind of thing, 0..1. Jaccard over tags and
+ * genres: shared features over the union, so it is not fooled by one film
+ * simply carrying more tags than the other.
+ */
+function kinship(a: Film, b: Film): number {
+  const A = new Set<string>([...a.tags, ...a.genres]);
+  const B = new Set<string>([...b.tags, ...b.genres]);
+  if (!A.size || !B.size) return 0;
+  let shared = 0;
+  for (const x of A) if (B.has(x)) shared += 1;
+  return shared / (A.size + B.size - shared);
+}
+
 function components(film: Film, taste: Taste): Components {
+  /* ── people ──
+     Was a flat 0.35 for any director you had not rated, which is most of
+     them: the heaviest-weighted axis had eight distinct values across the
+     whole catalogue and mostly said "stranger". Unknown is now genuinely
+     neutral, and a verdict you have actually earned moves it — further the
+     more films it rests on, because one rating is a rumour and four are a
+     pattern. */
   const dir = taste.director.get(film.director);
   const people = dir
-    ? clamp01(0.5 + (dir.mean - taste.meanScore) / 4 + Math.min(dir.n, 4) * 0.02)
-    : 0.35;
+    ? clamp01(0.5 + ((dir.mean - taste.meanScore) / 3) * Math.min(1, Math.sqrt(dir.n) / 2))
+    : 0.5;
 
-  let affSum = 0;
-  for (const t of film.tags) affSum += taste.tag.get(t) ?? 0;
-  for (const g of film.genres) affSum += (taste.genre.get(g) ?? 0) * 1.4;
-  const affDenom = film.tags.length + film.genres.length * 1.4;
-  // A film with neither tags nor genres divides 0 by 0, and NaN then
-  // propagates through the weighted sum all the way to the displayed match.
-  // `isRecommendable` keeps those out, but the guard stays: a NaN here is
-  // invisible until it reaches the screen as "NaN% MATCH".
-  const affinity = affDenom > 0 ? clamp01(0.5 + affSum / (affDenom * 2)) : 0.5;
+  /* ── affinity ──
+     Was the mean weight over every tag a film carries, so a film with three
+     tags you love and five you have no opinion on scored below a thin film
+     with one. Strong hits now carry most of it and breadth the rest, and the
+     output uses the range instead of hugging 0.5. */
+  const weights: number[] = [];
+  for (const t of film.tags) weights.push(taste.tag.get(t) ?? 0);
+  for (const g of film.genres) weights.push((taste.genre.get(g) ?? 0) * 1.2);
+  let affinity = 0.5;
+  if (weights.length) {
+    const sorted = [...weights].sort((a, b) => b - a);
+    const top = sorted.slice(0, 3);
+    const strong = top.reduce((s, v) => s + v, 0) / top.length;
+    const breadth = weights.reduce((s, v) => s + v, 0) / weights.length;
+    affinity = clamp01(0.5 + (strong * 0.7 + breadth * 0.3) * 0.72);
+  }
+
+  /* ── similarity ──
+     New. Averages of tags cannot express a combination: "slow" and "space"
+     score well one at a time without ever saying that slow space films are
+     the thing. This asks the direct question instead — how close is this to
+     the films you actually rated highest. */
+  let similarity = 0.5;
+  if (taste.favourites.length) {
+    let acc = 0;
+    let wsum = 0;
+    for (const fav of taste.favourites) {
+      if (fav.film.id === film.id) continue;
+      acc += kinship(film, fav.film) * fav.weight;
+      wsum += fav.weight;
+    }
+    // Jaccard between two films of the same kind lands around 0.3-0.5, so the
+    // raw mean never approaches 1. Scaled to use the range.
+    similarity = wsum ? clamp01((acc / wsum) * 2.2) : 0.5;
+  }
 
   const z = (film.runtime - taste.runtimeMean) / taste.runtimeSd;
   const runtimeFit = Math.exp(-(z * z) / 2);
@@ -131,7 +196,7 @@ function components(film: Film, taste: Taste): Components {
 
   const community = film.acclaim / 100;
 
-  return { people, affinity, runtimeFit, era, community };
+  return { people, affinity, similarity, runtimeFit, era, community };
 }
 
 function clamp01(x: number) {
@@ -393,10 +458,12 @@ export const matchIsMeaningful = (taste: Taste) => taste.n >= MIN_LOG_FOR_MATCH;
 /** The weighted sum, 0..1, for a film already known to be scoreable. */
 function rawScore(c: Components, settings: Settings): number {
   const w = settings.weights;
-  const total = w.people + w.affinity + w.runtimeFit + w.era + w.community || 1;
+  const sim = w.similarity ?? 0;
+  const total = w.people + w.affinity + sim + w.runtimeFit + w.era + w.community || 1;
   return (
     (c.people * w.people +
       c.affinity * w.affinity +
+      c.similarity * sim +
       c.runtimeFit * w.runtimeFit +
       c.era * w.era +
       c.community * w.community) /
@@ -404,8 +471,12 @@ function rawScore(c: Components, settings: Settings): number {
   );
 }
 
-/** Spread the top of the range out; raw rarely exceeds 0.8 in practice. */
-const toMatch = (raw: number) => Math.round(clamp01(raw * 1.12) * 100);
+/**
+ * Raw sits around 0.3-0.85 now the axes use their range, so a light
+ * expansion puts a very strong match near the top without a crowd of films
+ * pinned at 100 — which would also throw away the ordering between them.
+ */
+const toMatch = (raw: number) => Math.round(clamp01(raw * 1.06) * 100);
 
 export interface Score {
   match: number;
@@ -515,12 +586,14 @@ export function recommend(
         );
         seedReason = `Close to ${nearest.title} on tone and subject`;
       }
-      return { film, match, reasons, seedReason, rewatch: Boolean(lastWatched(film, watched)) };
+      return { film, match, raw, reasons, seedReason, rewatch: Boolean(lastWatched(film, watched)) };
     });
 
-  // A NaN comparison returns NaN, which sorts as equal — which is how the
-  // broken entry came to sit at the top of the list rather than the bottom.
-  scored.sort((a, b) => (b.match || 0) - (a.match || 0) || a.film.title.localeCompare(b.film.title));
+  // On the unrounded score: two films both shown as 91% are not really equal,
+  // and falling back to the alphabet at the top of the list is arbitrary.
+  // A NaN comparison returns NaN, which sorts as equal — which is how a
+  // broken entry once came to sit at the top rather than the bottom.
+  scored.sort((a, b) => (b.raw || 0) - (a.raw || 0) || a.film.title.localeCompare(b.film.title));
 
   // These are suggestions for something new. A film you loved always matches
   // your own taste best, so left alone rewatches would take the top of every
@@ -536,8 +609,8 @@ export function recommend(
     const takeAgain =
       j < again.length &&
       out.length >= Math.min(TOP_FOR_NEW, fresh.length) &&
-      (i >= fresh.length || (again[j].match || 0) >= (fresh[i].match || 0));
-    const { rewatch: _, ...rec } = takeAgain ? again[j++] : fresh[i++];
+      (i >= fresh.length || (again[j].raw || 0) >= (fresh[i].raw || 0));
+    const { rewatch: _rewatch, raw: _raw, ...rec } = takeAgain ? again[j++] : fresh[i++];
     out.push(rec);
   }
   return out;

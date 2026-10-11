@@ -5,7 +5,9 @@ import type { AppState, Collection, Genre, LogEntry, Settings, WatchlistEntry } 
 const STORAGE_KEY = 'flick.v1';
 
 export const DEFAULT_SETTINGS: Settings = {
-  weights: { people: 82, affinity: 74, runtimeFit: 56, era: 38, community: 20 },
+  // Content first. Runtime and decade used to outweigh what a film is
+  // actually about, which is how the picks stopped resembling the ratings.
+  weights: { people: 55, affinity: 80, similarity: 90, runtimeFit: 30, era: 20, community: 15 },
   runtimeCeiling: 180,
   excludedGenres: [],
   offerRewatches: false,
@@ -172,7 +174,16 @@ function load(): AppState {
       settings: {
         ...DEFAULT_SETTINGS,
         ...parsed.settings,
-        weights: { ...DEFAULT_SETTINGS.weights, ...parsed.settings?.weights },
+        // Weights saved before `similarity` existed came from a model where
+        // the axes meant different things — affinity was squashed toward the
+        // middle, and most of `people` was a constant. Merging those numbers
+        // into the new scoring would keep runtime and decade outweighing what
+        // a film is about, which is the thing being fixed. A library that has
+        // never seen the new model takes its defaults whole.
+        weights:
+          parsed.settings?.weights && 'similarity' in parsed.settings.weights
+            ? { ...DEFAULT_SETTINGS.weights, ...parsed.settings.weights }
+            : { ...DEFAULT_SETTINGS.weights },
       },
       collections: parsed.collections?.length ? parsed.collections : DEFAULT_COLLECTIONS,
       dismissed: parsed.dismissed ?? [],

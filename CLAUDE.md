@@ -35,6 +35,29 @@ Worth reproducing when touching stored state: plant `localStorage` with
 `page.addInitScript`, not `page.evaluate` after load — the running app's
 persist effect will otherwise overwrite it and the test lies.
 
+## Measuring the recommender
+
+"Are these good picks?" has no answer without knowing whose taste they are
+for, so the metric is self-consistency: hide one film someone rated, ask the
+engine how well it matches them, and check that films they rated highly come
+back scoring higher. Spearman rho between predicted match and actual score,
+over several synthetic personas with a stated preference.
+
+The bench lives in the scratchpad during development — bundle the real engine
+with esbuild and run it in Node, no browser needed:
+
+```bash
+npx esbuild bench.ts --bundle --platform=node --format=esm --outfile=bench.mjs
+node bench.mjs
+```
+
+It also prints each axis's `sd x weight` across the catalogue, which is what
+influence actually means — an axis with a high weight but almost no spread
+(`community`, or `people` before the rewrite, which had eight distinct values
+across 89 films) contributes nothing while looking important.
+
+Mean rho was 0.485 before the October rewrite and 0.811 after.
+
 ## Environment limits
 
 This sandbox blocks egress to `api.themoviedb.org`, `image.tmdb.org`,
@@ -46,8 +69,18 @@ path. Google Fonts is blocked too; inject the faces inline for screenshots.
 
 - `src/lib/recommend.ts` — content-based engine. Taste is each score's
   distance from the user's own mean, so a below-average rating counts
-  *against* a film's tags. Five weighted axes, hard rules applied before
+  *against* a film's tags. Six weighted axes, hard rules applied before
   scoring, reasons generated from whichever axis actually drove the result.
+  `similarity` — how close a candidate is to the films you rated highest,
+  Jaccard over tags and genres — carries the most weight, because averages
+  over tags cannot express a combination: "slow" and "space" both score well
+  one at a time without ever saying that slow space films are the point.
+  Changing the scoring means re-running the leave-one-out bench (below), not
+  eyeballing one list.
+
+  Weights stored before `similarity` existed are *replaced* rather than
+  merged: the axes were redefined, so the old numbers no longer mean the
+  same thing.
 - `src/lib/catalogue.tsx` — one provider over the bundled 89 films plus a
   cache of everything the user has touched. The cache is load-bearing: the log
   stores ids, and stats and recommendations need metadata synchronously and
