@@ -895,3 +895,69 @@
 @media (max-width: 480px) {
   .update-bar { gap: 9px; padding-left: 12px; padding-right: 12px; font-size: 12px; }
 }
+
+/* ── match for you ────────────────────────────────────────────────────
+   On a film's own page, next to what you actually scored it. The two
+   answer different questions: one is the engine's guess, one is the
+   verdict. */
+.detail-scores { display: flex; align-items: flex-end; gap: 30px; text-align: right; }
+.match-block { min-width: 118px; }
+.match-hero {
+  display: flex;
+  align-items: baseline;
+  justify-content: flex-end;
+  gap: 2px;
+  font: 500 46px var(--sans);
+  line-height: 1;
+  color: var(--cyan);
+}
+.match-hero > span { font-size: 19px; color: var(--cyan-hi); }
+.match-bar {
+  margin-top: 12px;
+  height: 3px;
+  background: rgba(126, 214, 232, 0.16);
+}
+.match-bar > i { display: block; height: 100%; background: var(--cyan); }
+
+@media (max-width: 860px) {
+  /* Two columns facing outward — the guess on the left, the verdict on the
+     right. Right-aligning both leaves the first one floating mid-screen. */
+  .detail-scores { gap: 18px; width: 100%; }
+  .match-block,
+  .detail-scores > div:last-child { flex: 1 1 0; min-width: 0; }
+  .match-block { text-align: left; }
+  .match-hero { justify-content: flex-start; font-size: 34px; }
+  .score-hero { font-size: 42px; }
+}
+
+@media (max-width: 480px) {
+  .detail-scores { gap: 14px; }
+  .match-hero { font-size: 30px; }
+  .match-hero > span { font-size: 14px; }
+  .match-bar { margin-top: 10px; }
+  .score-hero { font-size: 32px; }
+  .score-ticks i { width: 7px; }
+  /* "ACCLAIM 9.2 / 820K RATINGS" wrapped to two lines in half a screen. */
+  .detail-scores .meta { font-size: 9px; letter-spacing: 0.06em; }
+}
+
+/* The match on a poster. Quiet by default and lit only once it is worth
+   looking at, so a grid of 89 does not read as 89 alarms. */
+.match-pip {
+  position: absolute;
+  left: 8px;
+  top: 8px;
+  z-index: 2;
+  padding: 2px 6px;
+  border: 1px solid rgba(126, 214, 232, 0.28);
+  background: rgba(4, 10, 14, 0.72);
+  backdrop-filter: blur(4px);
+  font: 500 10px var(--mono);
+  letter-spacing: 0.04em;
+  color: var(--ink-4);
+}
+.match-pip.is-strong { border-color: var(--cyan); color: var(--cyan); }
+
+@media (max-width: 480px) {
+  .match-pip { left: 5px; top: 5px; padding: 1px 4px; font-size: 9px; }
+}

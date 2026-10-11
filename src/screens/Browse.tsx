@@ -4,15 +4,16 @@ import { useCatalogue } from '../lib/catalogue';
 import { Poster } from '../components/Poster';
 import { StarterBanner } from '../components/StarterBanner';
 import { Chip } from '../components/ui';
+import { buildTaste, matchIsMeaningful, scoreFilm } from '../lib/recommend';
 import { useStore } from '../lib/store';
 import type { Genre } from '../lib/types';
 
 const GENRES: Genre[] = ['Sci-fi', 'Neo-noir', 'Drama', 'Thriller', 'Crime', 'Animation', 'Horror', 'Action', 'Mystery'];
 const DECADES = [1920, 1940, 1960, 1970, 1980, 1990, 2000, 2010, 2020];
-type Sort = 'title' | 'year' | 'acclaim';
+type Sort = 'title' | 'year' | 'acclaim' | 'match';
 
 export function Browse() {
-  const { candidates } = useCatalogue();
+  const { candidates, getFilm } = useCatalogue();
   const { state } = useStore();
   const [params, setParams] = useSearchParams();
   const [genre, setGenre] = useState<Genre | null>(null);
@@ -22,6 +23,19 @@ export function Browse() {
 
   const collectionId = params.get('collection');
   const collection = state.collections.find((c) => c.id === collectionId) ?? null;
+
+  // One taste build for the whole grid rather than one per poster.
+  const taste = useMemo(() => buildTaste(state.log, getFilm), [state.log, getFilm]);
+  const showMatch = matchIsMeaningful(taste);
+  const matches = useMemo(() => {
+    const m = new Map<string, number>();
+    if (!showMatch) return m;
+    for (const f of candidates) {
+      const s = scoreFilm(state, f, getFilm, taste);
+      if (s) m.set(f.id, s.match);
+    }
+    return m;
+  }, [candidates, state, getFilm, taste, showMatch]);
 
   const seen = useMemo(() => new Set(state.log.map((e) => e.filmId)), [state.log]);
   const listed = useMemo(() => new Set(state.watchlist.map((w) => w.filmId)), [state.watchlist]);
@@ -37,10 +51,12 @@ export function Browse() {
         ? a.title.localeCompare(b.title)
         : sort === 'year'
           ? b.year - a.year
-          : b.acclaim - a.acclaim,
+          : sort === 'match'
+            ? (matches.get(b.id) ?? -1) - (matches.get(a.id) ?? -1) || a.title.localeCompare(b.title)
+            : b.acclaim - a.acclaim,
     );
     return out;
-  }, [collection, genre, decade, unseenOnly, sort, seen]);
+  }, [collection, genre, decade, unseenOnly, sort, seen, matches]);
 
   return (
     <div className="screen" style={{ gap: 22 }}>
@@ -66,6 +82,7 @@ export function Browse() {
             <option value="title">TITLE A-Z</option>
             <option value="year">NEWEST FIRST</option>
             <option value="acclaim">MOST ACCLAIMED</option>
+            {showMatch && <option value="match">BEST MATCH</option>}
           </select>
         </div>
       </div>
@@ -93,7 +110,12 @@ export function Browse() {
       ) : (
         <div className="grid-posters">
           {films.map((f) => (
-            <Poster key={f.id} film={f} status={seen.has(f.id) ? 'seen' : listed.has(f.id) ? 'listed' : null} />
+            <Poster
+              key={f.id}
+              film={f}
+              status={seen.has(f.id) ? 'seen' : listed.has(f.id) ? 'listed' : null}
+              match={matches.get(f.id) ?? null}
+            />
           ))}
         </div>
       )}

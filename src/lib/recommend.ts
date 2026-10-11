@@ -99,7 +99,7 @@ export function buildTaste(log: LogEntry[], getFilm: (id: string) => Film | unde
 }
 
 /** 0..1 for each axis, before the user's weights are applied. */
-interface Components {
+export interface Components {
   people: number;
   affinity: number;
   runtimeFit: number;
@@ -340,6 +340,62 @@ export function focusIsActive(f: Focus): boolean {
   return Boolean(f.maxRuntime || f.seedIds?.length || f.tags?.length || f.decade);
 }
 
+/**
+ * Below this many logged films the profile is mostly noise, and a match
+ * percentage would be a confident-looking number with nothing behind it.
+ */
+const MIN_LOG_FOR_MATCH = 3;
+
+export const matchIsMeaningful = (taste: Taste) => taste.n >= MIN_LOG_FOR_MATCH;
+
+/** The weighted sum, 0..1, for a film already known to be scoreable. */
+function rawScore(c: Components, settings: Settings): number {
+  const w = settings.weights;
+  const total = w.people + w.affinity + w.runtimeFit + w.era + w.community || 1;
+  return (
+    (c.people * w.people +
+      c.affinity * w.affinity +
+      c.runtimeFit * w.runtimeFit +
+      c.era * w.era +
+      c.community * w.community) /
+    total
+  );
+}
+
+/** Spread the top of the range out; raw rarely exceeds 0.8 in practice. */
+const toMatch = (raw: number) => Math.round(clamp01(raw * 1.12) * 100);
+
+export interface Score {
+  match: number;
+  components: Components;
+  reasons: string[];
+}
+
+/**
+ * One film against the profile, with the hard rules left out — those decide
+ * what to *offer*, which is a different question from how well something
+ * fits. A film already seen, already listed or over the runtime ceiling
+ * still has an honest answer to "would I like this".
+ *
+ * Shared with `recommend` on purpose: a percentage shown on a poster that
+ * disagreed with the one on the For You card would be worse than no
+ * percentage at all.
+ */
+export function scoreFilm(
+  state: AppState,
+  film: Film,
+  getFilm: (id: string) => Film | undefined,
+  taste: Taste = buildTaste(state.log, getFilm),
+): Score | null {
+  if (!isRecommendable(film) || !matchIsMeaningful(taste)) return null;
+  const components_ = components(film, taste);
+  return {
+    match: toMatch(rawScore(components_, state.settings)),
+    components: components_,
+    reasons: reasonsFor(film, taste, components_, state.log, getFilm, state.settings),
+  };
+}
+
 export function recommend(
   state: AppState,
   catalogue: Film[],
@@ -350,9 +406,6 @@ export function recommend(
   const taste = buildTaste(state.log, getFilm);
   const seen = new Set(state.log.map((e) => e.filmId));
   const listed = new Set(state.watchlist.map((w) => w.filmId));
-
-  const w = state.settings.weights;
-  const total = w.people + w.affinity + w.runtimeFit + w.era + w.community || 1;
 
   const seedFilms = (focus.seedIds ?? [])
     .map((id) => getFilm(id))
@@ -369,21 +422,14 @@ export function recommend(
     })
     .map((film) => {
       const c = components(film, taste);
-      let raw =
-        (c.people * w.people +
-          c.affinity * w.affinity +
-          c.runtimeFit * w.runtimeFit +
-          c.era * w.era +
-          c.community * w.community) /
-        total;
+      let raw = rawScore(c, state.settings);
 
       // Pointing at a film is an explicit instruction, so it outweighs the
       // standing profile rather than nudging it.
       const like = seedFilms.length ? seedAffinity(film, seedFilms) : 0;
       if (seedFilms.length) raw = raw * 0.4 + like * 0.6;
 
-      // Spread the top of the range out; raw rarely exceeds 0.8 in practice.
-      const match = Math.round(clamp01(raw * 1.12) * 100);
+      const match = toMatch(raw);
       const reasons = reasonsFor(film, taste, c, state.log, getFilm, state.settings);
       let seedReason: string | undefined;
       if (seedFilms.length && like > 0.3) {

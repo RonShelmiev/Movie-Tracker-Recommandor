@@ -4,7 +4,7 @@ import { useLogModal } from '../components/AppShell';
 import { Icon } from '../components/Icon';
 import { Poster } from '../components/Poster';
 import { SectionHead } from '../components/ui';
-import { buildTaste, formatRuntime } from '../lib/recommend';
+import { buildTaste, formatRuntime, scoreFilm } from '../lib/recommend';
 import { useStore } from '../lib/store';
 import type { Film } from '../lib/types';
 
@@ -42,6 +42,9 @@ export function FilmDetail() {
   const listed = state.watchlist.some((w) => w.filmId === film.id);
   const myScore = entries.length ? entries.reduce((s, e) => s + e.score, 0) / entries.length : null;
   const taste = buildTaste(state.log, getFilm);
+  // Independent of whether the engine would *offer* this film — seen, listed
+  // and over-the-ceiling titles all still have an honest fit.
+  const score = scoreFilm(state, film, getFilm, taste);
   const dir = taste.director.get(film.director);
   const seen = new Set(state.log.map((e) => e.filmId));
   const listedIds = new Set(state.watchlist.map((w) => w.filmId));
@@ -91,16 +94,31 @@ export function FilmDetail() {
               </div>
             </div>
 
-            <div style={{ textAlign: 'right' }}>
-              <div className="lbl" style={{ color: 'var(--ink-4)' }}>{myScore !== null ? 'Your score' : 'Not yet rated'}</div>
-              <div className="score-hero">{myScore !== null ? myScore.toFixed(1) : '—'}</div>
-              <div className="score-ticks" style={{ marginTop: 12 }}>
-                {Array.from({ length: 10 }, (_, i) => (
-                  <i key={i} className={myScore !== null && i < Math.round(myScore) ? 'on' : undefined} />
-                ))}
-              </div>
-              <div className="meta" style={{ marginTop: 12, color: 'var(--ink-6)', fontSize: 10 }}>
-                ACCLAIM {(film.acclaim / 10).toFixed(1)} / {film.ratingsK}K RATINGS
+            <div className="detail-scores">
+              {score && (
+                <div className="match-block">
+                  <div className="lbl" style={{ color: 'var(--cyan)' }}>Match for you</div>
+                  <div className="match-hero">
+                    {score.match}
+                    <span>%</span>
+                  </div>
+                  <div className="match-bar" aria-hidden="true">
+                    <i style={{ width: `${score.match}%` }} />
+                  </div>
+                </div>
+              )}
+
+              <div>
+                <div className="lbl" style={{ color: 'var(--ink-4)' }}>{myScore !== null ? 'Your score' : 'Not yet rated'}</div>
+                <div className="score-hero">{myScore !== null ? myScore.toFixed(1) : '—'}</div>
+                <div className="score-ticks" style={{ marginTop: 12 }}>
+                  {Array.from({ length: 10 }, (_, i) => (
+                    <i key={i} className={myScore !== null && i < Math.round(myScore) ? 'on' : undefined} />
+                  ))}
+                </div>
+                <div className="meta" style={{ marginTop: 12, color: 'var(--ink-6)', fontSize: 10 }}>
+                  ACCLAIM {(film.acclaim / 10).toFixed(1)} / {film.ratingsK}K RATINGS
+                </div>
               </div>
             </div>
           </div>
