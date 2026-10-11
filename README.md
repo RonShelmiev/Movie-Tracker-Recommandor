@@ -59,8 +59,17 @@ collaborate with — and every number it shows is derived from what you have log
    whatever you happen to watch a lot of.
 2. **Six axes**, each normalised to 0–1: how close a film is to the ones you
    rated highest, genre/mood affinity, people you rate highly, runtime fit (a
-   gaussian around the runtimes you actually finish), era, and community
-   acclaim.
+   gaussian around the runtimes you actually finish), era, and — only if you
+   switch it on — community acclaim.
+
+   By default **nothing but your own ratings decides a pick.** A taste that
+   diverges from consensus is exactly the case a personal recommender should
+   serve, so *Let other people's scores count* is off, and with it off the
+   acclaim figure is hidden on a film's page too.
+
+   Films you rated furthest above your own average pull hardest: the weight
+   is the lift to the power of 1.5, so the few you were emphatic about count
+   for more than the many you merely approved of.
 
    The first carries the most weight, and is the one that makes the picks
    resemble the ratings. Averages over tags cannot express a *combination*:
@@ -207,6 +216,14 @@ Spearman rho over four synthetic personas with a stated preference.
 |---|---|
 | before the October 2026 rewrite | 0.485 |
 | after | 0.811 |
+
+On a later, harder set of nine personas — three compressing their scores into
+part of the scale, two with a taste no single tag expresses:
+
+| | mean rho |
+|---|---|
+| before the my-scores-only pass | 0.757 |
+| after | 0.779 |
 
 The bench also prints each axis's `sd × weight` across the catalogue, which is
 what influence actually means. That is how the original problem showed up:

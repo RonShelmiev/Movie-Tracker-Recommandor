@@ -72,7 +72,7 @@ export function Settings() {
             <Slider label="People you rate highly" note="DIRECTORS YOU KEEP COMING BACK TO" value={settings.weights.people} onChange={set('people')} />
             <Slider label="Runtime that fits your habits" note="LENGTHS YOU ACTUALLY FINISH" value={settings.weights.runtimeFit} onChange={set('runtimeFit')} />
             <Slider label="Era and period" note="THE DECADES YOU SKEW TOWARD" value={settings.weights.era} onChange={set('era')} />
-            <Slider label="What everyone else scores" note="KEEP LOW TO STAY OFF THE BEATEN PATH" value={settings.weights.community} onChange={set('community')} />
+
           </div>
 
           <div className="lbl" style={{ display: 'block', marginTop: 34 }}>Hard rules</div>
@@ -118,6 +118,12 @@ export function Settings() {
               sub="ALLOW FILMS WITH UNDER 200K RATINGS"
               on={settings.surfaceObscure}
               onChange={(v) => dispatch({ type: 'settings/patch', patch: { surfaceObscure: v } })}
+            />
+            <ToggleRow
+              label="Let other people's scores count"
+              sub="OFF: NOTHING BUT YOUR OWN RATINGS DECIDES A PICK, AND ACCLAIM IS HIDDEN"
+              on={settings.useCommunityScores}
+              onChange={(v) => dispatch({ type: 'settings/patch', patch: { useCommunityScores: v } })}
             />
           </div>
 
@@ -360,13 +366,13 @@ export function Settings() {
             </div>
           </div>
 
-          {settings.weights.community > 60 && (
+          {settings.useCommunityScores && (
             <div style={{ padding: 20, border: '1px solid rgba(255,180,84,0.22)', background: 'rgba(255,180,84,0.05)' }}>
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
                 <span style={{ marginTop: 5, width: 5, height: 5, flexShrink: 0, background: 'var(--amber)' }} />
                 <div style={{ font: '300 13px var(--sans)', lineHeight: 1.6, color: '#C0A882' }}>
-                  Community score is at {settings.weights.community}. Much above 60 and your picks start looking like a
-                  streaming front page rather than yours.
+                  Other people&rsquo;s scores are counting toward your picks. Turn it off and nothing but your own
+                  ratings decides what gets suggested.
                 </div>
               </div>
             </div>

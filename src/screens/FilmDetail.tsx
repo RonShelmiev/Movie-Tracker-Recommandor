@@ -19,7 +19,9 @@ function similar(film: Film, pool: Film[], limit = 5): Film[] {
       return { f, n };
     })
     .filter((x) => x.n >= 3)
-    .sort((a, b) => b.n - a.n || b.f.acclaim - a.f.acclaim)
+    // Ties break on year, not acclaim: "more like this" should not quietly
+    // rank by what everyone else thought.
+    .sort((a, b) => b.n - a.n || b.f.year - a.f.year)
     .slice(0, limit)
     .map((x) => x.f);
 }
@@ -133,9 +135,11 @@ export function FilmDetail() {
                     <i key={i} className={myScore !== null && i < Math.round(myScore) ? 'on' : undefined} />
                   ))}
                 </div>
-                <div className="meta" style={{ marginTop: 12, color: 'var(--ink-6)', fontSize: 10 }}>
-                  ACCLAIM {(film.acclaim / 10).toFixed(1)} / {film.ratingsK}K RATINGS
-                </div>
+                {state.settings.useCommunityScores && (
+                  <div className="meta" style={{ marginTop: 12, color: 'var(--ink-6)', fontSize: 10 }}>
+                    ACCLAIM {(film.acclaim / 10).toFixed(1)} / {film.ratingsK}K RATINGS
+                  </div>
+                )}
               </div>
             </div>
           </div>

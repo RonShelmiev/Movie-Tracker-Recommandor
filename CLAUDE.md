@@ -56,7 +56,17 @@ influence actually means — an axis with a high weight but almost no spread
 (`community`, or `people` before the rewrite, which had eight distinct values
 across 89 films) contributes nothing while looking important.
 
-Mean rho was 0.485 before the October rewrite and 0.811 after.
+Mean rho was 0.485 before the October rewrite and 0.811 after, on four
+personas. The set then grew to nine — three that compress their scores into
+part of the scale, two whose taste is a *combination* no single tag expresses
+— and on that harder set it reads 0.757 before the my-scores-only pass and
+0.779 after.
+
+Two things measured as *not* worth shipping, so do not re-add them on
+intuition: an aversion term in `similarity` (penalising resemblance to films
+rated below your mean) came out flat or worse, because tag affinity already
+carries it; and the acclaim axis moves 0 of 10 picks at any sane weight,
+because every film in the catalogue is well regarded.
 
 ## Environment limits
 
@@ -81,6 +91,11 @@ path. Google Fonts is blocked too; inject the faces inline for screenshots.
   Weights stored before `similarity` existed are *replaced* rather than
   merged: the axes were redefined, so the old numbers no longer mean the
   same thing.
+
+  Nothing anyone else thinks reaches a pick unless `useCommunityScores` is
+  switched on, which it is not by default. That setting also hides the
+  acclaim figure on a film's page — the one place the crowd's verdict used to
+  sit next to the user's own.
 - `src/lib/catalogue.tsx` — one provider over the bundled 89 films plus a
   cache of everything the user has touched. The cache is load-bearing: the log
   stores ids, and stats and recommendations need metadata synchronously and

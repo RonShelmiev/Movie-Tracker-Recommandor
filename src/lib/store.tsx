@@ -7,11 +7,12 @@ const STORAGE_KEY = 'flick.v1';
 export const DEFAULT_SETTINGS: Settings = {
   // Content first. Runtime and decade used to outweigh what a film is
   // actually about, which is how the picks stopped resembling the ratings.
-  weights: { people: 55, affinity: 80, similarity: 90, runtimeFit: 30, era: 20, community: 15 },
+  weights: { people: 55, affinity: 80, similarity: 90, runtimeFit: 30, era: 20 },
   runtimeCeiling: 180,
   excludedGenres: [],
   offerRewatches: false,
   surfaceObscure: true,
+  useCommunityScores: false,
 };
 
 const DEFAULT_COLLECTIONS: Collection[] = [

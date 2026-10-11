@@ -72,7 +72,6 @@ export interface Settings {
     similarity: number;
     runtimeFit: number;
     era: number;
-    community: number;
   };
   /** Minutes, or null for no ceiling. */
   runtimeCeiling: number | null;
@@ -86,6 +85,14 @@ export interface Settings {
    */
   offerRewatches: boolean;
   surfaceObscure: boolean;
+  /**
+   * Whether anyone else's opinion enters at all — both the acclaim axis in
+   * the scoring and the acclaim figure on a film's page. Off by default: the
+   * whole point of logging your own scores is that they are yours, and a
+   * taste that diverges from consensus is exactly the case a personal
+   * recommender should serve.
+   */
+  useCommunityScores: boolean;
 }
 
 export interface AppState {
