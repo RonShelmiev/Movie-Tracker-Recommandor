@@ -138,3 +138,36 @@ export function Stat({ label, value, note, accent = false }: { label: string; va
     </div>
   );
 }
+
+/**
+ * A 10-point score drawn the Letterboxd way: five stars, halves allowed.
+ * 9.4 is four and a half; 10 is five. The number stays the real score —
+ * the stars are a reading aid.
+ */
+export function Stars({ score, size = 14 }: { score: number; size?: number }) {
+  const halves = Math.round(Math.max(0, Math.min(10, score)));
+  return (
+    <span className="stars" role="img" aria-label={`${(halves / 2).toFixed(1)} out of 5 stars`}>
+      {Array.from({ length: 5 }, (_, i) => {
+        const fill = halves >= (i + 1) * 2 ? 'full' : halves === i * 2 + 1 ? 'half' : 'empty';
+        return (
+          <svg key={i} width={size} height={size} viewBox="0 0 24 24" aria-hidden="true" className={`star star-${fill}`}>
+            <defs>
+              <clipPath id={`half-${i}`}>
+                <rect x="0" y="0" width="12" height="24" />
+              </clipPath>
+            </defs>
+            <path className="star-bg" d="M12 2.5l2.9 6.1 6.6.8-4.9 4.5 1.3 6.6L12 17.2l-5.9 3.3 1.3-6.6-4.9-4.5 6.6-.8z" />
+            {fill !== 'empty' && (
+              <path
+                className="star-fg"
+                d="M12 2.5l2.9 6.1 6.6.8-4.9 4.5 1.3 6.6L12 17.2l-5.9 3.3 1.3-6.6-4.9-4.5 6.6-.8z"
+                clipPath={fill === 'half' ? `url(#half-${i})` : undefined}
+              />
+            )}
+          </svg>
+        );
+      })}
+    </span>
+  );
+}

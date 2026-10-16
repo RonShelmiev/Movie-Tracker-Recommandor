@@ -1,5 +1,6 @@
 import type { Film, Genre, Tag } from '../lib/types';
 import { BUNDLED_POSTERS } from './posters';
+import { IMDB } from './imdb';
 
 /**
  * A starter catalogue, hand-curated rather than fetched.
@@ -124,6 +125,7 @@ function parse(row: Row): Film {
     art,
     synopsis,
     posterPath: BUNDLED_POSTERS[id],
+    imdb: IMDB[id] ? { id: IMDB[id][0], rating: IMDB[id][1], votes: IMDB[id][2] } : undefined,
   };
 }
 

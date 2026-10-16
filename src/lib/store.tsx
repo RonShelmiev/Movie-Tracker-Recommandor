@@ -12,7 +12,7 @@ export const DEFAULT_SETTINGS: Settings = {
   excludedGenres: [],
   offerRewatches: false,
   surfaceObscure: true,
-  useCommunityScores: false,
+  useImdb: true,
 };
 
 const DEFAULT_COLLECTIONS: Collection[] = [

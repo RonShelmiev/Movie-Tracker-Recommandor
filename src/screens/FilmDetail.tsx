@@ -4,8 +4,8 @@ import { useCatalogue } from '../lib/catalogue';
 import { useLogModal } from '../components/AppShell';
 import { Icon } from '../components/Icon';
 import { Poster } from '../components/Poster';
-import { SectionHead } from '../components/ui';
-import { formatRuntime, matchContext, scoreFilm } from '../lib/recommend';
+import { SectionHead, Stars } from '../components/ui';
+import { crowdRating, formatRuntime, matchContext, scoreFilm } from '../lib/recommend';
 import { posterUrl } from '../lib/tmdb';
 import { useStore } from '../lib/store';
 import type { Film } from '../lib/types';
@@ -69,7 +69,12 @@ export function FilmDetail() {
   const seen = new Set(state.log.map((e) => e.filmId));
   const listedIds = new Set(state.watchlist.map((w) => w.filmId));
   const art = posterUrl(film.posterPath, 'w500');
-  const showAcclaim = state.settings.useCommunityScores;
+  const crowd = crowdRating(film);
+  // A match is a guess at whether you would like it. Once you have rated it
+  // the guess is beside the point, and showing one next to your own score
+  // read as the app disagreeing with you: 2049 at "53%" beside Ron's 9.4.
+  const showMatch = myScore === null;
+  const tiles = 1 + (showMatch ? 1 : 0) + (crowd ? 1 : 0);
 
   const overlapNotes: string[] = [];
   if (dir && dir.n > 1) overlapNotes.push(`You rate ${film.director} ${dir.mean.toFixed(1)} across ${dir.n} films`);
@@ -80,12 +85,14 @@ export function FilmDetail() {
 
   return (
     <div className="film-page">
-      {/* The poster, blown up and blurred, is the backdrop. The old hero put
-          an art-* skin on the section itself, and that skin's motif — a
-          hairline or a rotated diamond — drew straight across the title and
-          the buttons. The skin now sits on its own layer under a veil, and
-          only shows when there is no artwork. */}
-      <section className="film-hero">
+      {/* On a phone the poster is the header, the way Letterboxd leads with
+          its art: sharp, full width, the top half showing before it fades
+          into the page under the title. On a wide screen it would be cropped
+          to a sliver, so there it is blurred into a backdrop beside a poster
+          card instead. The art-* skin sits on its own layer and only shows
+          when there is no artwork — on the section itself, its motif drew a
+          line through the title. */}
+      <section className={art ? 'film-hero has-art' : 'film-hero'}>
         <div className={`film-backdrop art-${film.art}`} aria-hidden="true">
           {art && <img src={art} alt="" />}
         </div>
@@ -106,9 +113,11 @@ export function FilmDetail() {
               <h1>{film.title}</h1>
               <div className="film-meta">
                 <span>{film.year}</span>
-                <span>{film.director}</span>
                 <span>{formatRuntime(film.runtime)}</span>
                 <span>{film.country}</span>
+              </div>
+              <div className="film-director">
+                Directed by <b>{film.director}</b>
               </div>
             </div>
           </div>
@@ -133,20 +142,15 @@ export function FilmDetail() {
         </div>
       </section>
 
-      {/* Your verdict and the engine's, side by side. Acclaim only joins them
-          when community scores are switched on — off by default, at Ron's
-          request, because the crowd's number next to his own was noise. */}
-      <section className={showAcclaim ? 'film-scores has-3' : 'film-scores'}>
+      {/* Your verdict, the engine's guess (only until you have one of your
+          own), and IMDb's. */}
+      <section className={`film-scores tiles-${tiles}`}>
         <div className="score-tile">
           <div className="lbl">Your score</div>
           {myScore !== null ? (
             <>
               <div className="score-big">{myScore.toFixed(1)}</div>
-              <div className="score-ticks">
-                {Array.from({ length: 10 }, (_, i) => (
-                  <i key={i} className={i < Math.round(myScore) ? 'on' : undefined} />
-                ))}
-              </div>
+              <Stars score={myScore} />
             </>
           ) : (
             <>
@@ -156,33 +160,43 @@ export function FilmDetail() {
           )}
         </div>
 
-        <div className="score-tile is-for-you">
-          <div className="lbl">Match for you</div>
-          {score ? (
-            <>
-              <div className="score-big">
-                {score.match}
-                <small>%</small>
-              </div>
-              <div className="fit-bar" aria-hidden="true">
-                <i style={{ width: `${score.match}%` }} />
-              </div>
-            </>
-          ) : (
-            <>
-              <div className="score-big is-empty">—</div>
-              <div className="score-note">Log three films to see a match</div>
-            </>
-          )}
-        </div>
+        {showMatch && (
+          <div className="score-tile is-for-you">
+            <div className="lbl">Match for you</div>
+            {score ? (
+              <>
+                <div className="score-big">
+                  {score.match}
+                  <small>%</small>
+                </div>
+                <div className="fit-bar" aria-hidden="true">
+                  <i style={{ width: `${score.match}%` }} />
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="score-big is-empty">—</div>
+                <div className="score-note">Log three films to see a match</div>
+              </>
+            )}
+          </div>
+        )}
 
-        {showAcclaim && (
-          <div className="score-tile">
-            <div className="lbl">Acclaim</div>
-            <div className="score-big is-dim">{(film.acclaim / 10).toFixed(1)}</div>
-            {/* The bundled figures are editorial estimates, not ratings data. */}
+        {crowd && (
+          <div className="score-tile is-crowd">
+            <div className="lbl">{crowd.source}</div>
+            <div className="score-big is-dim">
+              {crowd.value.toFixed(1)}
+              <small>/10</small>
+            </div>
             <div className="score-note">
-              {film.id.startsWith('tmdb:') ? (film.ratingsK > 0 ? `TMDB / ${film.ratingsK}K votes` : 'TMDB average') : 'Editorial estimate'}
+              {crowd.votes >= 1_000_000
+                ? `${(crowd.votes / 1_000_000).toFixed(1)}M votes`
+                : crowd.votes >= 1000
+                  ? `${Math.round(crowd.votes / 1000)}K votes`
+                  : crowd.votes > 0
+                    ? `${crowd.votes} votes`
+                    : 'Average rating'}
             </div>
           </div>
         )}
@@ -195,15 +209,9 @@ export function FilmDetail() {
             {film.synopsis}
           </p>
 
+          {/* Director and country moved up into the header, where Letterboxd
+              puts them; only the tags are left down here. */}
           <div className="info-grid" style={{ marginTop: 30 }}>
-            <div>
-              <div className="lbl">Director</div>
-              <div style={{ marginTop: 8, font: '400 14.5px var(--sans)', color: 'var(--ink)' }}>{film.director}</div>
-            </div>
-            <div>
-              <div className="lbl">Country</div>
-              <div style={{ marginTop: 8, font: '400 14.5px var(--sans)', color: 'var(--ink)' }}>{film.country}</div>
-            </div>
             <div style={{ gridColumn: '1 / -1' }}>
               <div className="lbl">Tags</div>
               <div style={{ marginTop: 10, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
