@@ -1,18 +1,17 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useCatalogue } from '../lib/catalogue';
-import { Icon } from '../components/Icon';
 import { Thumb } from '../components/Poster';
 import { StarterBanner } from '../components/StarterBanner';
-import { SectionHead } from '../components/ui';
-import { formatRuntime } from '../lib/recommend';
+import { SectionHead, Stars } from '../components/ui';
+import { formatRuntime, matchContext, matchIsMeaningful, scoreFilm } from '../lib/recommend';
 import { useStore } from '../lib/store';
 import type { Film } from '../lib/types';
 
 export function SearchResults() {
   const [params] = useSearchParams();
   const q = (params.get('q') ?? '').trim();
-  const { search, candidates, mode, busy, lastError } = useCatalogue();
+  const { search, candidates, mode, busy, lastError, getFilm } = useCatalogue();
   const { state } = useStore();
   const lower = q.toLowerCase();
   const [hits, setHits] = useState<Film[]>([]);
@@ -61,6 +60,7 @@ export function SearchResults() {
     return entries.reduce((s, e) => s + e.score, 0) / entries.length;
   };
   const listed = new Set(state.watchlist.map((w) => w.filmId));
+  const ctx = useMemo(() => matchContext(state, getFilm), [state, getFilm]);
 
   const results = [...new Set([...films, ...byPerson])];
   const total = results.length + people.length + collections.length;
@@ -133,24 +133,37 @@ export function SearchResults() {
               .map((f) => {
                 const score = scoreOf(f.id);
                 return (
-                  <Link key={f.id} to={`/film/${f.id}`} className="list-row" style={{ minHeight: 74 }}>
-                    <Thumb film={f} w={44} h={62} />
-                    <div style={{ width: 280 }}>
-                      <div style={{ font: '500 16px var(--sans)', letterSpacing: '0.03em', color: 'var(--ink-hi)' }}>{f.title}</div>
-                      <div className="meta" style={{ marginTop: 5, fontSize: 10 }}>{f.year} / {formatRuntime(f.runtime).toUpperCase()}</div>
-                    </div>
-                    <span style={{ flexGrow: 1, minWidth: 0, font: '300 13px var(--sans)', color: 'var(--ink-5)' }}>{f.director}</span>
-                    <div style={{ width: 110, display: 'flex', justifyContent: 'flex-end' }}>
-                      {score !== null ? (
-                        <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                          <Icon name="seen" size={14} width={1.9} colour="var(--cyan)" />
-                          <span style={{ font: '500 13px var(--mono)', color: 'var(--cyan)' }}>{score.toFixed(1)}</span>
-                        </span>
-                      ) : listed.has(f.id) ? (
-                        <span style={{ font: '400 11px var(--mono)', letterSpacing: '0.1em', color: 'var(--magenta)' }}>ON LIST</span>
-                      ) : (
-                        <span style={{ font: '400 11px var(--mono)', letterSpacing: '0.1em', color: 'var(--ink-8)' }}>NOT SEEN</span>
-                      )}
+                  // A poster you can recognise, the way Letterboxd lists a
+                  // search: the art carries the row, the words confirm it.
+                  <Link key={f.id} to={`/film/${f.id}`} className="search-row">
+                    <Thumb film={f} w={64} h={96} />
+                    <div className="search-row-main">
+                      <div className="search-row-title">
+                        {f.title} <span>{f.year || ''}</span>
+                      </div>
+                      <div className="search-row-by">
+                        Directed by <b>{f.director}</b>
+                      </div>
+                      <div className="meta search-row-meta">
+                        {formatRuntime(f.runtime).toUpperCase()}
+                        {f.genres.length > 0 && ` / ${f.genres.slice(0, 2).join(', ').toUpperCase()}`}
+                        {f.imdb && ` / IMDB ${f.imdb.rating.toFixed(1)}`}
+                      </div>
+                      <div className="search-row-status">
+                        {score !== null ? (
+                          <>
+                            <Stars score={score} size={12} />
+                            <span className="is-mine">{score.toFixed(1)}</span>
+                          </>
+                        ) : listed.has(f.id) ? (
+                          <span className="is-listed">ON YOUR LIST</span>
+                        ) : (
+                          (() => {
+                            const m = matchIsMeaningful(ctx.taste) ? scoreFilm(state, f, getFilm, ctx) : null;
+                            return m ? <span className="is-match">{m.match}% MATCH</span> : <span className="is-unseen">NOT SEEN</span>;
+                          })()
+                        )}
+                      </div>
                     </div>
                   </Link>
                 );
