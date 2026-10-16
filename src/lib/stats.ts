@@ -103,3 +103,96 @@ export function loggedYears(log: LogEntry[]): number[] {
   const years = new Set(log.map((e) => Number(e.watchedOn.slice(0, 4))));
   return [...years].sort((a, b) => b - a);
 }
+
+/** How the Seen list is ordered and sectioned. */
+export type SeenSort = 'watched' | 'score' | 'year' | 'genre';
+
+export interface SeenGroup {
+  key: string;
+  label: string;
+  entries: LogEntry[];
+}
+
+const byTitle = (getFilm: (id: string) => Film | undefined) => (a: LogEntry, b: LogEntry) =>
+  (getFilm(a.filmId)?.title ?? '').localeCompare(getFilm(b.filmId)?.title ?? '');
+
+/** Score bands, top down. A 10 gets its own band — it is a different statement from a 9.5. */
+const BANDS: { min: number; label: string }[] = [
+  { min: 10, label: '10 / MASTERPIECE' },
+  { min: 9, label: '9 – 9.9' },
+  { min: 8, label: '8 – 8.9' },
+  { min: 7, label: '7 – 7.9' },
+  { min: 6, label: '6 – 6.9' },
+  { min: 5, label: '5 – 5.9' },
+  { min: -Infinity, label: 'UNDER 5' },
+];
+
+/**
+ * The Seen list, sectioned by whichever axis was picked. `desc` is the
+ * natural reading for each: best first, newest first. Genre has no
+ * direction of its own — sections run largest first and `desc` orders the
+ * films inside them by score.
+ *
+ * A film carries several genres and appears under each. Filing it under
+ * only the first would hide Blade Runner from Neo-noir because its row
+ * happens to say Sci-fi first.
+ */
+export function groupSeen(
+  log: LogEntry[],
+  getFilm: (id: string) => Film | undefined,
+  sort: SeenSort,
+  desc: boolean,
+): SeenGroup[] {
+  const dir = desc ? -1 : 1;
+  const known = log.filter((e) => getFilm(e.filmId));
+  const title = byTitle(getFilm);
+
+  if (sort === 'watched') {
+    const groups = groupByMonth(known);
+    for (const g of groups) g.entries.sort((a, b) => dir * a.watchedOn.localeCompare(b.watchedOn));
+    return desc ? groups : groups.reverse();
+  }
+
+  if (sort === 'score') {
+    const ordered = [...known].sort((a, b) => dir * (a.score - b.score) || title(a, b));
+    const groups: SeenGroup[] = [];
+    for (const e of ordered) {
+      const band = BANDS.find((b) => e.score >= b.min)!;
+      const last = groups[groups.length - 1];
+      if (last && last.key === band.label) last.entries.push(e);
+      else groups.push({ key: band.label, label: band.label, entries: [e] });
+    }
+    return groups;
+  }
+
+  if (sort === 'year') {
+    const year = (e: LogEntry) => getFilm(e.filmId)!.year;
+    const ordered = [...known].sort((a, b) => dir * (year(a) - year(b)) || b.score - a.score);
+    const groups: SeenGroup[] = [];
+    for (const e of ordered) {
+      const dec = Math.floor(year(e) / 10) * 10;
+      const key = `${dec}s`;
+      const last = groups[groups.length - 1];
+      if (last && last.key === key) last.entries.push(e);
+      else groups.push({ key, label: `${dec}S`, entries: [e] });
+    }
+    return groups;
+  }
+
+  const byGenre = new Map<string, LogEntry[]>();
+  for (const e of known) {
+    const genres = getFilm(e.filmId)!.genres;
+    for (const g of genres.length ? genres : ['Other']) {
+      const list = byGenre.get(g) ?? [];
+      list.push(e);
+      byGenre.set(g, list);
+    }
+  }
+  return [...byGenre.entries()]
+    .sort((a, b) => b[1].length - a[1].length || a[0].localeCompare(b[0]))
+    .map(([g, entries]) => ({
+      key: g,
+      label: g.toUpperCase(),
+      entries: entries.sort((a, b) => dir * (a.score - b.score) || title(a, b)),
+    }));
+}
