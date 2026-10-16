@@ -490,11 +490,28 @@ function rawScore(c: Components, settings: Settings): number {
 }
 
 /**
- * Raw sits around 0.3-0.85 now the axes use their range, so a light
- * expansion puts a very strong match near the top without a crowd of films
- * pinned at 100 — which would also throw away the ordering between them.
+ * Raw to a percentage. Display only: the ranking is done on raw, so nothing
+ * here can change which films are picked or the leave-one-out bench.
+ *
+ * This used to be `raw * 1.06`, a straight line. But raw is a weighted mean
+ * of axes that each sit near 0.5 when they have nothing to say, so in
+ * practice it lives between about 0.35 and 0.75 — and a straight line kept
+ * the best film in the catalogue for a real library at 72-75%. Ron: "not one
+ * movie with 75+". The number undersold every pick it put first.
+ *
+ * An S-curve centred on the middle of that band instead: an ordinary film
+ * still reads in the fifties, a clear fit clears 80, the best few for a
+ * library with a real signal reach the nineties, and a film that runs
+ * against your scores drops into the twenties rather than sitting at 40.
+ * Measured on six libraries (October): the top pick lands 90-98 for every
+ * one with real spread in its scores, and a first-run library where every
+ * film is the same neutral 7.5 tops out near 70 — it should, nothing is
+ * known yet. Capped at 99: a percentage is a guess, never a certainty.
  */
-const toMatch = (raw: number) => Math.round(clamp01(raw * 1.06) * 100);
+const MATCH_CENTRE = 0.48;
+const MATCH_STEEPNESS = 11;
+const toMatch = (raw: number) =>
+  Math.min(99, Math.round(100 / (1 + Math.exp(-MATCH_STEEPNESS * ((Number.isFinite(raw) ? raw : 0) - MATCH_CENTRE)))));
 
 export interface Score {
   match: number;

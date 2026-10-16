@@ -40,9 +40,11 @@ input, textarea, select { font: inherit; color: inherit; }
     radial-gradient(60% 50% at 96% 92%, rgba(255, 77, 158, 0.12), transparent 60%),
     radial-gradient(90% 70% at 50% 50%, rgba(8, 14, 22, 0), rgba(2, 3, 6, 0.85) 100%);
 }
+/* No blend mode. `overlay` on a full-screen fixed layer makes the browser
+   re-composite everything under it on every scroll frame; on a phone that
+   showed up as posters and panels flashing blank while scrolling. */
 .grain {
-  opacity: 0.05;
-  mix-blend-mode: overlay;
+  opacity: 0.03;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 .scan {

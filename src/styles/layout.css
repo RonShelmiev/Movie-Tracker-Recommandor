@@ -961,3 +961,173 @@
 @media (max-width: 480px) {
   .match-pip { left: 5px; top: 5px; padding: 1px 4px; font-size: 9px; }
 }
+
+/* ── film page ────────────────────────────────────────────────────────
+   Poster-led, the way a film page is usually read: the artwork, the
+   title beside it, then the numbers. The old hero carried an art-* skin
+   directly, and that skin's ::after motif — a hairline or a rotated
+   diamond — drew straight across the title and the buttons. The skin now
+   lives on its own backdrop layer, under a veil. */
+.film-page { display: flex; flex-direction: column; }
+
+.film-hero { position: relative; overflow: hidden; isolation: isolate; }
+.film-backdrop { position: absolute; inset: 0; z-index: -2; }
+/* The skin's motif is decoration for a poster, not for a backdrop — and it
+   painted above the image, as a hairline through the title. */
+.film-backdrop::after { display: none; }
+.film-backdrop img {
+  position: absolute;
+  inset: -40px;
+  width: calc(100% + 80px);
+  height: calc(100% + 80px);
+  object-fit: cover;
+  filter: blur(22px) saturate(1.25);
+  opacity: 0.55;
+}
+.film-veil {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    radial-gradient(80% 90% at 85% 0%, rgba(255, 77, 158, 0.16), transparent 60%),
+    radial-gradient(70% 80% at 0% 100%, rgba(78, 226, 242, 0.14), transparent 60%),
+    linear-gradient(to bottom, rgba(4, 6, 10, 0.55), rgba(4, 6, 10, 0.92) 78%, var(--void));
+}
+.film-hero-inner {
+  padding: 22px 40px 30px;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+.film-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  align-self: flex-start;
+  color: var(--ink-3);
+  font: 400 12px var(--sans);
+  letter-spacing: 0.14em;
+}
+.film-head { display: flex; align-items: flex-end; gap: 28px; }
+.film-poster {
+  width: 200px;
+  flex-shrink: 0;
+  aspect-ratio: 2 / 3;
+  border: 1px solid var(--edge-3);
+  box-shadow: 0 0 0 1px rgba(4, 6, 10, 0.8), 0 24px 60px rgba(0, 0, 0, 0.6), 0 0 34px rgba(78, 226, 242, 0.12);
+}
+.film-titles { min-width: 0; padding-bottom: 4px; }
+.film-kicker { color: var(--cyan); }
+.film-titles h1 {
+  margin: 10px 0 0;
+  font: 700 clamp(30px, 4.2vw, 54px) var(--sans);
+  letter-spacing: 0.03em;
+  line-height: 1.02;
+  color: #f2fafd;
+  text-transform: uppercase;
+  text-wrap: balance;
+  overflow-wrap: break-word;
+  text-shadow: 0 2px 24px rgba(0, 0, 0, 0.6);
+}
+.film-meta {
+  margin-top: 14px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 0;
+  font: 400 11px var(--mono);
+  letter-spacing: 0.08em;
+  color: var(--ink-2);
+  text-transform: uppercase;
+}
+.film-meta > span + span::before { content: '/'; margin: 0 10px; color: var(--ink-7); }
+.film-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+.btn-on { border-color: var(--magenta); color: var(--magenta-hi); background: rgba(255, 77, 158, 0.08); }
+.btn-on:hover { border-color: var(--magenta-hi); color: var(--magenta-hi); }
+
+.film-scores {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1px;
+  margin: 0 40px;
+  border: 1px solid var(--edge-2);
+  background: var(--edge-2);
+}
+.film-scores.has-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.score-tile {
+  min-width: 0;
+  padding: 16px 18px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: #070b11;
+}
+.score-tile.is-for-you { background: linear-gradient(160deg, rgba(78, 226, 242, 0.09), rgba(255, 77, 158, 0.06)), #070b11; }
+.score-big {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  font: 500 40px var(--sans);
+  line-height: 1;
+  color: var(--cyan);
+}
+.score-big small { font: 500 0.45em var(--sans); color: var(--cyan-hi); }
+.score-big.is-empty { color: var(--ink-7); }
+.score-big.is-dim { color: var(--ink-hi); }
+.score-note { font: 400 10px var(--mono); letter-spacing: 0.08em; color: var(--ink-6); text-transform: uppercase; line-height: 1.5; }
+.score-cta { align-self: flex-start; font: 500 12px var(--sans); letter-spacing: 0.12em; text-transform: uppercase; }
+.film-scores .score-ticks { justify-content: flex-start; }
+.film-scores .score-ticks i { flex: 1 1 0; width: auto; max-width: 14px; }
+
+.fit-bar { height: 4px; background: rgba(126, 214, 232, 0.12); }
+.fit-bar > i {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, var(--cyan), var(--magenta));
+  box-shadow: 0 0 10px rgba(255, 77, 158, 0.45);
+}
+
+.film-body { padding-top: 30px; }
+
+@media (max-width: 860px) {
+  .film-hero-inner { padding: 16px 18px 22px; gap: 18px; }
+  .film-poster { width: 132px; }
+  .film-head { gap: 18px; }
+  .film-scores { margin: 0 18px; }
+}
+
+@media (max-width: 480px) {
+  .film-hero-inner { padding: 12px 12px 18px; gap: 16px; }
+  .film-head { align-items: flex-end; gap: 14px; }
+  .film-poster { width: 108px; }
+  .film-titles h1 { margin-top: 6px; font-size: 23px; letter-spacing: 0.02em; }
+  .film-meta { margin-top: 10px; font-size: 9.5px; letter-spacing: 0.05em; }
+  .film-meta > span + span::before { margin: 0 6px; }
+  .film-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .film-actions .btn { justify-content: center; padding: 0 10px; gap: 8px; font-size: 11px; letter-spacing: 0.08em; }
+  .film-scores { margin: 0 12px; }
+  .film-scores.has-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.score-tile { padding: 11px 10px 12px; gap: 7px; }
+  .score-big { font-size: 27px; gap: 3px 6px; }
+  .score-note { font-size: 8.5px; letter-spacing: 0.04em; }
+  .score-cta { font-size: 10.5px; }
+  .film-body { padding-top: 18px; }
+}
+
+/* ── phones: no live blur ─────────────────────────────────────────────
+   backdrop-filter re-blurs whatever scrolls beneath it on every frame.
+   With a sticky top bar, a fixed tab bar and a blurred panel per section,
+   a phone was doing that half a dozen times per frame, and mobile Safari
+   copes by dropping tiles — the "page is there but blank" flash. Near-
+   opaque fills look the same against this background at a fraction of
+   the cost. */
+@media (max-width: 860px) {
+  .panel { backdrop-filter: none; -webkit-backdrop-filter: none; background: rgba(8, 12, 19, 0.9); }
+  .topbar { backdrop-filter: none; -webkit-backdrop-filter: none; background: rgba(6, 10, 16, 0.97); }
+  .rail { backdrop-filter: none; -webkit-backdrop-filter: none; background: rgba(6, 10, 16, 0.98); }
+  .scrim { backdrop-filter: none; -webkit-backdrop-filter: none; background: rgba(2, 4, 7, 0.82); }
+  .update-bar { backdrop-filter: none; -webkit-backdrop-filter: none; }
+}
+
+
+
