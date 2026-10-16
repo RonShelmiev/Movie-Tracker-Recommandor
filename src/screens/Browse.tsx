@@ -38,6 +38,17 @@ export function Browse() {
   }, [candidates, state, getFilm, ctx, showMatch]);
 
   const seen = useMemo(() => new Set(state.log.map((e) => e.filmId)), [state.log]);
+  // Your latest score for each film you have rated. A rated film shows that
+  // rather than a match: the engine guessing at a film you already scored
+  // read as the app disagreeing with you (2049 at "53%" beside a 9.4).
+  const mine = useMemo(() => {
+    const m = new Map<string, { score: number; on: string }>();
+    for (const e of state.log) {
+      const prev = m.get(e.filmId);
+      if (!prev || e.watchedOn > prev.on) m.set(e.filmId, { score: e.score, on: e.watchedOn });
+    }
+    return m;
+  }, [state.log]);
   const listed = useMemo(() => new Set(state.watchlist.map((w) => w.filmId)), [state.watchlist]);
 
   const films = useMemo(() => {
@@ -115,6 +126,7 @@ export function Browse() {
               film={f}
               status={seen.has(f.id) ? 'seen' : listed.has(f.id) ? 'listed' : null}
               match={matches.get(f.id) ?? null}
+              mine={mine.get(f.id)?.score ?? null}
             />
           ))}
         </div>

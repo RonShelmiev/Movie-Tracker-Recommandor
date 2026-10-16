@@ -3,8 +3,8 @@ import { Link } from 'react-router-dom';
 import { useCatalogue } from '../lib/catalogue';
 import { useLogModal } from '../components/AppShell';
 import { Icon } from '../components/Icon';
-import { Thumb } from '../components/Poster';
-import { Chip, Meter, SectionHead } from '../components/ui';
+import { Poster, Thumb } from '../components/Poster';
+import { Chip, Meter, SectionHead, Stars } from '../components/ui';
 import { computeStats, genreCounts, groupSeen, loggedYears, perMonth } from '../lib/stats';
 import type { SeenSort } from '../lib/stats';
 import { useStore } from '../lib/store';
@@ -17,6 +17,16 @@ const SORTS: { id: SeenSort; label: string; desc: string; asc: string }[] = [
 ];
 
 const SORT_KEY = 'flick.seenSort.v1';
+const VIEW_KEY = 'flick.seenView.v1';
+type View = 'list' | 'posters';
+
+function loadView(): View {
+  try {
+    return localStorage.getItem(VIEW_KEY) === 'posters' ? 'posters' : 'list';
+  } catch {
+    return 'list';
+  }
+}
 
 /** The last sort you picked, remembered on this device only. */
 function loadSort(): { sort: SeenSort; desc: boolean } {
@@ -44,6 +54,17 @@ export function Seen() {
 
   const [order, setOrder] = useState(loadSort);
   const [onlyGenre, setOnlyGenre] = useState<string | null>(null);
+  // The list is for editing; the poster wall is for looking at what you
+  // have seen, the way Letterboxd shows a diary.
+  const [view, setView] = useState<View>(loadView);
+  const pickView = (v: View) => {
+    setView(v);
+    try {
+      localStorage.setItem(VIEW_KEY, v);
+    } catch {
+      /* not remembered, still applied */
+    }
+  };
   const pickOrder = (next: { sort: SeenSort; desc: boolean }) => {
     setOrder(next);
     try {
@@ -114,7 +135,10 @@ export function Seen() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
           <div className="sort-bar">
             <div className="sort-head">
-              <span className="lbl">Sort by</span>
+              <div className="view-switch" role="group" aria-label="View">
+                <button type="button" aria-pressed={view === 'list'} onClick={() => pickView('list')}>LIST</button>
+                <button type="button" aria-pressed={view === 'posters'} onClick={() => pickView('posters')}>POSTERS</button>
+              </div>
               <button
                 type="button"
                 className="sort-dir"
@@ -153,7 +177,25 @@ export function Seen() {
                 title={g.label}
                 right={<span className="meta" style={{ fontSize: 10, color: 'var(--ink-6)' }}>{g.entries.length} {g.entries.length === 1 ? 'FILM' : 'FILMS'}</span>}
               />
-              {g.entries.map((e) => {
+              {view === 'posters' ? (
+                <div className="seen-wall">
+                  {g.entries.map((e) => {
+                    const f = getFilm(e.filmId);
+                    if (!f) return null;
+                    return (
+                      <div key={`${e.id}-${g.key}`} className="seen-tile">
+                        <Poster film={f} caption={false} />
+                        {/* Tapping the stars edits the score, like a row in the list. */}
+                        <button type="button" className="seen-tile-score" onClick={() => editLog(e)} aria-label={`Edit the score for ${f.title}`}>
+                          <Stars score={e.score} size={11} />
+                          <span>{e.score.toFixed(1)}</span>
+                        </button>
+                        {e.rewatch && <span className="seen-tile-re" title="Rewatch">↻</span>}
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : g.entries.map((e) => {
                 const f = getFilm(e.filmId);
                 if (!f) return null;
                 const byDate = order.sort === 'watched';
