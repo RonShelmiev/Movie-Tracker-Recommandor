@@ -42,6 +42,26 @@ export interface Updater {
   reset: () => Promise<void>;
 }
 
+/** Asks the controlling worker for its build stamp; null if it will not say. */
+function workerVersion(): Promise<string | null> {
+  const ctl = navigator.serviceWorker.controller;
+  if (!ctl) return Promise.resolve(null);
+  return new Promise((resolve) => {
+    const channel = new MessageChannel();
+    const timer = setTimeout(() => resolve(null), 1500);
+    channel.port1.onmessage = (e) => {
+      clearTimeout(timer);
+      resolve(typeof e.data === 'string' ? e.data : null);
+    };
+    try {
+      ctl.postMessage('flick:version', [channel.port2]);
+    } catch {
+      clearTimeout(timer);
+      resolve(null);
+    }
+  });
+}
+
 const noop: Updater = { check: async () => {}, reset: async () => {} };
 
 /**
@@ -55,11 +75,24 @@ export function startUpdater(onWaiting: () => void): Updater {
 
   let registration: ServiceWorkerRegistration | null = null;
 
+  // Whether a worker was already in charge when this page loaded. On a first
+  // visit there is none: the page came straight from the network, so the
+  // worker that claims it a moment later has nothing newer to offer.
+  const hadController = Boolean(navigator.serviceWorker.controller);
+
   navigator.serviceWorker.addEventListener('controllerchange', () => {
-    // A new worker took over. Straight after launch that is the silent update
-    // this whole thing exists for; later it is a change under someone's hands.
-    if (Date.now() - startedAt < LAUNCH_GRACE) reload();
-    else onWaiting();
+    // A worker taking over used to mean an unconditional reload in the first
+    // six seconds. But the worker is network-first, so the page on screen is
+    // almost always the newest build already, and the reload only threw away
+    // whatever you had just tapped into — the app appeared to flicker and
+    // bounce on every launch after a deploy, and on every first visit.
+    // Reload only when the build actually differs from the one running.
+    if (!hadController) return;
+    void workerVersion().then((version) => {
+      if (version !== null && version === BUILD_ID) return;
+      if (Date.now() - startedAt < LAUNCH_GRACE) reload();
+      else onWaiting();
+    });
   });
 
   void navigator.serviceWorker

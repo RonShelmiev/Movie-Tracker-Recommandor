@@ -43,6 +43,12 @@ self.addEventListener('activate', (event) => {
 
 /** An explicit "drop everything" from the app's reset button. */
 self.addEventListener('message', (event) => {
+  // The page asks which build this worker belongs to, so it can tell a real
+  // update from a worker that merely took over the build already on screen.
+  if (event.data === 'flick:version') {
+    if (event.ports && event.ports[0]) event.ports[0].postMessage(VERSION);
+    return;
+  }
   if (event.data === 'flick:reset') {
     event.waitUntil(
       (async () => {

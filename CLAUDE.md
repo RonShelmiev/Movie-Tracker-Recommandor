@@ -92,6 +92,13 @@ path. Google Fonts is blocked too; inject the faces inline for screenshots.
   merged: the axes were redefined, so the old numbers no longer mean the
   same thing.
 
+  The percentage is an S-curve over raw (`MATCH_CENTRE`, `MATCH_STEEPNESS`),
+  not a straight scale: raw lives in roughly 0.35-0.75, so the old `raw *
+  1.06` capped the best pick for a real library near 72%. It is display
+  only — ranking is on raw, so the bench cannot see it. After touching it,
+  check the spread instead: top pick 90-98 for libraries with real spread in
+  their scores, around 70 for an all-7.5 first-run library.
+
   Nothing anyone else thinks reaches a pick unless `useCommunityScores` is
   switched on, which it is not by default. That setting also hides the
   acclaim figure on a film's page — the one place the crowd's verdict used to

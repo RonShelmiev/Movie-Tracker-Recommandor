@@ -6,6 +6,7 @@ import { useStore } from '../lib/store';
 import { Icon } from './Icon';
 import type { IconName } from './Icon';
 import { LogModal } from './LogModal';
+import { ScrollMemory } from './ScrollMemory';
 import type { LogEntry } from '../lib/types';
 
 interface LogControl {
@@ -50,6 +51,7 @@ export function AppShell() {
 
   return (
     <LogCtx.Provider value={{ openLog, editLog }}>
+      <ScrollMemory />
       <div className="atmo" />
       <div className="grain" />
       <div className="scan" />

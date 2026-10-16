@@ -5,7 +5,7 @@ import { useLogModal } from '../components/AppShell';
 import { Icon } from '../components/Icon';
 import { Thumb } from '../components/Poster';
 import { Chip, Meter } from '../components/ui';
-import { formatRuntime, recommend } from '../lib/recommend';
+import { formatRuntime, matchContext, scoreFilm } from '../lib/recommend';
 import { computeStats } from '../lib/stats';
 import { useStore } from '../lib/store';
 
@@ -18,16 +18,22 @@ export function ToSee() {
   const stats = computeStats(state, getFilm);
   const [filter, setFilter] = useState<Filter>('all');
 
-  // Match scores come from the same engine that produced the recommendations.
+  // Scored film by film with the same function the grid and the film page
+  // use. Running the recommender instead applied the hard rules, so a film on
+  // your list that was over the runtime ceiling showed no match at all.
   const matchById = useMemo(() => {
-    const all = recommend(
-      { ...state, watchlist: [] },
-      candidates,
-      getFilm,
-      candidates.length,
-    );
-    return new Map(all.map((r) => [r.film.id, r.match]));
-  }, [state]);
+    const ctx = matchContext(state, getFilm);
+    const out = new Map<string, number>();
+    for (const w of state.watchlist) {
+      const f = getFilm(w.filmId);
+      const s = f ? scoreFilm(state, f, getFilm, ctx) : null;
+      if (f && s) out.set(f.id, s.match);
+    }
+    return out;
+    // `candidates` changes whenever the film cache does, which is when
+    // getFilm starts answering for films it could not before.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state, getFilm, candidates]);
 
   const monthAgo = useMemo(() => {
     const d = new Date();
