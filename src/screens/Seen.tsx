@@ -5,8 +5,29 @@ import { useLogModal } from '../components/AppShell';
 import { Icon } from '../components/Icon';
 import { Thumb } from '../components/Poster';
 import { Chip, Meter, SectionHead } from '../components/ui';
-import { computeStats, genreCounts, groupByMonth, loggedYears, perMonth } from '../lib/stats';
+import { computeStats, genreCounts, groupSeen, loggedYears, perMonth } from '../lib/stats';
+import type { SeenSort } from '../lib/stats';
 import { useStore } from '../lib/store';
+
+const SORTS: { id: SeenSort; label: string; desc: string; asc: string }[] = [
+  { id: 'watched', label: 'Date watched', desc: 'Newest first', asc: 'Oldest first' },
+  { id: 'score', label: 'Score', desc: 'Highest first', asc: 'Lowest first' },
+  { id: 'year', label: 'Release year', desc: 'Newest first', asc: 'Oldest first' },
+  { id: 'genre', label: 'Genre', desc: 'Best first', asc: 'Worst first' },
+];
+
+const SORT_KEY = 'flick.seenSort.v1';
+
+/** The last sort you picked, remembered on this device only. */
+function loadSort(): { sort: SeenSort; desc: boolean } {
+  try {
+    const v = JSON.parse(localStorage.getItem(SORT_KEY) ?? 'null') as { sort?: string; desc?: boolean } | null;
+    if (v && SORTS.some((s) => s.id === v.sort)) return { sort: v.sort as SeenSort, desc: v.desc !== false };
+  } catch {
+    /* unavailable or corrupt — fall back to the default */
+  }
+  return { sort: 'watched', desc: true };
+}
 
 export function Seen() {
   const { getFilm } = useCatalogue();
@@ -21,7 +42,27 @@ export function Seen() {
     [state.log, year],
   );
 
-  const groups = groupByMonth(scoped);
+  const [order, setOrder] = useState(loadSort);
+  const [onlyGenre, setOnlyGenre] = useState<string | null>(null);
+  const pickOrder = (next: { sort: SeenSort; desc: boolean }) => {
+    setOrder(next);
+    try {
+      localStorage.setItem(SORT_KEY, JSON.stringify(next));
+    } catch {
+      /* not remembered, still applied */
+    }
+  };
+  const sortMeta = SORTS.find((x) => x.id === order.sort)!;
+
+  const allGroups = useMemo(
+    () => groupSeen(scoped, getFilm, order.sort, order.desc),
+    [scoped, getFilm, order],
+  );
+  // By genre, every film appears once per genre it carries, so the full list
+  // is long; a genre row lets you jump to one. It only offers genres that are
+  // actually in this slice of the log.
+  const genreChoice = onlyGenre && allGroups.some((g) => g.key === onlyGenre) ? onlyGenre : null;
+  const groups = order.sort === 'genre' && genreChoice ? allGroups.filter((g) => g.key === genreChoice) : allGroups;
   const months = perMonth(state.log, typeof year === 'number' ? year : new Date().getFullYear());
   const maxMonth = Math.max(1, ...months.map((m) => m.count));
   const genres = genreCounts(scoped, getFilm).slice(0, 5);
@@ -71,27 +112,73 @@ export function Seen() {
 
       <div className="split">
         <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+          <div className="sort-bar">
+            <div className="sort-head">
+              <span className="lbl">Sort by</span>
+              <button
+                type="button"
+                className="sort-dir"
+                onClick={() => pickOrder({ ...order, desc: !order.desc })}
+                aria-label={`Order: ${order.desc ? sortMeta.desc : sortMeta.asc}. Tap to reverse.`}
+              >
+                <span className={order.desc ? 'sort-arrow' : 'sort-arrow is-up'} aria-hidden="true">
+                  <Icon name="chevron-down" size={13} width={2} colour="var(--cyan)" />
+                </span>
+                <span>{(order.desc ? sortMeta.desc : sortMeta.asc).toUpperCase()}</span>
+              </button>
+            </div>
+            <div className="filter-row">
+              {SORTS.map((x) => (
+                <Chip
+                  key={x.id}
+                  label={x.label}
+                  on={order.sort === x.id}
+                  onClick={() => pickOrder({ sort: x.id, desc: order.sort === x.id ? order.desc : true })}
+                />
+              ))}
+            </div>
+            {order.sort === 'genre' && allGroups.length > 1 && (
+              <div className="filter-row">
+                <Chip label="All genres" on={!genreChoice} onClick={() => setOnlyGenre(null)} />
+                {allGroups.map((g) => (
+                  <Chip key={g.key} label={`${g.key} ${g.entries.length}`} on={genreChoice === g.key} onClick={() => setOnlyGenre(g.key)} />
+                ))}
+              </div>
+            )}
+          </div>
+
           {groups.map((g) => (
             <div key={g.key}>
               <SectionHead
                 title={g.label}
-                right={<span className="meta" style={{ fontSize: 10, color: 'var(--ink-6)' }}>{g.entries.length} FILMS</span>}
+                right={<span className="meta" style={{ fontSize: 10, color: 'var(--ink-6)' }}>{g.entries.length} {g.entries.length === 1 ? 'FILM' : 'FILMS'}</span>}
               />
-              {g.entries.map((e, i) => {
+              {g.entries.map((e) => {
                 const f = getFilm(e.filmId);
                 if (!f) return null;
+                const byDate = order.sort === 'watched';
                 return (
-                  <div key={`${e.filmId}-${e.watchedOn}-${i}`} className="log-row">
-                    <span className="log-day meta">{e.watchedOn.slice(8, 10)}</span>
+                  <div key={`${e.id}-${g.key}`} className="log-row">
+                    {/* The day of the month under a month heading; otherwise the
+                        heading says nothing about when, so the full date joins
+                        the first-watch flag instead. */}
+                    <span className="log-day meta">{byDate ? e.watchedOn.slice(8, 10) : ''}</span>
                     <span className="log-art">
                       <Thumb film={f} w={34} h={48} />
                     </span>
                     <div className="log-main">
                       <Link to={`/film/${f.id}`} className="log-title">{f.title}</Link>
-                      <div className="meta log-sub">{f.year} / {f.director.toUpperCase()}</div>
+                      <div className="meta log-sub">
+                        {f.year} / {f.director.toUpperCase()}
+                      </div>
                     </div>
                     <span className="log-kind meta" style={{ color: e.rewatch ? 'var(--amber)' : 'var(--ink-8)' }}>
                       {e.rewatch ? 'REWATCH' : 'FIRST WATCH'}
+                      {!byDate && (
+                        <span className="log-when">
+                          {new Date(e.watchedOn).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' }).toUpperCase()}
+                        </span>
+                      )}
                     </span>
                     {/* The score is the thing people come here to change, so it
                         is the control — this screen used to be read-only, which

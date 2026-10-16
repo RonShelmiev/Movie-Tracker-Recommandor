@@ -1131,3 +1131,32 @@
 
 
 
+
+/* ── Seen: sort bar ───────────────────────────────────────────────────
+   Which axis the log is sectioned by, and which way round. The chips
+   scroll sideways on a phone like every other filter row. */
+.sort-bar { display: flex; flex-direction: column; gap: 10px; }
+.sort-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.sort-dir {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 32px;
+  padding: 0 4px;
+  font: 500 10.5px var(--mono);
+  letter-spacing: 0.12em;
+  color: var(--cyan);
+}
+.sort-arrow { display: inline-flex; transition: transform 0.15s; }
+.sort-arrow.is-up { transform: rotate(180deg); }
+@media (max-width: 480px) {
+  .sort-bar { gap: 8px; }
+  .sort-dir { font-size: 9.5px; letter-spacing: 0.08em; }
+}
+/* Off the date sort, the flag carries the watch date too: its own line in
+   the narrow desktop column, run on after a dot on a phone. */
+.log-when { display: block; margin-top: 3px; color: var(--ink-6); }
+@media (max-width: 860px) {
+  .log-when { display: inline; margin-top: 0; }
+  .log-when::before { content: ' · '; }
+}
