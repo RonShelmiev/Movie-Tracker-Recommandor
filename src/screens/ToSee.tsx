@@ -5,7 +5,7 @@ import { useLogModal } from '../components/AppShell';
 import { Icon } from '../components/Icon';
 import { Thumb } from '../components/Poster';
 import { Chip, Meter } from '../components/ui';
-import { formatRuntime, recommend } from '../lib/recommend';
+import { buildTaste, formatRuntime, matchIsMeaningful, recommend } from '../lib/recommend';
 import { computeStats } from '../lib/stats';
 import { useStore } from '../lib/store';
 
@@ -28,6 +28,8 @@ export function ToSee() {
     );
     return new Map(all.map((r) => [r.film.id, r.match]));
   }, [state]);
+  // Same rule as everywhere else: no number until the log can justify one.
+  const showMatch = matchIsMeaningful(buildTaste(state.log, getFilm));
 
   const monthAgo = useMemo(() => {
     const d = new Date();
@@ -106,9 +108,11 @@ export function ToSee() {
               </div>
               <div style={{ width: 108, display: 'flex', alignItems: 'center', gap: 9 }}>
                 <div style={{ width: 54 }}>
-                  <Meter pct={matchById.get(film.id) ?? 0} />
+                  <Meter pct={showMatch ? matchById.get(film.id) ?? 0 : 0} dim={!showMatch} />
                 </div>
-                <span style={{ font: '500 12px var(--mono)', color: 'var(--ink-2)' }}>{matchById.get(film.id) ?? '—'}</span>
+                <span style={{ font: '500 12px var(--mono)', color: 'var(--ink-2)' }}>
+                  {showMatch ? matchById.get(film.id) ?? '—' : '—'}
+                </span>
               </div>
               <span className="meta" style={{ width: 92, fontSize: 10, color: 'var(--ink-7)' }}>
                 {new Date(w.addedOn).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }).toUpperCase()}

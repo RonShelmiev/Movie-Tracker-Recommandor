@@ -39,6 +39,14 @@ export interface LogEntry {
   rewatch: boolean;
   /** 0-10, one decimal. */
   score: number;
+  /**
+   * Marked as seen without an opinion — what onboarding records. It counts
+   * as watched, so it is never recommended, but it must not reach the taste
+   * profile: a placeholder score is not a verdict, and six of them at the
+   * same number flatten the profile into "no preferences", which is how
+   * every match ended up reading 59%.
+   */
+  unrated?: boolean;
   note?: string;
   /**
    * When this entry was last written, ISO with time. Sync needs it: with two

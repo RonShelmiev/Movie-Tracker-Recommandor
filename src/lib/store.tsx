@@ -144,7 +144,9 @@ function reducer(state: AppState, action: Action): AppState {
       };
     }
     case 'onboard': {
-      // Seeded films get a neutral score — enough to place them, not enough to pretend we know.
+      // Seen, but not an opinion. The score is a placeholder so the entry is
+      // well formed; `unrated` keeps it out of the taste profile, where six
+      // identical scores would otherwise read as "likes everything equally".
       const day = today();
       const entries: LogEntry[] = action.filmIds.map((filmId) => ({
         id: newId(),
@@ -152,6 +154,7 @@ function reducer(state: AppState, action: Action): AppState {
         watchedOn: day,
         rewatch: false,
         score: 7.5,
+        unrated: true,
       }));
       return { ...state, log: [...entries, ...state.log], onboarded: true };
     }

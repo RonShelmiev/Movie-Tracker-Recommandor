@@ -13,6 +13,14 @@ import type { AppState, Film, Genre, LogEntry, Recommendation, Settings, Tag } f
 export interface Taste {
   n: number;
   meanScore: number;
+  /**
+   * Standard deviation of your scores. Everything the engine knows comes
+   * from films sitting above or below your own average, so when this is near
+   * zero there is nothing to rank by and every match lands in the same
+   * narrow band — which looks like a broken percentage rather than an honest
+   * "I cannot tell yet".
+   */
+  spread: number;
   tag: Map<Tag, number>;
   genre: Map<Genre, number>;
   director: Map<string, { mean: number; n: number }>;
@@ -32,6 +40,7 @@ export interface Taste {
 const EMPTY_TASTE: Taste = {
   n: 0,
   meanScore: 7,
+  spread: 0,
   tag: new Map(),
   genre: new Map(),
   director: new Map(),
@@ -51,13 +60,19 @@ function normalise<K>(m: Map<K, number>): Map<K, number> {
 }
 
 export function buildTaste(log: LogEntry[], getFilm: (id: string) => Film | undefined): Taste {
+  // Entries marked seen without an opinion are deliberately absent: they
+  // still count as watched elsewhere, but a placeholder score is not a
+  // verdict and must not shape what gets recommended.
   const rated = log
     .map((e) => ({ e, f: getFilm(e.filmId) }))
-    .filter((x): x is { e: LogEntry; f: Film } => Boolean(x.f));
+    .filter((x): x is { e: LogEntry; f: Film } => Boolean(x.f) && !x.e.unrated);
 
   if (rated.length === 0) return EMPTY_TASTE;
 
   const meanScore = rated.reduce((s, x) => s + x.e.score, 0) / rated.length;
+  const spread = Math.sqrt(
+    rated.reduce((s, x) => s + (x.e.score - meanScore) ** 2, 0) / rated.length,
+  );
 
   const tag = new Map<Tag, number>();
   const genre = new Map<Genre, number>();
@@ -112,6 +127,7 @@ export function buildTaste(log: LogEntry[], getFilm: (id: string) => Film | unde
   return {
     n: rated.length,
     meanScore,
+    spread,
     tag: normalise(tag),
     genre: normalise(genre),
     director,
@@ -463,6 +479,15 @@ export function focusIsActive(f: Focus): boolean {
 const MIN_LOG_FOR_MATCH = 3;
 
 export const matchIsMeaningful = (taste: Taste) => taste.n >= MIN_LOG_FOR_MATCH;
+
+/**
+ * Enough ratings to score, but all so close together that the engine cannot
+ * separate anything — the percentages will cluster and no amount of tuning
+ * will spread them, because the information is not there. Worth saying out
+ * loud rather than leaving someone to wonder why nothing reaches 80.
+ */
+export const tasteIsFlat = (taste: Taste) =>
+  taste.n >= MIN_LOG_FOR_MATCH && taste.spread < 0.75;
 
 /** The weighted sum, 0..1, for a film already known to be scoreable. */
 /**
