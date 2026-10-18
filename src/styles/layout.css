@@ -961,3 +961,76 @@
 @media (max-width: 480px) {
   .match-pip { left: 5px; top: 5px; padding: 1px 4px; font-size: 9px; }
 }
+
+/* ── search results ───────────────────────────────────────────────────
+   The row carries two tap targets, not one: the film, and marking it seen
+   without leaving the results. They are siblings because a button cannot
+   live inside a link, so the row's widths are set here rather than inline —
+   the phone override for .list-row children only reaches direct children,
+   and the old fixed 280px title column would have been out of its reach. */
+.search-row { gap: 14px; min-height: 74px; }
+.search-row-main {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-grow: 1;
+  min-width: 0;
+}
+.search-row-text { display: block; min-width: 0; }
+/* Wraps to two lines rather than cutting off at one: the title is what he
+   is scanning for, and the row has given its right-hand side to the button. */
+.search-row-title {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  font: 500 16px var(--sans);
+  letter-spacing: 0.03em;
+  line-height: 1.25;
+  color: var(--ink-hi);
+  overflow: hidden;
+}
+.search-row-meta {
+  display: block;
+  margin-top: 5px;
+  font-size: 10px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.search-row-meta b { color: var(--magenta); font-weight: 400; }
+.search-row-act { flex-shrink: 0; padding: 0 15px; }
+.search-row-act.is-seen {
+  border-color: rgba(78, 226, 242, 0.4);
+  color: var(--cyan);
+  font-family: var(--mono);
+}
+
+/* Two children, and the second must stay on the row — .list-row wraps on a
+   phone for the four-column to-see table, which this is not. */
+@media (max-width: 860px) {
+  .search-row { flex-wrap: nowrap; gap: 12px; padding: 14px 16px; }
+  .search-row-main { gap: 12px; }
+  .search-row-title { font-size: 14.5px; }
+  .search-row-act { padding: 0 12px; letter-spacing: 0.08em; }
+}
+
+/* ── back out of a film ───────────────────────────────────────────────
+   Says where it goes, which is wherever you came from. */
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 40px;
+  color: var(--ink-3);
+}
+.back-link span {
+  font: 400 12px var(--sans);
+  letter-spacing: 0.14em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.back-link:hover { color: var(--ink-hi); }
+@media (max-width: 480px) {
+  .back-link span { font-size: 11px; letter-spacing: 0.1em; }
+}

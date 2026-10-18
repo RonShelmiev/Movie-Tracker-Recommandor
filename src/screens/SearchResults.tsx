@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useCatalogue } from '../lib/catalogue';
+import { useLogModal } from '../components/AppShell';
 import { Icon } from '../components/Icon';
 import { Thumb } from '../components/Poster';
 import { StarterBanner } from '../components/StarterBanner';
@@ -14,6 +15,7 @@ export function SearchResults() {
   const q = (params.get('q') ?? '').trim();
   const { search, candidates, mode, busy, lastError } = useCatalogue();
   const { state } = useStore();
+  const { openLog, editLog } = useLogModal();
   const lower = q.toLowerCase();
   const [hits, setHits] = useState<Film[]>([]);
 
@@ -60,6 +62,11 @@ export function SearchResults() {
     if (!entries.length) return null;
     return entries.reduce((s, e) => s + e.score, 0) / entries.length;
   };
+  /* Logging happens here rather than on the film page. Three Spider-Mans is
+     three round trips otherwise — tap one, score it, come back, retype the
+     search — so the modal opens over the results and leaves them standing. */
+  const latestEntry = (filmId: string) =>
+    state.log.filter((e) => e.filmId === filmId).sort((a, b) => b.watchedOn.localeCompare(a.watchedOn))[0];
   const listed = new Set(state.watchlist.map((w) => w.filmId));
 
   const results = [...new Set([...films, ...byPerson])];
@@ -132,27 +139,45 @@ export function SearchResults() {
               .sort((a, b) => b.year - a.year)
               .map((f) => {
                 const score = scoreOf(f.id);
+                const entry = latestEntry(f.id);
                 return (
-                  <Link key={f.id} to={`/film/${f.id}`} className="list-row" style={{ minHeight: 74 }}>
-                    <Thumb film={f} w={44} h={62} />
-                    <div style={{ width: 280 }}>
-                      <div style={{ font: '500 16px var(--sans)', letterSpacing: '0.03em', color: 'var(--ink-hi)' }}>{f.title}</div>
-                      <div className="meta" style={{ marginTop: 5, fontSize: 10 }}>{f.year} / {formatRuntime(f.runtime).toUpperCase()}</div>
-                    </div>
-                    <span style={{ flexGrow: 1, minWidth: 0, font: '300 13px var(--sans)', color: 'var(--ink-5)' }}>{f.director}</span>
-                    <div style={{ width: 110, display: 'flex', justifyContent: 'flex-end' }}>
-                      {score !== null ? (
-                        <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                          <Icon name="seen" size={14} width={1.9} colour="var(--cyan)" />
-                          <span style={{ font: '500 13px var(--mono)', color: 'var(--cyan)' }}>{score.toFixed(1)}</span>
+                  <div key={f.id} className="list-row search-row">
+                    <Link to={`/film/${f.id}`} className="search-row-main">
+                      <Thumb film={f} w={44} h={62} />
+                      <span className="search-row-text">
+                        <span className="search-row-title">{f.title}</span>
+                        <span className="meta search-row-meta">
+                          {/* Front of the line: on a phone the tail of this
+                              row is the first thing to be ellipsised away. */}
+                          {listed.has(f.id) && score === null && <b>ON YOUR LIST / </b>}
+                          {f.year} / {formatRuntime(f.runtime).toUpperCase()} / {f.director.toUpperCase()}
                         </span>
-                      ) : listed.has(f.id) ? (
-                        <span style={{ font: '400 11px var(--mono)', letterSpacing: '0.1em', color: 'var(--magenta)' }}>ON LIST</span>
-                      ) : (
-                        <span style={{ font: '400 11px var(--mono)', letterSpacing: '0.1em', color: 'var(--ink-8)' }}>NOT SEEN</span>
-                      )}
-                    </div>
-                  </Link>
+                      </span>
+                    </Link>
+                    {score !== null ? (
+                      <button
+                        type="button"
+                        className="btn btn-sm search-row-act is-seen"
+                        onClick={() => editLog(entry)}
+                        aria-label={`Change your ${score.toFixed(1)} for ${f.title}`}
+                      >
+                        <Icon name="seen" size={14} width={1.9} colour="var(--cyan)" />
+                        <span>{score.toFixed(1)}</span>
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        className="btn btn-sm search-row-act"
+                        onClick={() => openLog(f.id)}
+                        aria-label={`Mark ${f.title} seen`}
+                      >
+                        {/* Same words as the button on the film page, and no
+                            icon: a tick here reads as "you have seen this"
+                            rather than as something to tap. */}
+                        MARK SEEN
+                      </button>
+                    )}
+                  </div>
                 );
               })}
           </div>

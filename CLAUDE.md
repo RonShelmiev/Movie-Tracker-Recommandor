@@ -35,6 +35,12 @@ Worth reproducing when touching stored state: plant `localStorage` with
 `page.addInitScript`, not `page.evaluate` after load — the running app's
 persist effect will otherwise overwrite it and the test lies.
 
+Read a value by a class that exists for it, never by position. `.rec-card`'s
+first `<span>` used to be the match percentage; once that block became
+conditional the same selector quietly returned a different element and three
+harnesses reported `0%` for a screen that was rendering correctly. The match
+block is `.rec-match` for exactly this reason.
+
 ## Measuring the recommender
 
 "Are these good picks?" has no answer without knowing whose taste they are
@@ -96,6 +102,30 @@ path. Google Fonts is blocked too; inject the faces inline for screenshots.
   switched on, which it is not by default. That setting also hides the
   acclaim figure on a film's page — the one place the crowd's verdict used to
   sit next to the user's own.
+
+  **The percentage ceiling lives in the library, not the maths.** Ron's
+  complaint that nothing ever reached 80% was true and had nothing to do with
+  the formula: onboarding logged its films at a flat 7.5, and a log with no
+  score variation gives the engine nothing to rank by — every film comes back
+  55-59%. Those entries now carry `unrated: true` and `buildTaste` skips
+  them. With a real spread the catalogue reaches 95-100%. Two guards follow
+  from this and must move together, because a screen quoting a number while
+  its neighbour withholds one is worse than either: `matchIsMeaningful`
+  (three rated films) gates the pips on Browse, the cards on For You, the
+  hero on the dashboard and the queue on To See, and `scoreFilm` returns null
+  so a film page omits it; `tasteIsFlat` drives the For You notice that
+  explains a bunched profile. Never paper over either by widening the
+  multiplier — that is how 59% became the answer to everything.
+- `src/components/AppShell.tsx` — holds the log modal and `PlaceCtx`, the last
+  screen you were on that was not a film page. The film page's back link reads
+  it, so leaving a film returns to the search you ran rather than to Browse.
+  It is tracked centrally because posters, search rows, the dashboard and For
+  You all link to a film and each would otherwise have to remember to say
+  where it came from. Film routes are skipped deliberately: following "more
+  like this" twice should still leave the way back to the list you started
+  from. The topbar's search box is filled from `?q=` on arrival for the same
+  reason — coming back to results with an empty box is the same lost place.
+
 - `src/lib/catalogue.tsx` — one provider over the bundled 89 films plus a
   cache of everything the user has touched. The cache is load-bearing: the log
   stores ids, and stats and recommendations need metadata synchronously and

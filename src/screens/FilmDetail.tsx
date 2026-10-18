@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useCatalogue } from '../lib/catalogue';
-import { useLogModal } from '../components/AppShell';
+import { useLastPlace, useLogModal } from '../components/AppShell';
 import { Icon } from '../components/Icon';
 import { Poster } from '../components/Poster';
 import { SectionHead } from '../components/ui';
@@ -31,6 +31,10 @@ export function FilmDetail() {
   const { candidates, getFilm, load } = useCatalogue();
   const { state, dispatch } = useStore();
   const { openLog, editLog } = useLogModal();
+  /* Back goes where you actually came from. Marking three films seen off one
+     search used to mean three trips through Browse and three retyped
+     searches. */
+  const back = useLastPlace() ?? { to: '/browse', label: 'BACK TO BROWSE' };
   const film = id ? getFilm(id) : undefined;
 
   // A TMDB film nobody has searched for on this device is not cached yet.
@@ -82,9 +86,9 @@ export function FilmDetail() {
         <div className="glow-b" />
         <div className="veil" />
         <div className="inner">
-          <Link to="/browse" style={{ display: 'inline-flex', alignItems: 'center', gap: 10, color: 'var(--ink-3)' }}>
+          <Link to={back.to} className="back-link">
             <Icon name="chevron-left" size={15} width={1.8} />
-            <span style={{ font: '400 12px var(--sans)', letterSpacing: '0.14em' }}>BROWSE ALL</span>
+            <span>{back.label}</span>
           </Link>
 
           <div style={{ marginTop: 'auto', display: 'flex', alignItems: 'flex-end', gap: 32, flexWrap: 'wrap' }}>
