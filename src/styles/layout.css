@@ -1289,8 +1289,41 @@
 .search-row-status .is-listed { color: var(--magenta); }
 .search-row-status .is-match { color: var(--cyan); }
 .search-row-status .is-unseen { color: var(--ink-8); }
+
+/* The row and its log button are siblings — a button cannot live inside a
+   link — so the link takes the flexible width and the button keeps its own. */
+.search-row-link {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  flex-grow: 1;
+  min-width: 0;
+  color: inherit;
+}
+.search-row-act {
+  flex-shrink: 0;
+  align-self: center;
+  flex-direction: column;
+  gap: 4px;
+  width: 58px;
+  height: auto;
+  padding: 10px 0;
+  font-size: 9.5px;
+  letter-spacing: 0.14em;
+}
+.search-row-act:hover { border-color: var(--cyan); }
+
+/* Where "back" goes now says where it goes, and some of those are longer
+   than BROWSE ALL was. */
+.film-back span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 @media (max-width: 480px) {
   .search-row { padding: 12px; gap: 12px; }
+  .search-row-link { gap: 12px; }
+  .search-row-act { width: 54px; }
   .search-row-title { font-size: 15px; }
   .search-row-title > span { font-size: 12.5px; }
   .search-row-by { font-size: 11.5px; }

@@ -1,3 +1,4 @@
+import { isRated } from './store';
 import type { AppState, Film, Genre, LogEntry } from './types';
 
 export interface Stats {
@@ -22,6 +23,7 @@ export function computeStats(
   getFilm: (id: string) => Film | undefined,
 ): Stats {
   const rated = state.log.filter((e) => getFilm(e.filmId));
+  const scored = rated.filter(isRated);
   const minutes = rated.reduce((s, e) => s + (getFilm(e.filmId)?.runtime ?? 0), 0);
   const cutoff = dayjsAgo(30);
   return {
@@ -29,7 +31,9 @@ export function computeStats(
     distinct: new Set(rated.map((e) => e.filmId)).size,
     toSee: state.watchlist.length,
     hours: Math.round(minutes / 60),
-    meanScore: rated.length ? rated.reduce((s, e) => s + e.score, 0) / rated.length : 0,
+    // Of the films you scored, not of the films you logged: a first-run
+    // "seen" carries a placeholder, and averaging it in moves this number.
+    meanScore: scored.length ? scored.reduce((s, e) => s + e.score, 0) / scored.length : 0,
     seenLast30: rated.filter((e) => e.watchedOn >= cutoff).length,
     addedLast30: state.watchlist.filter((w) => w.addedOn >= cutoff).length,
     queuedMinutes: state.watchlist.reduce((s, w) => s + (getFilm(w.filmId)?.runtime ?? 0), 0),

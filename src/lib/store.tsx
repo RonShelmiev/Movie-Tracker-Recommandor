@@ -50,6 +50,21 @@ export type Action =
 
 const today = () => new Date().toISOString().slice(0, 10);
 
+/**
+ * A watch with a verdict behind it. Films marked seen during first-run are
+ * recorded as watched at a placeholder 7.5 — showing that back as "your
+ * score" claims an opinion nobody gave. The engine already skips them; so
+ * must anything that prints a number next to your name.
+ */
+export const isRated = (e: LogEntry) => !e.unrated;
+
+/** Your score for a film, or null if you have watched it without rating it. */
+export function myScoreFor(log: LogEntry[], filmId: string): number | null {
+  const rated = log.filter((e) => e.filmId === filmId && isRated(e));
+  if (!rated.length) return null;
+  return rated.reduce((s, e) => s + e.score, 0) / rated.length;
+}
+
 export const newId = () =>
   `e${Date.now().toString(36)}${Math.random().toString(36).slice(2, 7)}`;
 
@@ -144,7 +159,9 @@ function reducer(state: AppState, action: Action): AppState {
       };
     }
     case 'onboard': {
-      // Seeded films get a neutral score — enough to place them, not enough to pretend we know.
+      // Seen, but not an opinion. The score is a placeholder so the entry is
+      // well formed; `unrated` keeps it out of the taste profile, where six
+      // identical scores would otherwise read as "likes everything equally".
       const day = today();
       const entries: LogEntry[] = action.filmIds.map((filmId) => ({
         id: newId(),
@@ -152,6 +169,7 @@ function reducer(state: AppState, action: Action): AppState {
         watchedOn: day,
         rewatch: false,
         score: 7.5,
+        unrated: true,
       }));
       return { ...state, log: [...entries, ...state.log], onboarded: true };
     }

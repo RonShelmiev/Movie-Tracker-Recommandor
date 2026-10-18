@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useCatalogue } from '../lib/catalogue';
-import { useLogModal } from '../components/AppShell';
+import { useLastPlace, useLogModal } from '../components/AppShell';
 import { Icon } from '../components/Icon';
 import { Poster } from '../components/Poster';
 import { SectionHead, Stars } from '../components/ui';
 import { crowdRating, formatRuntime, matchContext, scoreFilm } from '../lib/recommend';
 import { posterUrl } from '../lib/tmdb';
-import { useStore } from '../lib/store';
+import { isRated, myScoreFor, useStore } from '../lib/store';
 import type { Film } from '../lib/types';
 
 function similar(film: Film, pool: Film[], limit = 5): Film[] {
@@ -32,6 +32,10 @@ export function FilmDetail() {
   const { candidates, getFilm, load } = useCatalogue();
   const { state, dispatch } = useStore();
   const { openLog, editLog } = useLogModal();
+  /* Back goes where you actually came from. Marking three films seen off one
+     search used to mean three trips through Browse and three retyped
+     searches. */
+  const back = useLastPlace() ?? { to: '/browse', label: 'BROWSE ALL' };
   const film = id ? getFilm(id) : undefined;
 
   // A TMDB film nobody has searched for on this device is not cached yet.
@@ -51,7 +55,7 @@ export function FilmDetail() {
     return (
       <div className="screen">
         <div className="empty-note">
-          {loading ? 'Fetching that film from TMDB…' : <>That film is not in the catalogue. <Link to="/browse">Browse everything</Link>.</>}
+          {loading ? 'Fetching that film from TMDB…' : <>That film is not in the catalogue. <Link to={back.to}>Go back</Link>.</>}
         </div>
       </div>
     );
@@ -59,7 +63,7 @@ export function FilmDetail() {
 
   const entries = state.log.filter((e) => e.filmId === film.id).sort((a, b) => b.watchedOn.localeCompare(a.watchedOn));
   const listed = state.watchlist.some((w) => w.filmId === film.id);
-  const myScore = entries.length ? entries.reduce((s, e) => s + e.score, 0) / entries.length : null;
+  const myScore = myScoreFor(state.log, film.id);
   // Independent of whether the engine would *offer* this film — seen, listed
   // and over-the-ceiling titles all still have an honest fit.
   const ctx = matchContext(state, getFilm);
@@ -99,9 +103,9 @@ export function FilmDetail() {
         <div className="film-veil" aria-hidden="true" />
 
         <div className="film-hero-inner">
-          <Link to="/browse" className="film-back">
+          <Link to={back.to} className="film-back">
             <Icon name="chevron-left" size={15} width={1.8} />
-            <span>BROWSE ALL</span>
+            <span>{back.label}</span>
           </Link>
 
           <div className="film-head">
@@ -260,7 +264,9 @@ export function FilmDetail() {
                           {new Date(e.watchedOn).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
                         </span>
                         <span className="meta" style={{ fontSize: 10, color: 'var(--ink-6)' }}>{e.rewatch ? 'REWATCH' : 'FIRST'}</span>
-                        <span style={{ font: '500 15px var(--mono)', color: 'var(--cyan)' }}>{e.score.toFixed(1)}</span>
+                        <span style={{ font: '500 15px var(--mono)', color: isRated(e) ? 'var(--cyan)' : 'var(--ink-7)' }}>
+                          {isRated(e) ? e.score.toFixed(1) : '—'}
+                        </span>
                         <Icon name="pencil" size={14} width={1.6} colour="var(--ink-6)" />
                       </button>
                       <button

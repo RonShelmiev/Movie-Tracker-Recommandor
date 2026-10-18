@@ -6,9 +6,9 @@ import { Poster, Thumb } from '../components/Poster';
 import { posterUrl } from '../lib/tmdb';
 import { StarterBanner } from '../components/StarterBanner';
 import { Meter, SectionHead, Stat } from '../components/ui';
-import { buildTaste, formatRuntime, recommend } from '../lib/recommend';
+import { buildTaste, formatRuntime, matchIsMeaningful, recommend } from '../lib/recommend';
 import { computeStats } from '../lib/stats';
-import { useStore } from '../lib/store';
+import { isRated, useStore } from '../lib/store';
 
 const TAG_LABEL: Record<string, string> = {
   cerebral: 'Cerebral',
@@ -33,6 +33,9 @@ export function Dashboard() {
   const taste = buildTaste(state.log, getFilm);
   const recs = recommend(state, candidates, getFilm, 8);
   const top = recs[0];
+  // Browse and For You both withhold the number until there is something
+  // behind it. The hero cannot be the one screen still quoting one.
+  const showMatch = matchIsMeaningful(taste);
 
   const nextUp = state.watchlist
     .map((w) => ({ w, film: getFilm(w.filmId) }))
@@ -55,8 +58,12 @@ export function Dashboard() {
           <div className="hero-body">
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               <span className="lbl" style={{ color: 'var(--cyan)' }}>Tonight&rsquo;s pick</span>
-              <span style={{ width: 26, height: 1, background: 'var(--edge-3)' }} />
-              <span className="meta" style={{ color: 'var(--cyan)', letterSpacing: '0.14em' }}>{top.match}% MATCH</span>
+              {showMatch && (
+                <>
+                  <span style={{ width: 26, height: 1, background: 'var(--edge-3)' }} />
+                  <span className="meta" style={{ color: 'var(--cyan)', letterSpacing: '0.14em' }}>{top.match}% MATCH</span>
+                </>
+              )}
             </div>
 
             <Link to={`/film/${top.film.id}`} className="hero-title">
@@ -141,8 +148,8 @@ export function Dashboard() {
                         {new Date(e.watchedOn).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }).toUpperCase()} / {e.rewatch ? 'REWATCH' : 'FIRST WATCH'}
                       </div>
                     </div>
-                    <span style={{ font: '500 14px var(--mono)', color: e.score >= taste.meanScore ? 'var(--cyan)' : 'var(--ink-4)' }}>
-                      {e.score.toFixed(1)}
+                    <span style={{ font: '500 14px var(--mono)', color: !isRated(e) ? 'var(--ink-7)' : e.score >= taste.meanScore ? 'var(--cyan)' : 'var(--ink-4)' }}>
+                      {isRated(e) ? e.score.toFixed(1) : '—'}
                     </span>
                   </Link>
                 );

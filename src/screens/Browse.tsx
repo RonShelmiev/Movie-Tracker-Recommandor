@@ -5,7 +5,7 @@ import { Poster } from '../components/Poster';
 import { StarterBanner } from '../components/StarterBanner';
 import { Chip } from '../components/ui';
 import { matchContext, matchIsMeaningful, scoreFilm } from '../lib/recommend';
-import { useStore } from '../lib/store';
+import { isRated, useStore } from '../lib/store';
 import type { Genre } from '../lib/types';
 
 const GENRES: Genre[] = ['Sci-fi', 'Neo-noir', 'Drama', 'Thriller', 'Crime', 'Animation', 'Horror', 'Action', 'Mystery'];
@@ -44,6 +44,8 @@ export function Browse() {
   const mine = useMemo(() => {
     const m = new Map<string, { score: number; on: string }>();
     for (const e of state.log) {
+      // A first-run "seen" is not a 7.5 you gave it.
+      if (!isRated(e)) continue;
       const prev = m.get(e.filmId);
       if (!prev || e.watchedOn > prev.on) m.set(e.filmId, { score: e.score, on: e.watchedOn });
     }

@@ -5,9 +5,17 @@ import { Icon } from '../components/Icon';
 import { Thumb } from '../components/Poster';
 import { posterUrl } from '../lib/tmdb';
 import { Chip, SectionHead } from '../components/ui';
-import { buildTaste, focusIsActive, formatRuntime, recommend, seedClusters } from '../lib/recommend';
+import {
+  buildTaste,
+  focusIsActive,
+  formatRuntime,
+  matchIsMeaningful,
+  recommend,
+  seedClusters,
+  tasteIsFlat,
+} from '../lib/recommend';
 import type { Focus } from '../lib/recommend';
-import { useStore } from '../lib/store';
+import { isRated, useStore } from '../lib/store';
 import type { Tag } from '../lib/types';
 
 /** Readable names for the tags that can be steered by. */
@@ -52,10 +60,12 @@ export function ForYou() {
 
   const taste = useMemo(() => buildTaste(state.log, getFilm), [state.log, getFilm]);
 
-  /** Your best-rated films, as things to say "more like this" about. */
+  /** Your best-rated films, as things to say "more like this" about. A film
+      you only marked seen has no verdict to be "more like". */
   const seedChoices = useMemo(
     () =>
-      [...state.log]
+      state.log
+        .filter(isRated)
         .sort((a, b) => b.score - a.score)
         .map((e) => ({ e, f: getFilm(e.filmId) }))
         .filter((x): x is { e: typeof x.e; f: NonNullable<typeof x.f> } => Boolean(x.f))
@@ -99,6 +109,10 @@ export function ForYou() {
   );
   const clusters = useMemo(() => seedClusters(recs, state, getFilm), [recs, state, getFilm]);
 
+  /* Browse withholds its pips when there is nothing to go on; the cards must
+     agree. Ranking still works — it can order films without claiming to know
+     by how much. */
+  const showMatch = matchIsMeaningful(taste);
   const top = recs.slice(0, 3);
   const rest = recs.slice(3, 15);
   const active = focusIsActive(focus);
@@ -146,6 +160,64 @@ export function ForYou() {
           TUNE MY TASTE
         </Link>
       </div>
+
+      {/* Everything the engine knows comes from films sitting above or below
+          your own average, so scores packed into one band leave it nothing
+          to rank by. Better to say so than to let the percentages look
+          broken. */}
+      {(() => {
+        const unrated = state.log.length - taste.n;
+        if (taste.n === 0 && state.log.length > 0) {
+          return (
+            <div className="starter-note">
+              <span className="starter-dot" aria-hidden="true" />
+              <span>
+                <b>NOTHING RATED YET</b>
+                <span>
+                  {state.log.length} {state.log.length === 1 ? 'film is' : 'films are'} marked as seen,
+                  but none carries a score — marking something seen says you watched it, not what you
+                  thought. Tap any of them on <Link to="/seen">Seen</Link> and give it a number, and
+                  matching turns on.
+                </span>
+              </span>
+            </div>
+          );
+        }
+        if (taste.n > 0 && taste.n < 3) {
+          return (
+            <div className="starter-note">
+              <span className="starter-dot" aria-hidden="true" />
+              <span>
+                <b>{taste.n} {taste.n === 1 ? 'FILM' : 'FILMS'} RATED</b>
+                <span>
+                  Three is where percentages start appearing
+                  {unrated > 0 ? `; the other ${unrated} are marked seen but unscored` : ''}. The
+                  further apart you rate things, the sharper it gets.
+                </span>
+              </span>
+            </div>
+          );
+        }
+        if (tasteIsFlat(taste)) {
+          return (
+            <div className="starter-note">
+              <span className="starter-dot" aria-hidden="true" />
+              <span>
+                <b>YOUR SCORES ARE CLOSE TOGETHER</b>
+                <span>
+                  A spread of {taste.spread.toFixed(1)} across {taste.n} rated{' '}
+                  {taste.n === 1 ? 'film' : 'films'}. Matching reads the gap between what you loved and
+                  what you merely finished, so while your scores sit in one band every film comes back
+                  in one band too — which is why nothing here stands out. Put your favourites at 9 and
+                  10 and the ones you shrugged at down at 5 and 6, and it sharpens more than any
+                  setting on this page.
+                </span>
+              </span>
+            </div>
+          );
+        }
+        return null;
+      })()}
 
       {/* Tune My Taste holds the standing profile. These steer tonight only,
           and are deliberately not saved. */}
@@ -219,10 +291,12 @@ export function ForYou() {
                 {rec.film.posterPath && <img className="art-img" src={posterUrl(rec.film.posterPath, 'w342')} alt="" />}
               </div>
               <div style={{ flexGrow: 1, minWidth: 0, padding: 18, display: 'flex', flexDirection: 'column' }}>
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
-                  <span style={{ font: '500 24px var(--sans)', color: 'var(--cyan)' }}>{rec.match}</span>
-                  <span className="lbl" style={{ color: 'var(--cyan)' }}>% match</span>
-                </div>
+                {showMatch && (
+                  <div className="rec-match" style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+                    <span style={{ font: '500 24px var(--sans)', color: 'var(--cyan)' }}>{rec.match}</span>
+                    <span className="lbl" style={{ color: 'var(--cyan)' }}>% match</span>
+                  </div>
+                )}
                 <Link to={`/film/${rec.film.id}`} className="rec-title">{rec.film.title.toUpperCase()}</Link>
                 <div className="meta" style={{ marginTop: 7, fontSize: 10 }}>
                   {rec.film.year} / {rec.film.director.toUpperCase()} / {formatRuntime(rec.film.runtime).toUpperCase()}
@@ -291,7 +365,7 @@ export function ForYou() {
                   aria-label={`Add ${r.film.title} to your To See list`}
                 >
                   <span style={{ width: 34, textAlign: 'right', font: '500 14px var(--mono)', color: 'var(--cyan)' }}>
-                    {r.match}
+                    {showMatch ? r.match : ''}
                   </span>
                   <Icon name="tosee" size={14} width={1.8} colour="var(--ink-5)" />
                 </button>
@@ -323,7 +397,9 @@ export function ForYou() {
                       <Thumb film={r.film} w={26} h={38} />
                       <span style={{ flexGrow: 1, minWidth: 0, font: '300 13px var(--sans)', color: 'var(--ink-2)' }}>{r.film.title}</span>
                       <span className="meta" style={{ fontSize: 10, color: 'var(--ink-7)' }}>{r.film.year}</span>
-                      <span style={{ width: 30, textAlign: 'right', font: '500 12px var(--mono)', color: 'var(--cyan)' }}>{r.match}</span>
+                      <span style={{ width: 30, textAlign: 'right', font: '500 12px var(--mono)', color: 'var(--cyan)' }}>
+                        {showMatch ? r.match : ''}
+                      </span>
                     </Link>
                   ))}
                 </div>

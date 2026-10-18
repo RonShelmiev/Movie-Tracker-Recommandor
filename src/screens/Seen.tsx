@@ -7,7 +7,7 @@ import { Poster, Thumb } from '../components/Poster';
 import { Chip, Meter, SectionHead, Stars } from '../components/ui';
 import { computeStats, genreCounts, groupSeen, loggedYears, perMonth } from '../lib/stats';
 import type { SeenSort } from '../lib/stats';
-import { useStore } from '../lib/store';
+import { isRated, useStore } from '../lib/store';
 
 const SORTS: { id: SeenSort; label: string; desc: string; asc: string }[] = [
   { id: 'watched', label: 'Date watched', desc: 'Newest first', asc: 'Oldest first' },
@@ -186,9 +186,15 @@ export function Seen() {
                       <div key={`${e.id}-${g.key}`} className="seen-tile">
                         <Poster film={f} caption={false} />
                         {/* Tapping the stars edits the score, like a row in the list. */}
-                        <button type="button" className="seen-tile-score" onClick={() => editLog(e)} aria-label={`Edit the score for ${f.title}`}>
-                          <Stars score={e.score} size={11} />
-                          <span>{e.score.toFixed(1)}</span>
+                        <button type="button" className="seen-tile-score" onClick={() => editLog(e)} aria-label={isRated(e) ? `Edit the score for ${f.title}` : `Rate ${f.title}`}>
+                          {isRated(e) ? (
+                            <>
+                              <Stars score={e.score} size={11} />
+                              <span>{e.score.toFixed(1)}</span>
+                            </>
+                          ) : (
+                            <span>RATE IT</span>
+                          )}
                         </button>
                         {e.rewatch && <span className="seen-tile-re" title="Rewatch">↻</span>}
                       </div>
@@ -233,10 +239,10 @@ export function Seen() {
                       aria-label={`Edit the score for ${f.title}`}
                     >
                       <span className="score-meter">
-                        <Meter pct={e.score * 10} />
+                        <Meter pct={isRated(e) ? e.score * 10 : 0} dim={!isRated(e)} />
                       </span>
-                      <span style={{ width: 30, textAlign: 'right', font: '500 14px var(--mono)', color: 'var(--ink)' }}>
-                        {e.score.toFixed(1)}
+                      <span style={{ width: 30, textAlign: 'right', font: '500 14px var(--mono)', color: isRated(e) ? 'var(--ink)' : 'var(--ink-7)' }}>
+                        {isRated(e) ? e.score.toFixed(1) : '—'}
                       </span>
                       <Icon name="pencil" size={13} width={1.6} colour="var(--ink-6)" />
                     </button>
@@ -320,7 +326,9 @@ export function Seen() {
                     <Thumb film={f} w={26} h={36} />
                     <span style={{ flexGrow: 1, minWidth: 0, font: '300 13.5px var(--sans)', color: 'var(--ink-2)' }}>{f.title}</span>
                     <span className="meta" style={{ fontSize: 10, color: 'var(--ink-7)' }}>{f.year}</span>
-                    <span style={{ width: 30, textAlign: 'right', font: '500 13px var(--mono)', color: 'var(--cyan)' }}>{e.score.toFixed(1)}</span>
+                    <span style={{ width: 30, textAlign: 'right', font: '500 13px var(--mono)', color: isRated(e) ? 'var(--cyan)' : 'var(--ink-7)' }}>
+                      {isRated(e) ? e.score.toFixed(1) : '—'}
+                    </span>
                   </Link>
                 ))}
               </div>

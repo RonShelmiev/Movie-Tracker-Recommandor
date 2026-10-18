@@ -46,7 +46,12 @@ under `flick.v1`; a TMDB key and cloud sync are both optional (below).
 | For you | `/for-you` | Ranked recommendations, each showing which logged film produced it |
 | Tune my taste | `/settings` | Signal weights and hard rules, with a live preview of the effect |
 
-"Log a film" is a modal available from anywhere, so logging never loses your place.
+"Log a film" is a modal available from anywhere, so logging never loses your
+place. Search results carry their own **MARK SEEN** button for the same reason:
+working through a series means three or four films in a row, and a trip to each
+film page and back would cost the search each time. Leaving a film page returns
+you wherever you came from — the search you ran, the collection you were in —
+rather than always to Browse.
 
 ## How the recommender works
 
@@ -82,9 +87,10 @@ collaborate with — and every number it shows is derived from what you have log
    with three tags you love and five you have no opinion on is not dragged
    below a thin film with one. People is neutral for a director you have never
    rated, and moves further the more films your verdict rests on.
-3. **Your weights** from `/settings` combine those into a match score. Turning
-   community acclaim up genuinely reorders the list toward the canon; turning it
-   down surfaces the obscure.
+3. **Your weights** from `/settings` combine those into a match score. Nothing
+   anyone else thought is in it unless you switch community scores on, which is
+   off by default — the engine answers "how close is this to what *you* rate
+   highly", not "is this well regarded".
 4. **Hard rules** filter before scoring: runtime ceiling, excluded genres,
    dismissed films, anything already on your list, and **anything you have
    seen**. A film counts as seen under every id it goes by — the bundled copy
@@ -92,7 +98,14 @@ collaborate with — and every number it shows is derived from what you have log
    by default; switched on, they are limited to films you rated well (7.5+ and
    above your own average) at least 180 days ago, one per eight picks, never in
    the top three.
-5. **Reasons** are generated from whichever axis actually drove the score, and
+5. **No percentage until it means something.** Matching reads the gap between
+   what you rated high and what you rated low, so it needs scores to read. Films
+   marked seen during first-run carry no score — saying you watched something is
+   not saying what you thought of it — and under three rated films every screen
+   that would quote a number shows nothing instead of a confident 50-something.
+   `/for-you` says which of those two it is, and if your scores are all bunched
+   into one band it says that too, because that is what holds the ceiling down.
+6. **Reasons** are generated from whichever axis actually drove the score, and
    each recommendation is traced back to the logged film with the strongest tag
    overlap — that is what "where these came from" on `/for-you` is showing.
 
