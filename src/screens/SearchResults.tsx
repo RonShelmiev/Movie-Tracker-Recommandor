@@ -5,15 +5,15 @@ import { useLogModal } from '../components/AppShell';
 import { Icon } from '../components/Icon';
 import { Thumb } from '../components/Poster';
 import { StarterBanner } from '../components/StarterBanner';
-import { SectionHead } from '../components/ui';
-import { formatRuntime } from '../lib/recommend';
-import { useStore } from '../lib/store';
+import { SectionHead, Stars } from '../components/ui';
+import { formatRuntime, matchContext, matchIsMeaningful, scoreFilm } from '../lib/recommend';
+import { myScoreFor, useStore } from '../lib/store';
 import type { Film } from '../lib/types';
 
 export function SearchResults() {
   const [params] = useSearchParams();
   const q = (params.get('q') ?? '').trim();
-  const { search, candidates, mode, busy, lastError } = useCatalogue();
+  const { search, candidates, mode, busy, lastError, getFilm } = useCatalogue();
   const { state } = useStore();
   const { openLog, editLog } = useLogModal();
   const lower = q.toLowerCase();
@@ -57,17 +57,16 @@ export function SearchResults() {
 
   const collections = state.collections.filter((c) => c.name.toLowerCase().includes(lower) && lower);
 
-  const scoreOf = (filmId: string) => {
-    const entries = state.log.filter((e) => e.filmId === filmId);
-    if (!entries.length) return null;
-    return entries.reduce((s, e) => s + e.score, 0) / entries.length;
-  };
-  /* Logging happens here rather than on the film page. Three Spider-Mans is
-     three round trips otherwise — tap one, score it, come back, retype the
-     search — so the modal opens over the results and leaves them standing. */
+  /* Logging happens here rather than on the film page. Working through a
+     series is three or four films in a row, and a trip to each film page and
+     back cost the search every time. The modal opens over the results and
+     leaves them standing. */
   const latestEntry = (filmId: string) =>
     state.log.filter((e) => e.filmId === filmId).sort((a, b) => b.watchedOn.localeCompare(a.watchedOn))[0];
+
+  const scoreOf = (filmId: string) => myScoreFor(state.log, filmId);
   const listed = new Set(state.watchlist.map((w) => w.filmId));
+  const ctx = useMemo(() => matchContext(state, getFilm), [state, getFilm]);
 
   const results = [...new Set([...films, ...byPerson])];
   const total = results.length + people.length + collections.length;
@@ -139,44 +138,58 @@ export function SearchResults() {
               .sort((a, b) => b.year - a.year)
               .map((f) => {
                 const score = scoreOf(f.id);
-                const entry = latestEntry(f.id);
                 return (
-                  <div key={f.id} className="list-row search-row">
-                    <Link to={`/film/${f.id}`} className="search-row-main">
-                      <Thumb film={f} w={44} h={62} />
-                      <span className="search-row-text">
-                        <span className="search-row-title">{f.title}</span>
-                        <span className="meta search-row-meta">
-                          {/* Front of the line: on a phone the tail of this
-                              row is the first thing to be ellipsised away. */}
-                          {listed.has(f.id) && score === null && <b>ON YOUR LIST / </b>}
-                          {f.year} / {formatRuntime(f.runtime).toUpperCase()} / {f.director.toUpperCase()}
-                        </span>
-                      </span>
+                  // A poster you can recognise, the way Letterboxd lists a
+                  // search: the art carries the row, the words confirm it.
+                  // The row and the log button are siblings because a button
+                  // cannot live inside a link.
+                  <div key={f.id} className="search-row">
+                    <Link to={`/film/${f.id}`} className="search-row-link">
+                      <Thumb film={f} w={64} h={96} />
+                      <div className="search-row-main">
+                        <div className="search-row-title">
+                          {f.title} <span>{f.year || ''}</span>
+                        </div>
+                        <div className="search-row-by">
+                          Directed by <b>{f.director}</b>
+                        </div>
+                        <div className="meta search-row-meta">
+                          {formatRuntime(f.runtime).toUpperCase()}
+                          {f.genres.length > 0 && ` / ${f.genres.slice(0, 2).join(', ').toUpperCase()}`}
+                          {f.imdb && ` / IMDB ${f.imdb.rating.toFixed(1)}`}
+                        </div>
+                        <div className="search-row-status">
+                          {score !== null ? (
+                            <>
+                              <Stars score={score} size={12} />
+                              <span className="is-mine">{score.toFixed(1)}</span>
+                            </>
+                          ) : listed.has(f.id) ? (
+                            <span className="is-listed">ON YOUR LIST</span>
+                          ) : (
+                            (() => {
+                              const m = matchIsMeaningful(ctx.taste) ? scoreFilm(state, f, getFilm, ctx) : null;
+                              return m ? <span className="is-match">{m.match}% MATCH</span> : <span className="is-unseen">NOT SEEN</span>;
+                            })()
+                          )}
+                        </div>
+                      </div>
                     </Link>
-                    {score !== null ? (
-                      <button
-                        type="button"
-                        className="btn btn-sm search-row-act is-seen"
-                        onClick={() => editLog(entry)}
-                        aria-label={`Change your ${score.toFixed(1)} for ${f.title}`}
-                      >
-                        <Icon name="seen" size={14} width={1.9} colour="var(--cyan)" />
-                        <span>{score.toFixed(1)}</span>
-                      </button>
-                    ) : (
-                      <button
-                        type="button"
-                        className="btn btn-sm search-row-act"
-                        onClick={() => openLog(f.id)}
-                        aria-label={`Mark ${f.title} seen`}
-                      >
-                        {/* Same words as the button on the film page, and no
-                            icon: a tick here reads as "you have seen this"
-                            rather than as something to tap. */}
-                        MARK SEEN
-                      </button>
-                    )}
+                    {/* Icon over a word, so it stays legible at the width a
+                        phone can spare without eating the title. */}
+                    <button
+                      type="button"
+                      className="btn search-row-act"
+                      onClick={() => (score !== null ? editLog(latestEntry(f.id)) : openLog(f.id))}
+                      aria-label={score !== null ? `Change your ${score.toFixed(1)} for ${f.title}` : `Mark ${f.title} seen`}
+                    >
+                      {score !== null ? (
+                        <Icon name="pencil" size={16} width={1.7} colour="var(--cyan)" />
+                      ) : (
+                        <Icon name="plus" size={16} width={1.8} colour="var(--ink-3)" />
+                      )}
+                      <span>{score !== null ? 'EDIT' : 'SEEN'}</span>
+                    </button>
                   </div>
                 );
               })}

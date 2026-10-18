@@ -4,9 +4,10 @@ import { useCatalogue } from '../lib/catalogue';
 import { useLastPlace, useLogModal } from '../components/AppShell';
 import { Icon } from '../components/Icon';
 import { Poster } from '../components/Poster';
-import { SectionHead } from '../components/ui';
-import { formatRuntime, matchContext, scoreFilm } from '../lib/recommend';
-import { useStore } from '../lib/store';
+import { SectionHead, Stars } from '../components/ui';
+import { crowdRating, formatRuntime, matchContext, scoreFilm } from '../lib/recommend';
+import { posterUrl } from '../lib/tmdb';
+import { isRated, myScoreFor, useStore } from '../lib/store';
 import type { Film } from '../lib/types';
 
 function similar(film: Film, pool: Film[], limit = 5): Film[] {
@@ -34,7 +35,7 @@ export function FilmDetail() {
   /* Back goes where you actually came from. Marking three films seen off one
      search used to mean three trips through Browse and three retyped
      searches. */
-  const back = useLastPlace() ?? { to: '/browse', label: 'BACK TO BROWSE' };
+  const back = useLastPlace() ?? { to: '/browse', label: 'BROWSE ALL' };
   const film = id ? getFilm(id) : undefined;
 
   // A TMDB film nobody has searched for on this device is not cached yet.
@@ -54,7 +55,7 @@ export function FilmDetail() {
     return (
       <div className="screen">
         <div className="empty-note">
-          {loading ? 'Fetching that film from TMDB…' : <>That film is not in the catalogue. <Link to="/browse">Browse everything</Link>.</>}
+          {loading ? 'Fetching that film from TMDB…' : <>That film is not in the catalogue. <Link to={back.to}>Go back</Link>.</>}
         </div>
       </div>
     );
@@ -62,7 +63,7 @@ export function FilmDetail() {
 
   const entries = state.log.filter((e) => e.filmId === film.id).sort((a, b) => b.watchedOn.localeCompare(a.watchedOn));
   const listed = state.watchlist.some((w) => w.filmId === film.id);
-  const myScore = entries.length ? entries.reduce((s, e) => s + e.score, 0) / entries.length : null;
+  const myScore = myScoreFor(state.log, film.id);
   // Independent of whether the engine would *offer* this film — seen, listed
   // and over-the-ceiling titles all still have an honest fit.
   const ctx = matchContext(state, getFilm);
@@ -71,6 +72,13 @@ export function FilmDetail() {
   const dir = taste.director.get(film.director);
   const seen = new Set(state.log.map((e) => e.filmId));
   const listedIds = new Set(state.watchlist.map((w) => w.filmId));
+  const art = posterUrl(film.posterPath, 'w500');
+  const crowd = crowdRating(film);
+  // A match is a guess at whether you would like it. Once you have rated it
+  // the guess is beside the point, and showing one next to your own score
+  // read as the app disagreeing with you: 2049 at "53%" beside Ron's 9.4.
+  const showMatch = myScore === null;
+  const tiles = 1 + (showMatch ? 1 : 0) + (crowd ? 1 : 0);
 
   const overlapNotes: string[] = [];
   if (dir && dir.n > 1) overlapNotes.push(`You rate ${film.director} ${dir.mean.toFixed(1)} across ${dir.n} films`);
@@ -80,92 +88,134 @@ export function FilmDetail() {
   if (strongTag) overlapNotes.push(`Tagged “${strongTag}”, which runs high in your log`);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column' }}>
-      <section className={`keyart art-${film.art}`}>
-        <div className="glow-a" />
-        <div className="glow-b" />
-        <div className="veil" />
-        <div className="inner">
-          <Link to={back.to} className="back-link">
+    <div className="film-page">
+      {/* On a phone the poster is the header, the way Letterboxd leads with
+          its art: sharp, full width, the top half showing before it fades
+          into the page under the title. On a wide screen it would be cropped
+          to a sliver, so there it is blurred into a backdrop beside a poster
+          card instead. The art-* skin sits on its own layer and only shows
+          when there is no artwork — on the section itself, its motif drew a
+          line through the title. */}
+      <section className={art ? 'film-hero has-art' : 'film-hero'}>
+        <div className={`film-backdrop art-${film.art}`} aria-hidden="true">
+          {art && <img src={art} alt="" />}
+        </div>
+        <div className="film-veil" aria-hidden="true" />
+
+        <div className="film-hero-inner">
+          <Link to={back.to} className="film-back">
             <Icon name="chevron-left" size={15} width={1.8} />
             <span>{back.label}</span>
           </Link>
 
-          <div style={{ marginTop: 'auto', display: 'flex', alignItems: 'flex-end', gap: 32, flexWrap: 'wrap' }}>
-            <div style={{ flexGrow: 1, minWidth: 280 }}>
-              <h1>{film.title.toUpperCase()}</h1>
-              <div className="meta" style={{ marginTop: 14, color: 'var(--ink-2)' }}>
-                {film.year} &nbsp;/&nbsp; {film.director.toUpperCase()} &nbsp;/&nbsp; {formatRuntime(film.runtime).toUpperCase()} &nbsp;/&nbsp; {film.genres.join(', ').toUpperCase()} &nbsp;/&nbsp; {film.country.toUpperCase()}
+          <div className="film-head">
+            <div className={`film-poster art-${film.art}`}>
+              {art && <img className="art-img" src={art} alt={`${film.title} poster`} />}
+            </div>
+            <div className="film-titles">
+              <div className="lbl film-kicker">{film.genres.join(' / ') || 'Film'}</div>
+              <h1>{film.title}</h1>
+              <div className="film-meta">
+                <span>{film.year}</span>
+                <span>{formatRuntime(film.runtime)}</span>
+                <span>{film.country}</span>
               </div>
-
-              <div style={{ marginTop: 22, display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-                <button type="button" className="btn btn-primary" onClick={() => openLog(film.id)}>
-                  <Icon name="check" size={15} width={2.2} colour="var(--void)" />
-                  {entries.length ? `SEEN · ${entries.length} ${entries.length === 1 ? 'TIME' : 'TIMES'}` : 'MARK SEEN'}
-                </button>
-                {listed ? (
-                  <button type="button" className="btn" onClick={() => dispatch({ type: 'watchlist/remove', filmId: film.id })}>
-                    <Icon name="close" size={15} width={1.8} />
-                    ON YOUR LIST
-                  </button>
-                ) : (
-                  <button type="button" className="btn" onClick={() => dispatch({ type: 'watchlist/add', filmId: film.id, source: 'You added it' })}>
-                    <Icon name="tosee" size={15} width={1.6} />
-                    ADD TO SEE
-                  </button>
-                )}
+              <div className="film-director">
+                Directed by <b>{film.director}</b>
               </div>
             </div>
+          </div>
 
-            <div className="detail-scores">
-              {score && (
-                <div className="match-block">
-                  <div className="lbl" style={{ color: 'var(--cyan)' }}>Match for you</div>
-                  <div className="match-hero">
-                    {score.match}
-                    <span>%</span>
-                  </div>
-                  <div className="match-bar" aria-hidden="true">
-                    <i style={{ width: `${score.match}%` }} />
-                  </div>
-                </div>
-              )}
-
-              <div>
-                <div className="lbl" style={{ color: 'var(--ink-4)' }}>{myScore !== null ? 'Your score' : 'Not yet rated'}</div>
-                <div className="score-hero">{myScore !== null ? myScore.toFixed(1) : '—'}</div>
-                <div className="score-ticks" style={{ marginTop: 12 }}>
-                  {Array.from({ length: 10 }, (_, i) => (
-                    <i key={i} className={myScore !== null && i < Math.round(myScore) ? 'on' : undefined} />
-                  ))}
-                </div>
-                {state.settings.useCommunityScores && (
-                  <div className="meta" style={{ marginTop: 12, color: 'var(--ink-6)', fontSize: 10 }}>
-                    ACCLAIM {(film.acclaim / 10).toFixed(1)} / {film.ratingsK}K RATINGS
-                  </div>
-                )}
-              </div>
-            </div>
+          <div className="film-actions">
+            <button type="button" className="btn btn-primary" onClick={() => openLog(film.id)}>
+              <Icon name="check" size={15} width={2.2} colour="var(--void)" />
+              {entries.length ? `SEEN · ${entries.length}×` : 'MARK SEEN'}
+            </button>
+            {listed ? (
+              <button type="button" className="btn btn-on" onClick={() => dispatch({ type: 'watchlist/remove', filmId: film.id })}>
+                <Icon name="tosee" size={15} width={1.6} />
+                ON YOUR LIST
+              </button>
+            ) : (
+              <button type="button" className="btn" onClick={() => dispatch({ type: 'watchlist/add', filmId: film.id, source: 'You added it' })}>
+                <Icon name="tosee" size={15} width={1.6} />
+                ADD TO SEE
+              </button>
+            )}
           </div>
         </div>
       </section>
 
-      <div className="screen split" style={{ paddingTop: 32 }}>
+      {/* Your verdict, the engine's guess (only until you have one of your
+          own), and IMDb's. */}
+      <section className={`film-scores tiles-${tiles}`}>
+        <div className="score-tile">
+          <div className="lbl">Your score</div>
+          {myScore !== null ? (
+            <>
+              <div className="score-big">{myScore.toFixed(1)}</div>
+              <Stars score={myScore} />
+            </>
+          ) : (
+            <>
+              <div className="score-big is-empty">—</div>
+              <button type="button" className="link-btn score-cta" onClick={() => openLog(film.id)}>Rate it</button>
+            </>
+          )}
+        </div>
+
+        {showMatch && (
+          <div className="score-tile is-for-you">
+            <div className="lbl">Match for you</div>
+            {score ? (
+              <>
+                <div className="score-big">
+                  {score.match}
+                  <small>%</small>
+                </div>
+                <div className="fit-bar" aria-hidden="true">
+                  <i style={{ width: `${score.match}%` }} />
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="score-big is-empty">—</div>
+                <div className="score-note">Log three films to see a match</div>
+              </>
+            )}
+          </div>
+        )}
+
+        {crowd && (
+          <div className="score-tile is-crowd">
+            <div className="lbl">{crowd.source}</div>
+            <div className="score-big is-dim">
+              {crowd.value.toFixed(1)}
+              <small>/10</small>
+            </div>
+            <div className="score-note">
+              {crowd.votes >= 1_000_000
+                ? `${(crowd.votes / 1_000_000).toFixed(1)}M votes`
+                : crowd.votes >= 1000
+                  ? `${Math.round(crowd.votes / 1000)}K votes`
+                  : crowd.votes > 0
+                    ? `${crowd.votes} votes`
+                    : 'Average rating'}
+            </div>
+          </div>
+        )}
+      </section>
+
+      <div className="screen split film-body">
         <div>
           <div className="lbl">Synopsis</div>
           <p style={{ marginTop: 12, maxWidth: 660, font: '300 15px var(--sans)', lineHeight: 1.7, color: 'var(--ink-2)', textWrap: 'pretty' }}>
             {film.synopsis}
           </p>
 
+          {/* Director and country moved up into the header, where Letterboxd
+              puts them; only the tags are left down here. */}
           <div className="info-grid" style={{ marginTop: 30 }}>
-            <div>
-              <div className="lbl">Director</div>
-              <div style={{ marginTop: 8, font: '400 14.5px var(--sans)', color: 'var(--ink)' }}>{film.director}</div>
-            </div>
-            <div>
-              <div className="lbl">Country</div>
-              <div style={{ marginTop: 8, font: '400 14.5px var(--sans)', color: 'var(--ink)' }}>{film.country}</div>
-            </div>
             <div style={{ gridColumn: '1 / -1' }}>
               <div className="lbl">Tags</div>
               <div style={{ marginTop: 10, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
@@ -178,7 +228,7 @@ export function FilmDetail() {
 
           <div style={{ marginTop: 34 }}>
             <SectionHead title="MORE LIKE THIS" />
-            <div className="grid-posters" style={{ marginTop: 14, gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))' }}>
+            <div className="grid-posters" style={{ marginTop: 14 }}>
               {similar(film, candidates).map((f) => (
                 <Poster key={f.id} film={f} status={seen.has(f.id) ? 'seen' : listedIds.has(f.id) ? 'listed' : null} />
               ))}
@@ -214,7 +264,9 @@ export function FilmDetail() {
                           {new Date(e.watchedOn).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
                         </span>
                         <span className="meta" style={{ fontSize: 10, color: 'var(--ink-6)' }}>{e.rewatch ? 'REWATCH' : 'FIRST'}</span>
-                        <span style={{ font: '500 15px var(--mono)', color: 'var(--cyan)' }}>{e.score.toFixed(1)}</span>
+                        <span style={{ font: '500 15px var(--mono)', color: isRated(e) ? 'var(--cyan)' : 'var(--ink-7)' }}>
+                          {isRated(e) ? e.score.toFixed(1) : '—'}
+                        </span>
                         <Icon name="pencil" size={14} width={1.6} colour="var(--ink-6)" />
                       </button>
                       <button

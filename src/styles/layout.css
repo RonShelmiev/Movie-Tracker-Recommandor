@@ -353,7 +353,10 @@
     padding: 16px;
     min-height: 0;
   }
-  .list-row > * { width: auto !important; }
+  /* Not the thumbnail: it is an empty box sized inline, and `width: auto`
+     collapsed it to nothing — every search result, to-see row and log
+     picker showed a hairline where the poster should be. */
+  .list-row > *:not(.thumb) { width: auto !important; }
   .list-row > span[class='meta'] { order: 5; }
 
   /* Four flexible columns wrapped into a ragged three-line block, with the
@@ -957,80 +960,372 @@
   color: var(--ink-4);
 }
 .match-pip.is-strong { border-color: var(--cyan); color: var(--cyan); }
+.match-pip.is-mine { border-color: var(--magenta); color: var(--magenta-hi); }
 
 @media (max-width: 480px) {
   .match-pip { left: 5px; top: 5px; padding: 1px 4px; font-size: 9px; }
 }
 
-/* ── search results ───────────────────────────────────────────────────
-   The row carries two tap targets, not one: the film, and marking it seen
-   without leaving the results. They are siblings because a button cannot
-   live inside a link, so the row's widths are set here rather than inline —
-   the phone override for .list-row children only reaches direct children,
-   and the old fixed 280px title column would have been out of its reach. */
-.search-row { gap: 14px; min-height: 74px; }
-.search-row-main {
+/* ── film page ────────────────────────────────────────────────────────
+   Poster-led, the way a film page is usually read: the artwork, the
+   title beside it, then the numbers. The old hero carried an art-* skin
+   directly, and that skin's ::after motif — a hairline or a rotated
+   diamond — drew straight across the title and the buttons. The skin now
+   lives on its own backdrop layer, under a veil. */
+.film-page { display: flex; flex-direction: column; }
+
+.film-hero { position: relative; overflow: hidden; isolation: isolate; }
+.film-backdrop { position: absolute; inset: 0; z-index: -2; }
+/* The skin's motif is decoration for a poster, not for a backdrop — and it
+   painted above the image, as a hairline through the title. */
+.film-backdrop::after { display: none; }
+.film-backdrop img {
+  position: absolute;
+  inset: -40px;
+  width: calc(100% + 80px);
+  height: calc(100% + 80px);
+  object-fit: cover;
+  filter: blur(22px) saturate(1.25);
+  opacity: 0.55;
+}
+.film-veil {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    radial-gradient(80% 90% at 85% 0%, rgba(255, 77, 158, 0.16), transparent 60%),
+    radial-gradient(70% 80% at 0% 100%, rgba(78, 226, 242, 0.14), transparent 60%),
+    linear-gradient(to bottom, rgba(4, 6, 10, 0.55), rgba(4, 6, 10, 0.92) 78%, var(--void));
+}
+.film-hero-inner {
+  padding: 22px 40px 30px;
   display: flex;
-  align-items: center;
-  gap: 16px;
-  flex-grow: 1;
-  min-width: 0;
+  flex-direction: column;
+  gap: 22px;
 }
-.search-row-text { display: block; min-width: 0; }
-/* Wraps to two lines rather than cutting off at one: the title is what he
-   is scanning for, and the row has given its right-hand side to the button. */
-.search-row-title {
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  font: 500 16px var(--sans);
-  letter-spacing: 0.03em;
-  line-height: 1.25;
-  color: var(--ink-hi);
-  overflow: hidden;
-}
-.search-row-meta {
-  display: block;
-  margin-top: 5px;
-  font-size: 10px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.search-row-meta b { color: var(--magenta); font-weight: 400; }
-.search-row-act { flex-shrink: 0; padding: 0 15px; }
-.search-row-act.is-seen {
-  border-color: rgba(78, 226, 242, 0.4);
-  color: var(--cyan);
-  font-family: var(--mono);
-}
-
-/* Two children, and the second must stay on the row — .list-row wraps on a
-   phone for the four-column to-see table, which this is not. */
-@media (max-width: 860px) {
-  .search-row { flex-wrap: nowrap; gap: 12px; padding: 14px 16px; }
-  .search-row-main { gap: 12px; }
-  .search-row-title { font-size: 14.5px; }
-  .search-row-act { padding: 0 12px; letter-spacing: 0.08em; }
-}
-
-/* ── back out of a film ───────────────────────────────────────────────
-   Says where it goes, which is wherever you came from. */
-.back-link {
+.film-back {
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  min-height: 40px;
+  align-self: flex-start;
   color: var(--ink-3);
-}
-.back-link span {
   font: 400 12px var(--sans);
   letter-spacing: 0.14em;
+}
+.film-head { display: flex; align-items: flex-end; gap: 28px; }
+.film-poster {
+  width: 200px;
+  flex-shrink: 0;
+  aspect-ratio: 2 / 3;
+  border: 1px solid var(--edge-3);
+  box-shadow: 0 0 0 1px rgba(4, 6, 10, 0.8), 0 24px 60px rgba(0, 0, 0, 0.6), 0 0 34px rgba(78, 226, 242, 0.12);
+}
+.film-titles { min-width: 0; padding-bottom: 4px; }
+.film-kicker { color: var(--cyan); }
+.film-titles h1 {
+  margin: 10px 0 0;
+  font: 700 clamp(30px, 4.2vw, 54px) var(--sans);
+  letter-spacing: 0.03em;
+  line-height: 1.02;
+  color: #f2fafd;
+  text-transform: uppercase;
+  text-wrap: balance;
+  overflow-wrap: break-word;
+  text-shadow: 0 2px 24px rgba(0, 0, 0, 0.6);
+}
+.film-meta {
+  margin-top: 14px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 0;
+  font: 400 11px var(--mono);
+  letter-spacing: 0.08em;
+  color: var(--ink-2);
+  text-transform: uppercase;
+}
+.film-meta > span + span::before { content: '/'; margin: 0 10px; color: var(--ink-7); }
+.film-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+.btn-on { border-color: var(--magenta); color: var(--magenta-hi); background: rgba(255, 77, 158, 0.08); }
+.btn-on:hover { border-color: var(--magenta-hi); color: var(--magenta-hi); }
+
+.film-scores {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1px;
+  margin: 0 40px;
+  border: 1px solid var(--edge-2);
+  background: var(--edge-2);
+}
+.film-scores.tiles-1 { grid-template-columns: minmax(0, 1fr); }
+.film-scores.tiles-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.score-tile {
+  min-width: 0;
+  padding: 16px 18px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: #070b11;
+}
+.score-tile.is-for-you { background: linear-gradient(160deg, rgba(78, 226, 242, 0.09), rgba(255, 77, 158, 0.06)), #070b11; }
+.score-big {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  font: 500 40px var(--sans);
+  line-height: 1;
+  color: var(--cyan);
+}
+.score-big small { font: 500 0.45em var(--sans); color: var(--cyan-hi); }
+.score-big.is-empty { color: var(--ink-7); }
+.score-big.is-dim { color: var(--ink-hi); }
+.score-note { font: 400 10px var(--mono); letter-spacing: 0.08em; color: var(--ink-6); text-transform: uppercase; line-height: 1.5; }
+.score-cta { align-self: flex-start; font: 500 12px var(--sans); letter-spacing: 0.12em; text-transform: uppercase; }
+.film-scores .score-ticks { justify-content: flex-start; }
+.film-scores .score-ticks i { flex: 1 1 0; width: auto; max-width: 14px; }
+
+.fit-bar { height: 4px; background: rgba(126, 214, 232, 0.12); }
+.fit-bar > i {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, var(--cyan), var(--magenta));
+  box-shadow: 0 0 10px rgba(255, 77, 158, 0.45);
+}
+
+.film-body { padding-top: 30px; }
+
+@media (max-width: 860px) {
+  .film-hero-inner { padding: 16px 18px 22px; gap: 18px; }
+  .film-poster { width: 132px; }
+  .film-head { gap: 18px; }
+  .film-scores { margin: 0 18px; }
+}
+
+@media (max-width: 480px) {
+  .film-hero-inner { padding: 12px 12px 18px; gap: 16px; }
+  .film-head { align-items: flex-end; gap: 14px; }
+  .film-poster { width: 108px; }
+  .film-titles h1 { margin-top: 6px; font-size: 23px; letter-spacing: 0.02em; }
+  .film-meta { margin-top: 10px; font-size: 9.5px; letter-spacing: 0.05em; }
+  .film-meta > span + span::before { margin: 0 6px; }
+  .film-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .film-actions .btn { justify-content: center; padding: 0 10px; gap: 8px; font-size: 11px; letter-spacing: 0.08em; }
+  .film-scores { margin: 0 12px; }
+
+.score-tile { padding: 11px 10px 12px; gap: 7px; }
+  .score-big { font-size: 27px; gap: 3px 6px; }
+  .score-note { font-size: 8.5px; letter-spacing: 0.04em; }
+  .score-cta { font-size: 10.5px; }
+  .film-body { padding-top: 18px; }
+}
+
+/* ── phones: no live blur ─────────────────────────────────────────────
+   backdrop-filter re-blurs whatever scrolls beneath it on every frame.
+   With a sticky top bar, a fixed tab bar and a blurred panel per section,
+   a phone was doing that half a dozen times per frame, and mobile Safari
+   copes by dropping tiles — the "page is there but blank" flash. Near-
+   opaque fills look the same against this background at a fraction of
+   the cost. */
+@media (max-width: 860px) {
+  .panel { backdrop-filter: none; -webkit-backdrop-filter: none; background: rgba(8, 12, 19, 0.9); }
+  .topbar { backdrop-filter: none; -webkit-backdrop-filter: none; background: rgba(6, 10, 16, 0.97); }
+  .rail { backdrop-filter: none; -webkit-backdrop-filter: none; background: rgba(6, 10, 16, 0.98); }
+  .scrim { backdrop-filter: none; -webkit-backdrop-filter: none; background: rgba(2, 4, 7, 0.82); }
+  .update-bar { backdrop-filter: none; -webkit-backdrop-filter: none; }
+  /* One per poster: forty live blurs on a Browse grid. */
+  .match-pip { backdrop-filter: none; -webkit-backdrop-filter: none; background: rgba(4, 10, 14, 0.86); }
+}
+
+
+
+
+/* ── Seen: sort bar ───────────────────────────────────────────────────
+   Which axis the log is sectioned by, and which way round. The chips
+   scroll sideways on a phone like every other filter row. */
+.sort-bar { display: flex; flex-direction: column; gap: 10px; }
+.sort-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.sort-dir {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 32px;
+  padding: 0 4px;
+  font: 500 10.5px var(--mono);
+  letter-spacing: 0.12em;
+  color: var(--cyan);
+}
+.sort-arrow { display: inline-flex; transition: transform 0.15s; }
+.sort-arrow.is-up { transform: rotate(180deg); }
+@media (max-width: 480px) {
+  .sort-bar { gap: 8px; }
+  .sort-dir { font-size: 9.5px; letter-spacing: 0.08em; }
+}
+/* Off the date sort, the flag carries the watch date too: its own line in
+   the narrow desktop column, run on after a dot on a phone. */
+.log-when { display: block; margin-top: 3px; color: var(--ink-6); }
+@media (max-width: 860px) {
+  .log-when { display: inline; margin-top: 0; }
+  .log-when::before { content: ' · '; }
+}
+
+/* ── film page, phone: the poster is the header ───────────────────────
+   Letterboxd leads a film with its art. On a phone the poster runs full
+   width and sharp, roughly its top half showing before it fades into the
+   page, and the title sits over the fade. The small poster card would
+   only repeat the same image, so it steps aside. */
+@media (max-width: 860px) {
+  .film-hero.has-art .film-backdrop img {
+    inset: 0 0 auto 0;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 2 / 3;
+    object-fit: cover;
+    object-position: top;
+    filter: none;
+    opacity: 1;
+  }
+  .film-hero.has-art .film-veil {
+    background:
+      linear-gradient(to bottom, rgba(4, 6, 10, 0.55) 0, rgba(4, 6, 10, 0) 70px),
+      linear-gradient(to bottom, transparent 0, transparent calc(78vw - 160px), rgba(4, 6, 10, 0.75) calc(78vw - 40px), var(--void) 78vw);
+  }
+  .film-hero.has-art .film-hero-inner { padding-top: 14px; }
+  /* Half the poster shows above the title: the head starts well down. */
+  .film-hero.has-art .film-head { margin-top: calc(78vw - 150px); }
+  .film-hero.has-art .film-poster { display: none; }
+  .film-hero.has-art .film-titles h1 { font-size: 30px; text-shadow: 0 2px 18px rgba(0, 0, 0, 0.85); }
+  .film-hero.has-art .film-back {
+    padding: 6px 10px 6px 6px;
+    background: rgba(4, 6, 10, 0.55);
+    color: var(--ink-hi);
+  }
+}
+@media (max-width: 480px) {
+  .film-hero.has-art .film-titles h1 { font-size: 27px; }
+}
+
+.film-director { margin-top: 8px; font: 300 13px var(--sans); letter-spacing: 0.03em; color: var(--ink-3); }
+.film-director b { font-weight: 500; color: var(--ink-hi); }
+
+/* Stars: cyan on a faint outline, the half clipped down the middle. */
+.stars { display: inline-flex; gap: 2px; }
+.star .star-bg { fill: rgba(126, 214, 232, 0.14); }
+.star .star-fg { fill: var(--cyan); filter: drop-shadow(0 0 3px rgba(78, 226, 242, 0.5)); }
+.score-tile.is-crowd .score-big small { color: var(--ink-5); }
+
+/* ── Seen: list or poster wall ────────────────────────────────────────
+   The wall is the Letterboxd diary: posters edge to edge, your stars and
+   score under each. */
+.view-switch { display: inline-flex; border: 1px solid var(--edge-2); }
+.view-switch > button {
+  min-height: 32px;
+  padding: 0 12px;
+  font: 500 10.5px var(--mono);
+  letter-spacing: 0.12em;
+  color: var(--ink-5);
+}
+.view-switch > button + button { border-left: 1px solid var(--edge-2); }
+.view-switch > button[aria-pressed='true'] { background: rgba(78, 226, 242, 0.12); color: var(--cyan); }
+
+.seen-wall {
+  margin-top: 14px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(112px, 1fr));
+  gap: 16px 12px;
+}
+.seen-tile { position: relative; min-width: 0; }
+.seen-tile-score {
+  margin-top: 6px;
+  width: 100%;
+  min-height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  font: 500 11px var(--mono);
+  color: var(--ink-2);
+}
+.seen-tile-re {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  z-index: 3;
+  width: 20px;
+  height: 20px;
+  display: grid;
+  place-items: center;
+  background: rgba(4, 6, 10, 0.8);
+  border: 1px solid rgba(255, 180, 84, 0.5);
+  color: var(--amber);
+  font-size: 12px;
+}
+@media (max-width: 480px) {
+  .seen-wall { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px 6px; margin-top: 10px; }
+  .seen-tile-score { flex-direction: column; align-items: flex-start; gap: 2px; min-height: 0; font-size: 10px; }
+  .seen-tile-score .stars svg { width: 9px; height: 9px; }
+  .view-switch > button { padding: 0 9px; font-size: 9.5px; letter-spacing: 0.08em; }
+}
+
+/* ── search results ───────────────────────────────────────────────────
+   Poster first. A list of titles alone left you guessing which "Dune". */
+.search-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--edge-soft);
+  color: inherit;
+}
+.search-row:last-child { border-bottom: none; }
+.search-row:hover { background: rgba(78, 226, 242, 0.04); }
+.search-row-main { flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 5px; }
+.search-row-title { font: 500 17px var(--sans); letter-spacing: 0.02em; line-height: 1.2; color: var(--ink-hi); }
+.search-row-title > span { margin-left: 4px; font: 300 14px var(--sans); color: var(--ink-5); }
+.search-row-by { font: 300 12.5px var(--sans); color: var(--ink-4); }
+.search-row-by b { font-weight: 500; color: var(--ink-2); }
+.search-row-meta { font-size: 10px; color: var(--ink-6); }
+.search-row-status { margin-top: 3px; display: flex; align-items: center; gap: 8px; font: 500 11px var(--mono); letter-spacing: 0.08em; }
+.search-row-status .is-mine { color: var(--cyan); }
+.search-row-status .is-listed { color: var(--magenta); }
+.search-row-status .is-match { color: var(--cyan); }
+.search-row-status .is-unseen { color: var(--ink-8); }
+
+/* The row and its log button are siblings — a button cannot live inside a
+   link — so the link takes the flexible width and the button keeps its own. */
+.search-row-link {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  flex-grow: 1;
+  min-width: 0;
+  color: inherit;
+}
+.search-row-act {
+  flex-shrink: 0;
+  align-self: center;
+  flex-direction: column;
+  gap: 4px;
+  width: 58px;
+  height: auto;
+  padding: 10px 0;
+  font-size: 9.5px;
+  letter-spacing: 0.14em;
+}
+.search-row-act:hover { border-color: var(--cyan); }
+
+/* Where "back" goes now says where it goes, and some of those are longer
+   than BROWSE ALL was. */
+.film-back span {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.back-link:hover { color: var(--ink-hi); }
 @media (max-width: 480px) {
-  .back-link span { font-size: 11px; letter-spacing: 0.1em; }
+  .search-row { padding: 12px; gap: 12px; }
+  .search-row-link { gap: 12px; }
+  .search-row-act { width: 54px; }
+  .search-row-title { font-size: 15px; }
+  .search-row-title > span { font-size: 12.5px; }
+  .search-row-by { font-size: 11.5px; }
+  .search-row-meta { font-size: 9px; }
 }

@@ -3,10 +3,41 @@ import { Link } from 'react-router-dom';
 import { useCatalogue } from '../lib/catalogue';
 import { useLogModal } from '../components/AppShell';
 import { Icon } from '../components/Icon';
-import { Thumb } from '../components/Poster';
-import { Chip, Meter, SectionHead } from '../components/ui';
-import { computeStats, genreCounts, groupByMonth, loggedYears, perMonth } from '../lib/stats';
-import { useStore } from '../lib/store';
+import { Poster, Thumb } from '../components/Poster';
+import { Chip, Meter, SectionHead, Stars } from '../components/ui';
+import { computeStats, genreCounts, groupSeen, loggedYears, perMonth } from '../lib/stats';
+import type { SeenSort } from '../lib/stats';
+import { isRated, useStore } from '../lib/store';
+
+const SORTS: { id: SeenSort; label: string; desc: string; asc: string }[] = [
+  { id: 'watched', label: 'Date watched', desc: 'Newest first', asc: 'Oldest first' },
+  { id: 'score', label: 'Score', desc: 'Highest first', asc: 'Lowest first' },
+  { id: 'year', label: 'Release year', desc: 'Newest first', asc: 'Oldest first' },
+  { id: 'genre', label: 'Genre', desc: 'Best first', asc: 'Worst first' },
+];
+
+const SORT_KEY = 'flick.seenSort.v1';
+const VIEW_KEY = 'flick.seenView.v1';
+type View = 'list' | 'posters';
+
+function loadView(): View {
+  try {
+    return localStorage.getItem(VIEW_KEY) === 'posters' ? 'posters' : 'list';
+  } catch {
+    return 'list';
+  }
+}
+
+/** The last sort you picked, remembered on this device only. */
+function loadSort(): { sort: SeenSort; desc: boolean } {
+  try {
+    const v = JSON.parse(localStorage.getItem(SORT_KEY) ?? 'null') as { sort?: string; desc?: boolean } | null;
+    if (v && SORTS.some((s) => s.id === v.sort)) return { sort: v.sort as SeenSort, desc: v.desc !== false };
+  } catch {
+    /* unavailable or corrupt — fall back to the default */
+  }
+  return { sort: 'watched', desc: true };
+}
 
 export function Seen() {
   const { getFilm } = useCatalogue();
@@ -21,7 +52,38 @@ export function Seen() {
     [state.log, year],
   );
 
-  const groups = groupByMonth(scoped);
+  const [order, setOrder] = useState(loadSort);
+  const [onlyGenre, setOnlyGenre] = useState<string | null>(null);
+  // The list is for editing; the poster wall is for looking at what you
+  // have seen, the way Letterboxd shows a diary.
+  const [view, setView] = useState<View>(loadView);
+  const pickView = (v: View) => {
+    setView(v);
+    try {
+      localStorage.setItem(VIEW_KEY, v);
+    } catch {
+      /* not remembered, still applied */
+    }
+  };
+  const pickOrder = (next: { sort: SeenSort; desc: boolean }) => {
+    setOrder(next);
+    try {
+      localStorage.setItem(SORT_KEY, JSON.stringify(next));
+    } catch {
+      /* not remembered, still applied */
+    }
+  };
+  const sortMeta = SORTS.find((x) => x.id === order.sort)!;
+
+  const allGroups = useMemo(
+    () => groupSeen(scoped, getFilm, order.sort, order.desc),
+    [scoped, getFilm, order],
+  );
+  // By genre, every film appears once per genre it carries, so the full list
+  // is long; a genre row lets you jump to one. It only offers genres that are
+  // actually in this slice of the log.
+  const genreChoice = onlyGenre && allGroups.some((g) => g.key === onlyGenre) ? onlyGenre : null;
+  const groups = order.sort === 'genre' && genreChoice ? allGroups.filter((g) => g.key === genreChoice) : allGroups;
   const months = perMonth(state.log, typeof year === 'number' ? year : new Date().getFullYear());
   const maxMonth = Math.max(1, ...months.map((m) => m.count));
   const genres = genreCounts(scoped, getFilm).slice(0, 5);
@@ -71,27 +133,100 @@ export function Seen() {
 
       <div className="split">
         <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+          <div className="sort-bar">
+            <div className="sort-head">
+              <div className="view-switch" role="group" aria-label="View">
+                <button type="button" aria-pressed={view === 'list'} onClick={() => pickView('list')}>LIST</button>
+                <button type="button" aria-pressed={view === 'posters'} onClick={() => pickView('posters')}>POSTERS</button>
+              </div>
+              <button
+                type="button"
+                className="sort-dir"
+                onClick={() => pickOrder({ ...order, desc: !order.desc })}
+                aria-label={`Order: ${order.desc ? sortMeta.desc : sortMeta.asc}. Tap to reverse.`}
+              >
+                <span className={order.desc ? 'sort-arrow' : 'sort-arrow is-up'} aria-hidden="true">
+                  <Icon name="chevron-down" size={13} width={2} colour="var(--cyan)" />
+                </span>
+                <span>{(order.desc ? sortMeta.desc : sortMeta.asc).toUpperCase()}</span>
+              </button>
+            </div>
+            <div className="filter-row">
+              {SORTS.map((x) => (
+                <Chip
+                  key={x.id}
+                  label={x.label}
+                  on={order.sort === x.id}
+                  onClick={() => pickOrder({ sort: x.id, desc: order.sort === x.id ? order.desc : true })}
+                />
+              ))}
+            </div>
+            {order.sort === 'genre' && allGroups.length > 1 && (
+              <div className="filter-row">
+                <Chip label="All genres" on={!genreChoice} onClick={() => setOnlyGenre(null)} />
+                {allGroups.map((g) => (
+                  <Chip key={g.key} label={`${g.key} ${g.entries.length}`} on={genreChoice === g.key} onClick={() => setOnlyGenre(g.key)} />
+                ))}
+              </div>
+            )}
+          </div>
+
           {groups.map((g) => (
             <div key={g.key}>
               <SectionHead
                 title={g.label}
-                right={<span className="meta" style={{ fontSize: 10, color: 'var(--ink-6)' }}>{g.entries.length} FILMS</span>}
+                right={<span className="meta" style={{ fontSize: 10, color: 'var(--ink-6)' }}>{g.entries.length} {g.entries.length === 1 ? 'FILM' : 'FILMS'}</span>}
               />
-              {g.entries.map((e, i) => {
+              {view === 'posters' ? (
+                <div className="seen-wall">
+                  {g.entries.map((e) => {
+                    const f = getFilm(e.filmId);
+                    if (!f) return null;
+                    return (
+                      <div key={`${e.id}-${g.key}`} className="seen-tile">
+                        <Poster film={f} caption={false} />
+                        {/* Tapping the stars edits the score, like a row in the list. */}
+                        <button type="button" className="seen-tile-score" onClick={() => editLog(e)} aria-label={isRated(e) ? `Edit the score for ${f.title}` : `Rate ${f.title}`}>
+                          {isRated(e) ? (
+                            <>
+                              <Stars score={e.score} size={11} />
+                              <span>{e.score.toFixed(1)}</span>
+                            </>
+                          ) : (
+                            <span>RATE IT</span>
+                          )}
+                        </button>
+                        {e.rewatch && <span className="seen-tile-re" title="Rewatch">↻</span>}
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : g.entries.map((e) => {
                 const f = getFilm(e.filmId);
                 if (!f) return null;
+                const byDate = order.sort === 'watched';
                 return (
-                  <div key={`${e.filmId}-${e.watchedOn}-${i}`} className="log-row">
-                    <span className="log-day meta">{e.watchedOn.slice(8, 10)}</span>
+                  <div key={`${e.id}-${g.key}`} className="log-row">
+                    {/* The day of the month under a month heading; otherwise the
+                        heading says nothing about when, so the full date joins
+                        the first-watch flag instead. */}
+                    <span className="log-day meta">{byDate ? e.watchedOn.slice(8, 10) : ''}</span>
                     <span className="log-art">
                       <Thumb film={f} w={34} h={48} />
                     </span>
                     <div className="log-main">
                       <Link to={`/film/${f.id}`} className="log-title">{f.title}</Link>
-                      <div className="meta log-sub">{f.year} / {f.director.toUpperCase()}</div>
+                      <div className="meta log-sub">
+                        {f.year} / {f.director.toUpperCase()}
+                      </div>
                     </div>
                     <span className="log-kind meta" style={{ color: e.rewatch ? 'var(--amber)' : 'var(--ink-8)' }}>
                       {e.rewatch ? 'REWATCH' : 'FIRST WATCH'}
+                      {!byDate && (
+                        <span className="log-when">
+                          {new Date(e.watchedOn).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' }).toUpperCase()}
+                        </span>
+                      )}
                     </span>
                     {/* The score is the thing people come here to change, so it
                         is the control — this screen used to be read-only, which
@@ -104,10 +239,10 @@ export function Seen() {
                       aria-label={`Edit the score for ${f.title}`}
                     >
                       <span className="score-meter">
-                        <Meter pct={e.score * 10} />
+                        <Meter pct={isRated(e) ? e.score * 10 : 0} dim={!isRated(e)} />
                       </span>
-                      <span style={{ width: 30, textAlign: 'right', font: '500 14px var(--mono)', color: 'var(--ink)' }}>
-                        {e.score.toFixed(1)}
+                      <span style={{ width: 30, textAlign: 'right', font: '500 14px var(--mono)', color: isRated(e) ? 'var(--ink)' : 'var(--ink-7)' }}>
+                        {isRated(e) ? e.score.toFixed(1) : '—'}
                       </span>
                       <Icon name="pencil" size={13} width={1.6} colour="var(--ink-6)" />
                     </button>
@@ -191,7 +326,9 @@ export function Seen() {
                     <Thumb film={f} w={26} h={36} />
                     <span style={{ flexGrow: 1, minWidth: 0, font: '300 13.5px var(--sans)', color: 'var(--ink-2)' }}>{f.title}</span>
                     <span className="meta" style={{ fontSize: 10, color: 'var(--ink-7)' }}>{f.year}</span>
-                    <span style={{ width: 30, textAlign: 'right', font: '500 13px var(--mono)', color: 'var(--cyan)' }}>{e.score.toFixed(1)}</span>
+                    <span style={{ width: 30, textAlign: 'right', font: '500 13px var(--mono)', color: isRated(e) ? 'var(--cyan)' : 'var(--ink-7)' }}>
+                      {isRated(e) ? e.score.toFixed(1) : '—'}
+                    </span>
                   </Link>
                 ))}
               </div>

@@ -5,7 +5,7 @@ import { useLogModal } from '../components/AppShell';
 import { Icon } from '../components/Icon';
 import { Thumb } from '../components/Poster';
 import { Chip, Meter } from '../components/ui';
-import { buildTaste, formatRuntime, matchIsMeaningful, recommend } from '../lib/recommend';
+import { formatRuntime, matchContext, scoreFilm } from '../lib/recommend';
 import { computeStats } from '../lib/stats';
 import { useStore } from '../lib/store';
 
@@ -18,18 +18,22 @@ export function ToSee() {
   const stats = computeStats(state, getFilm);
   const [filter, setFilter] = useState<Filter>('all');
 
-  // Match scores come from the same engine that produced the recommendations.
+  // Scored film by film with the same function the grid and the film page
+  // use. Running the recommender instead applied the hard rules, so a film on
+  // your list that was over the runtime ceiling showed no match at all.
   const matchById = useMemo(() => {
-    const all = recommend(
-      { ...state, watchlist: [] },
-      candidates,
-      getFilm,
-      candidates.length,
-    );
-    return new Map(all.map((r) => [r.film.id, r.match]));
-  }, [state]);
-  // Same rule as everywhere else: no number until the log can justify one.
-  const showMatch = matchIsMeaningful(buildTaste(state.log, getFilm));
+    const ctx = matchContext(state, getFilm);
+    const out = new Map<string, number>();
+    for (const w of state.watchlist) {
+      const f = getFilm(w.filmId);
+      const s = f ? scoreFilm(state, f, getFilm, ctx) : null;
+      if (f && s) out.set(f.id, s.match);
+    }
+    return out;
+    // `candidates` changes whenever the film cache does, which is when
+    // getFilm starts answering for films it could not before.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state, getFilm, candidates]);
 
   const monthAgo = useMemo(() => {
     const d = new Date();
@@ -108,11 +112,9 @@ export function ToSee() {
               </div>
               <div style={{ width: 108, display: 'flex', alignItems: 'center', gap: 9 }}>
                 <div style={{ width: 54 }}>
-                  <Meter pct={showMatch ? matchById.get(film.id) ?? 0 : 0} dim={!showMatch} />
+                  <Meter pct={matchById.get(film.id) ?? 0} />
                 </div>
-                <span style={{ font: '500 12px var(--mono)', color: 'var(--ink-2)' }}>
-                  {showMatch ? matchById.get(film.id) ?? '—' : '—'}
-                </span>
+                <span style={{ font: '500 12px var(--mono)', color: 'var(--ink-2)' }}>{matchById.get(film.id) ?? '—'}</span>
               </div>
               <span className="meta" style={{ width: 92, fontSize: 10, color: 'var(--ink-7)' }}>
                 {new Date(w.addedOn).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }).toUpperCase()}

@@ -120,10 +120,10 @@ export function Settings() {
               onChange={(v) => dispatch({ type: 'settings/patch', patch: { surfaceObscure: v } })}
             />
             <ToggleRow
-              label="Let other people's scores count"
-              sub="OFF: NOTHING BUT YOUR OWN RATINGS DECIDES A PICK, AND ACCLAIM IS HIDDEN"
-              on={settings.useCommunityScores}
-              onChange={(v) => dispatch({ type: 'settings/patch', patch: { useCommunityScores: v } })}
+              label="Let IMDb ratings count"
+              sub="A NUDGE TOWARD WELL-RATED FILMS — YOUR OWN SCORES STILL LEAD"
+              on={settings.useImdb}
+              onChange={(v) => dispatch({ type: 'settings/patch', patch: { useImdb: v } })}
             />
           </div>
 
@@ -366,17 +366,6 @@ export function Settings() {
             </div>
           </div>
 
-          {settings.useCommunityScores && (
-            <div style={{ padding: 20, border: '1px solid rgba(255,180,84,0.22)', background: 'rgba(255,180,84,0.05)' }}>
-              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
-                <span style={{ marginTop: 5, width: 5, height: 5, flexShrink: 0, background: 'var(--amber)' }} />
-                <div style={{ font: '300 13px var(--sans)', lineHeight: 1.6, color: '#C0A882' }}>
-                  Other people&rsquo;s scores are counting toward your picks. Turn it off and nothing but your own
-                  ratings decides what gets suggested.
-                </div>
-              </div>
-            </div>
-          )}
         </div>
       </div>
     </div>

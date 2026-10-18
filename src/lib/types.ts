@@ -27,6 +27,8 @@ export interface Film {
   art: number;
   /** TMDB poster path, when the film came from TMDB. Absent for the bundled catalogue. */
   posterPath?: string;
+  /** The real IMDb rating and vote count, where known — see data/imdb.ts. */
+  imdb?: { id: string; rating: number; votes: number };
   synopsis: string;
 }
 
@@ -94,13 +96,16 @@ export interface Settings {
   offerRewatches: boolean;
   surfaceObscure: boolean;
   /**
-   * Whether anyone else's opinion enters at all — both the acclaim axis in
-   * the scoring and the acclaim figure on a film's page. Off by default: the
-   * whole point of logging your own scores is that they are yours, and a
-   * taste that diverges from consensus is exactly the case a personal
-   * recommender should serve.
+   * Whether the crowd's rating nudges the picks: IMDb's for the bundled
+   * films, TMDB's for anything found by search. On by default since Ron
+   * asked for it (October 2026), having earlier asked for his scores alone —
+   * so it is a nudge at a fixed, modest weight, and your own ratings still
+   * decide. A new name rather than flipping `useCommunityScores`: stored
+   * settings merge over the defaults, so the old switch's saved `false`
+   * would have kept it off. The old acclaim axis used editorial estimates;
+   * this one uses real ratings.
    */
-  useCommunityScores: boolean;
+  useImdb: boolean;
 }
 
 export interface AppState {

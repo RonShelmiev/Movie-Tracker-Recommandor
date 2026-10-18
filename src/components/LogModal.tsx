@@ -144,7 +144,7 @@ export function LogModal({
                   <div className="list" style={{ marginTop: 8 }}>
                     {matches.map((f) => (
                       <button key={f.id} type="button" className="list-row" style={{ minHeight: 62 }} onClick={() => setPicked(f)}>
-                        <Thumb film={f} w={32} h={46} />
+                        <Thumb film={f} w={44} h={66} />
                         <span style={{ flexGrow: 1, font: '500 15px var(--sans)', color: 'var(--ink)' }}>{f.title}</span>
                         <span className="meta" style={{ fontSize: 10 }}>{f.year} / {f.director.toUpperCase()}</span>
                       </button>

@@ -71,8 +71,31 @@ part of the scale, two whose taste is a *combination* no single tag expresses
 Two things measured as *not* worth shipping, so do not re-add them on
 intuition: an aversion term in `similarity` (penalising resemblance to films
 rated below your mean) came out flat or worse, because tag affinity already
-carries it; and the acclaim axis moves 0 of 10 picks at any sane weight,
-because every film in the catalogue is well regarded.
+carries it; and the old acclaim axis, built on the editorial `acclaim`
+estimates, moved 0 of 10 picks at any weight because they have no spread.
+
+The October 16 pass rebuilt the bench harder (random 30-film libraries out
+of 89, noisy scores, nine personas): 0.482 at the start. Changes measured
+on it:
+
+- `similarity` compares against the **3 nearest** favourites, not a
+  weighted mean over all of them, and the top-12 cap on favourites is gone.
+  Averaged, a near-twin of one favourite was diluted by every unrelated
+  one, which is how Ron's 9.4 for Blade Runner 2049 left Blade Runner at
+  40%. Swept k = 1, 2, 3, 5: 3 is best (0.484).
+- A favourite's weight has an **absolute floor**: anything above 8.5 counts
+  for something even when it is at or below a generous rater's mean. Only
+  `similarity` uses it. Anchoring the whole neutral point toward an
+  absolute 7 instead was tried and *rejected*: it wrecked the persona who
+  rates 8.5-10 (0.88 -> 0.23).
+- **Sequels and originals** (shared title stem, "Blade Runner" /
+  "Blade Runner 2049") get kinship 0.85; the same director adds 0.12.
+- **Real IMDb ratings** (`src/data/imdb.ts`, from IMDb's datasets) replace
+  the editorial acclaim, on by default (`useImdb`) at weight 40. Unlike the
+  estimates they help: 0 -> 0.484, 40 -> 0.498, 60 -> 0.506.
+
+Final: 0.498. For the Ron-shaped library Blade Runner went 81% / rank 8 to
+93% / rank 3.
 
 ## Environment limits
 
@@ -98,33 +121,53 @@ path. Google Fonts is blocked too; inject the faces inline for screenshots.
   merged: the axes were redefined, so the old numbers no longer mean the
   same thing.
 
-  Nothing anyone else thinks reaches a pick unless `useCommunityScores` is
-  switched on, which it is not by default. That setting also hides the
-  acclaim figure on a film's page — the one place the crowd's verdict used to
-  sit next to the user's own.
+  The percentage is an S-curve over raw (`MATCH_CENTRE`, `MATCH_STEEPNESS`),
+  not a straight scale: raw lives in roughly 0.35-0.75, so the old `raw *
+  1.06` capped the best pick for a real library near 72%. It is display
+  only — ranking is on raw, so the bench cannot see it. After touching it,
+  check the spread instead: top pick 90-98 for libraries with real spread in
+  their scores, around 70 for an all-7.5 first-run library.
 
-  **The percentage ceiling lives in the library, not the maths.** Ron's
-  complaint that nothing ever reached 80% was true and had nothing to do with
-  the formula: onboarding logged its films at a flat 7.5, and a log with no
-  score variation gives the engine nothing to rank by — every film comes back
-  55-59%. Those entries now carry `unrated: true` and `buildTaste` skips
-  them. With a real spread the catalogue reaches 95-100%. Two guards follow
-  from this and must move together, because a screen quoting a number while
-  its neighbour withholds one is worse than either: `matchIsMeaningful`
-  (three rated films) gates the pips on Browse, the cards on For You, the
-  hero on the dashboard and the queue on To See, and `scoreFilm` returns null
-  so a film page omits it; `tasteIsFlat` drives the For You notice that
-  explains a bunched profile. Never paper over either by widening the
-  multiplier — that is how 59% became the answer to everything.
-- `src/components/AppShell.tsx` — holds the log modal and `PlaceCtx`, the last
-  screen you were on that was not a film page. The film page's back link reads
-  it, so leaving a film returns to the search you ran rather than to Browse.
-  It is tracked centrally because posters, search rows, the dashboard and For
-  You all link to a film and each would otherwise have to remember to say
-  where it came from. Film routes are skipped deliberately: following "more
-  like this" twice should still leave the way back to the list you started
-  from. The topbar's search box is filled from `?q=` on arrival for the same
-  reason — coming back to results with an empty box is the same lost place.
+  The crowd enters through `useImdb` (on by default, at Ron's later request):
+  IMDb's rating for bundled films, TMDB's average for searched ones, never
+  the editorial `acclaim`. A film you have rated shows your score, not a
+  match — on its page and on Browse posters.
+
+  **The ceiling is also in the library, not only in the scale.** The S-curve
+  fixed how raw is shown; this is what was being shown. First-run logged its
+  films at a flat 7.5, and taste is each score's distance from your own mean,
+  so a log with no variation leaves nothing to separate anything — every film
+  came back in one band. Those entries now carry `unrated: true` and
+  `buildTaste` skips them, so marking something seen no longer makes a claim
+  about what you thought of it. With a real spread the catalogue reaches
+  95-100%.
+
+  Two guards follow, and they must move together: a screen quoting a number
+  while its neighbour withholds one is worse than either. `matchIsMeaningful`
+  (three rated films) gates the pips on Browse, the cards and list on For You
+  and the dashboard hero, and makes `scoreFilm` return null so the film page
+  and the To See queue show nothing rather than a guess. `tasteIsFlat` drives
+  the For You notice that explains a bunched profile — the case where there
+  are enough ratings to score but no spread to score with. Never recover a
+  number by widening the scale: the all-7.5 first-run library reads as
+  withheld now, not as 70%.
+
+- `src/components/AppShell.tsx` — holds the log modal, `ScrollMemory`, and
+  `PlaceCtx`: the last screen you were on that was not a film page. The film
+  page's back link reads it, so leaving a film returns to the search you ran
+  rather than to Browse. It is tracked centrally because posters, search
+  rows, the dashboard and For You all link to a film and each would otherwise
+  have to remember to say where it came from. Film routes are skipped
+  deliberately: following "more like this" twice should still leave the way
+  back to the list you started from. The topbar's search box is filled from
+  `?q=` on arrival for the same reason — coming back to results with an empty
+  box is the same lost place, and `ScrollMemory` handles the third: where in
+  the list you were.
+
+- Search rows carry their own log button, a sibling of the row's link because
+  a button cannot nest inside one. Logging a series is three or four films in
+  a row and each used to cost a round trip through the film page, which lost
+  the search.
 
 - `src/lib/catalogue.tsx` — one provider over the bundled 89 films plus a
   cache of everything the user has touched. The cache is load-bearing: the log

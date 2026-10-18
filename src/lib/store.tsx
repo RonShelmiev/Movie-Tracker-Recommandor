@@ -12,7 +12,7 @@ export const DEFAULT_SETTINGS: Settings = {
   excludedGenres: [],
   offerRewatches: false,
   surfaceObscure: true,
-  useCommunityScores: false,
+  useImdb: true,
 };
 
 const DEFAULT_COLLECTIONS: Collection[] = [
@@ -49,6 +49,21 @@ export type Action =
   | { type: 'reset' };
 
 const today = () => new Date().toISOString().slice(0, 10);
+
+/**
+ * A watch with a verdict behind it. Films marked seen during first-run are
+ * recorded as watched at a placeholder 7.5 — showing that back as "your
+ * score" claims an opinion nobody gave. The engine already skips them; so
+ * must anything that prints a number next to your name.
+ */
+export const isRated = (e: LogEntry) => !e.unrated;
+
+/** Your score for a film, or null if you have watched it without rating it. */
+export function myScoreFor(log: LogEntry[], filmId: string): number | null {
+  const rated = log.filter((e) => e.filmId === filmId && isRated(e));
+  if (!rated.length) return null;
+  return rated.reduce((s, e) => s + e.score, 0) / rated.length;
+}
 
 export const newId = () =>
   `e${Date.now().toString(36)}${Math.random().toString(36).slice(2, 7)}`;

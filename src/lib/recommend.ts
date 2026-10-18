@@ -35,6 +35,11 @@ export interface Taste {
    * Comparing a candidate against whole films you loved keeps that.
    */
   favourites: { film: Film; weight: number }[];
+  /**
+   * The score that counts as neutral. Mostly your own mean, pulled partway
+   * toward an absolute 7 — see `buildTaste`.
+   */
+  centre: number;
 }
 
 const EMPTY_TASTE: Taste = {
@@ -48,6 +53,7 @@ const EMPTY_TASTE: Taste = {
   runtimeSd: 35,
   decade: new Map(),
   favourites: [],
+  centre: 7,
 };
 
 function normalise<K>(m: Map<K, number>): Map<K, number> {
@@ -58,6 +64,31 @@ function normalise<K>(m: Map<K, number>): Map<K, number> {
   for (const [k, v] of m) out.set(k, v / max);
   return out;
 }
+
+/**
+ * How much a film counts as one you loved. Mostly how far it sits above your
+ * own average, as before — but a score that is high in absolute terms always
+ * counts for something. For someone who averages 9.4, a 9.4 is "average" by
+ * the relative measure and dropped out of the favourites entirely; out of
+ * ten it is still a film they loved, and its sequel should not read as a
+ * stranger. Only the near-twin comparison uses this; tag affinity stays
+ * purely relative, which is what keeps a compressed 8.5-10 scale readable.
+ */
+function favouriteWeight(score: number, centre: number): number {
+  const relative = Math.max(0, score - centre);
+  const absolute = Math.max(0, score - LOVED_ABOVE) * LOVED_WEIGHT;
+  return Math.max(relative, absolute) ** 1.5;
+}
+const LOVED_ABOVE = 8.5;
+const LOVED_WEIGHT = 0.6;
+
+/** How many of your favourites a candidate is compared with, nearest first. */
+const NEAREST = 3;
+const SIM_SCALE = 1.4;
+
+/** Where "neutral" is pulled toward, and how far. Measured on the bench. */
+const ANCHOR = 7;
+const ANCHOR_PULL = 0;
 
 export function buildTaste(log: LogEntry[], getFilm: (id: string) => Film | undefined): Taste {
   // Entries marked seen without an opinion are deliberately absent: they
@@ -74,6 +105,16 @@ export function buildTaste(log: LogEntry[], getFilm: (id: string) => Film | unde
     rated.reduce((s, x) => s + (x.e.score - meanScore) ** 2, 0) / rated.length,
   );
 
+  /*
+   * What counts as "liked". Purely relative to your own mean, a generous
+   * rater's 9.4 sat barely above an average of 9 and counted for almost
+   * nothing — Ron gave Blade Runner 2049 a 9.4 and the original came back at
+   * 40%. A 9.4 out of 10 is a strong opinion whatever your average is. So
+   * neutral is your mean pulled partway toward an absolute 7: a generous
+   * rater's 9s still count, and a harsh rater's 6s still read as good.
+   */
+  const centre = meanScore * (1 - ANCHOR_PULL) + ANCHOR * ANCHOR_PULL;
+
   const tag = new Map<Tag, number>();
   const genre = new Map<Genre, number>();
   const decade = new Map<number, number>();
@@ -84,7 +125,7 @@ export function buildTaste(log: LogEntry[], getFilm: (id: string) => Film | unde
 
   for (const { e, f } of rated) {
     // Above your own mean counts for, below counts against.
-    const lift = e.score - meanScore;
+    const lift = e.score - centre;
     for (const t of f.tags) tag.set(t, (tag.get(t) ?? 0) + lift);
     for (const g of f.genres) genre.set(g, (genre.get(g) ?? 0) + lift);
     const dec = Math.floor(f.year / 10) * 10;
@@ -119,10 +160,9 @@ export function buildTaste(log: LogEntry[], getFilm: (id: string) => Film | unde
    * 0.769, and flat above that.
    */
   const favourites = rated
-    .filter((x) => x.e.score > meanScore)
-    .map((x) => ({ film: x.f, weight: (x.e.score - meanScore) ** 1.5 }))
-    .sort((a, b) => b.weight - a.weight)
-    .slice(0, 12);
+    .map((x) => ({ film: x.f, weight: favouriteWeight(x.e.score, centre) }))
+    .filter((x) => x.weight > 0)
+    .sort((a, b) => b.weight - a.weight);
 
   return {
     n: rated.length,
@@ -135,6 +175,7 @@ export function buildTaste(log: LogEntry[], getFilm: (id: string) => Film | unde
     runtimeSd: Math.max(20, Math.sqrt(variance)),
     decade: normalise(decade),
     favourites,
+    centre,
   };
 }
 
@@ -156,10 +197,42 @@ export interface Components {
 function kinship(a: Film, b: Film): number {
   const A = new Set<string>([...a.tags, ...a.genres]);
   const B = new Set<string>([...b.tags, ...b.genres]);
-  if (!A.size || !B.size) return 0;
-  let shared = 0;
-  for (const x of A) if (B.has(x)) shared += 1;
-  return shared / (A.size + B.size - shared);
+  let k = 0;
+  if (A.size && B.size) {
+    let shared = 0;
+    for (const x of A) if (B.has(x)) shared += 1;
+    k = shared / (A.size + B.size - shared);
+  }
+  // A sequel or an original is the strongest resemblance there is, and tags
+  // alone can miss it: the bundled Blade Runner and a searched-for 2049 are
+  // tagged by different hands.
+  if (sameSeries(a, b)) return Math.max(k, SERIES_KINSHIP);
+  // The same director is a real resemblance tags do not carry.
+  if (a.director && a.director === b.director && a.director !== 'Unknown') k = Math.min(1, k + DIRECTOR_KINSHIP);
+  return k;
+}
+
+const SERIES_KINSHIP = 0.85;
+const DIRECTOR_KINSHIP = 0.12;
+
+/** "Blade Runner" and "Blade Runner 2049"; "Dune" and "Dune: Part Two". */
+function seriesStem(f: Film): string {
+  return f.title
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .split(/[:(]| part | - /)[0]
+    .replace(/\b(19|20)\d\d\b/g, '')
+    .replace(/\b(ii|iii|iv|2|3|4)\b/g, '')
+    .replace(/[^a-z0-9]+/g, '');
+}
+
+function sameSeries(a: Film, b: Film): boolean {
+  if (a.id === b.id) return false;
+  const x = seriesStem(a);
+  const y = seriesStem(b);
+  // Short stems ("her", "moon") would match far too much.
+  return x.length >= 4 && x === y;
 }
 
 function components(film: Film, taste: Taste): Components {
@@ -172,7 +245,7 @@ function components(film: Film, taste: Taste): Components {
      pattern. */
   const dir = taste.director.get(film.director);
   const people = dir
-    ? clamp01(0.5 + ((dir.mean - taste.meanScore) / 3) * Math.min(1, Math.sqrt(dir.n) / 2))
+    ? clamp01(0.5 + ((dir.mean - taste.centre) / 3) * Math.min(1, Math.sqrt(dir.n) / 2))
     : 0.5;
 
   /* ── affinity ──
@@ -199,18 +272,23 @@ function components(film: Film, taste: Taste): Components {
      the films you actually rated highest. */
   let similarity = 0.5;
   if (taste.favourites.length) {
+    // The nearest few favourites decide, not all of them. Averaged over every
+    // film you liked, a near-twin of one favourite was diluted by how unlike
+    // it is to the rest — so someone with wide taste saw every film read as
+    // middling, and Blade Runner scored like a stranger beside the 2049 they
+    // had just rated 9.4.
+    const near = taste.favourites
+      .filter((fav) => fav.film.id !== film.id)
+      .map((fav) => ({ k: kinship(film, fav.film), w: fav.weight }))
+      .sort((a, b) => b.k * Math.sqrt(b.w) - a.k * Math.sqrt(a.w))
+      .slice(0, NEAREST);
     let acc = 0;
     let wsum = 0;
-    for (const fav of taste.favourites) {
-      if (fav.film.id === film.id) continue;
-      acc += kinship(film, fav.film) * fav.weight;
-      wsum += fav.weight;
+    for (const { k, w } of near) {
+      acc += k * w;
+      wsum += w;
     }
-    // Jaccard between two films of the same kind lands around 0.3-0.5, so the
-    // raw mean never approaches 1. Scaled to use the range — 1.8 measured
-    // best of 1.2 to 2.6, where more aggressive scaling clips the top and
-    // throws away the ordering between the strongest matches.
-    similarity = wsum ? clamp01((acc / wsum) * 1.8) : 0.5;
+    similarity = wsum ? clamp01((acc / wsum) * SIM_SCALE) : 0.5;
   }
 
   const z = (film.runtime - taste.runtimeMean) / taste.runtimeSd;
@@ -219,9 +297,27 @@ function components(film: Film, taste: Taste): Components {
   const dec = Math.floor(film.year / 10) * 10;
   const era = clamp01(0.5 + (taste.decade.get(dec) ?? 0) / 2);
 
-  const community = film.acclaim / 100;
+  const community = crowdFit(film);
 
   return { people, affinity, similarity, runtimeFit, era, community };
+}
+
+/**
+ * The crowd's rating, 0..1. IMDb's where the film has one; TMDB's vote
+ * average for a searched film, which is a real rating too. The bundled
+ * `acclaim` figure is an editorial estimate and is not used. 6.5 on IMDb
+ * reads as neutral and 8.8 as the top: every film in the starter catalogue
+ * is well regarded, so a 0-10 reading would have no spread to give.
+ */
+export function crowdRating(film: Film): { value: number; source: 'IMDb' | 'TMDB'; votes: number } | null {
+  if (film.imdb) return { value: film.imdb.rating, source: 'IMDb', votes: film.imdb.votes };
+  if (film.id.startsWith('tmdb:') && film.acclaim > 0) return { value: film.acclaim / 10, source: 'TMDB', votes: film.ratingsK * 1000 };
+  return null;
+}
+
+function crowdFit(film: Film): number {
+  const r = crowdRating(film);
+  return r ? clamp01((r.value - 6.5) / 2.3) : 0.5;
 }
 
 function clamp01(x: number) {
@@ -293,6 +389,7 @@ export function nearestSeed(
   const self = new Set(keysOf(film));
   for (const entry of log) {
     if (entry.filmId === film.id) continue; // a film cannot be its own reason
+    if (entry.unrated) continue; // "because you rated X 7.5" when you did not
     const seed = getFilm(entry.filmId);
     if (!seed || entry.score < meanScore) continue;
     if (self.has(filmKey(seed))) continue; // nor can its other copy
@@ -365,11 +462,11 @@ function reasonsFor(
     );
   }
 
-  const seed = nearestSeed(film, log, getFilm, taste.meanScore);
+  const seed = nearestSeed(film, log, getFilm, taste.centre);
   if (seed) out.push(`Because you rated ${seed.film.title} ${seed.entry.score.toFixed(1)}`);
 
   const dir = taste.director.get(film.director);
-  if (dir && dir.mean > taste.meanScore + 0.2) {
+  if (dir && dir.mean > taste.centre + 0.2) {
     out.push(`You rate ${film.director} ${dir.mean.toFixed(1)} on average`);
   }
 
@@ -436,7 +533,10 @@ interface RuleContext {
  * ones rated badly.
  */
 function isRewatchWorthy(last: LogEntry, meanScore: number) {
-  return daysSince(last.watchedOn) >= REWATCH_AFTER_DAYS && last.score >= Math.max(7.5, meanScore + 0.5);
+  // A placeholder 7.5 clears the bar without anyone having liked the film.
+  return !last.unrated
+    && daysSince(last.watchedOn) >= REWATCH_AFTER_DAYS
+    && last.score >= Math.max(7.5, meanScore + 0.5);
 }
 
 function passesRules(film: Film, state: AppState, ctx: RuleContext): boolean {
@@ -489,19 +589,21 @@ export const matchIsMeaningful = (taste: Taste) => taste.n >= MIN_LOG_FOR_MATCH;
 export const tasteIsFlat = (taste: Taste) =>
   taste.n >= MIN_LOG_FOR_MATCH && taste.spread < 0.75;
 
-/** The weighted sum, 0..1, for a film already known to be scoreable. */
 /**
- * What acclaim counts for when it is switched on at all. Fixed rather than a
- * slider: measured against the catalogue it barely moves the order even at
- * four times this, because every film here is well regarded, so offering a
- * dial for it would promise a control that does nothing.
+ * What the crowd's rating counts for. Fixed rather than a slider. The old
+ * acclaim axis used editorial estimates with no spread and moved nothing;
+ * real IMDb ratings do have spread. Swept on the leave-one-out bench (nine
+ * personas): 0 -> 0.484, 25 -> 0.496, 40 -> 0.498, 60 -> 0.506 — it helps a
+ * little, never hurts. 40 changes one of the top ten for a typical library
+ * and lifts their mean IMDb rating from 7.89 to 7.97: a nudge, not a takeover.
  */
-const COMMUNITY_WEIGHT = 25;
+const COMMUNITY_WEIGHT = 40;
 
+/** The weighted sum, 0..1, for a film already known to be scoreable. */
 function rawScore(c: Components, settings: Settings): number {
   const w = settings.weights;
   const sim = w.similarity ?? 0;
-  const com = settings.useCommunityScores ? COMMUNITY_WEIGHT : 0;
+  const com = settings.useImdb ? COMMUNITY_WEIGHT : 0;
   const total = w.people + w.affinity + sim + w.runtimeFit + w.era + com || 1;
   return (
     (c.people * w.people +
@@ -515,14 +617,33 @@ function rawScore(c: Components, settings: Settings): number {
 }
 
 /**
- * Raw sits around 0.3-0.85 now the axes use their range, so a light
- * expansion puts a very strong match near the top without a crowd of films
- * pinned at 100 — which would also throw away the ordering between them.
+ * Raw to a percentage. Display only: the ranking is done on raw, so nothing
+ * here can change which films are picked or the leave-one-out bench.
+ *
+ * This used to be `raw * 1.06`, a straight line. But raw is a weighted mean
+ * of axes that each sit near 0.5 when they have nothing to say, so in
+ * practice it lives between about 0.35 and 0.75 — and a straight line kept
+ * the best film in the catalogue for a real library at 72-75%. Ron: "not one
+ * movie with 75+". The number undersold every pick it put first.
+ *
+ * An S-curve centred on the middle of that band instead: an ordinary film
+ * still reads in the fifties, a clear fit clears 80, the best few for a
+ * library with a real signal reach the nineties, and a film that runs
+ * against your scores drops into the twenties rather than sitting at 40.
+ * Measured on six libraries (October): the top pick lands 90-98 for every
+ * one with real spread in its scores, and a first-run library where every
+ * film is the same neutral 7.5 tops out near 70 — it should, nothing is
+ * known yet. Capped at 99: a percentage is a guess, never a certainty.
  */
-const toMatch = (raw: number) => Math.round(clamp01(raw * 1.06) * 100);
+const MATCH_CENTRE = 0.48;
+const MATCH_STEEPNESS = 11;
+const toMatch = (raw: number) =>
+  Math.min(99, Math.round(100 / (1 + Math.exp(-MATCH_STEEPNESS * ((Number.isFinite(raw) ? raw : 0) - MATCH_CENTRE)))));
 
 export interface Score {
   match: number;
+  /** The unrounded verdict the match is read from — for ordering and measuring. */
+  raw: number;
   components: Components;
   reasons: string[];
 }
@@ -545,8 +666,10 @@ export function scoreFilm(
 ): Score | null {
   if (!isRecommendable(film) || !matchIsMeaningful(ctx.taste)) return null;
   const components_ = components(film, ctx.taste);
+  const raw = rawScore(components_, state.settings);
   return {
-    match: toMatch(rawScore(components_, state.settings)),
+    match: toMatch(raw),
+    raw,
     components: components_,
     reasons: reasonsFor(film, ctx.taste, components_, state.log, getFilm, state.settings, ctx.watched),
   };
@@ -676,7 +799,7 @@ export function seedClusters(
   const bySeed = new Map<string, SeedCluster>();
 
   for (const rec of recs) {
-    const seed = nearestSeed(rec.film, state.log, getFilm, taste.meanScore);
+    const seed = nearestSeed(rec.film, state.log, getFilm, taste.centre);
     if (!seed) continue;
     const cluster = bySeed.get(seed.film.id) ?? { seed: seed.film, entry: seed.entry, results: [] };
     cluster.results.push(rec);

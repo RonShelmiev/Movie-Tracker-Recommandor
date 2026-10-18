@@ -8,7 +8,7 @@ import { StarterBanner } from '../components/StarterBanner';
 import { Meter, SectionHead, Stat } from '../components/ui';
 import { buildTaste, formatRuntime, matchIsMeaningful, recommend } from '../lib/recommend';
 import { computeStats } from '../lib/stats';
-import { useStore } from '../lib/store';
+import { isRated, useStore } from '../lib/store';
 
 const TAG_LABEL: Record<string, string> = {
   cerebral: 'Cerebral',
@@ -148,8 +148,8 @@ export function Dashboard() {
                         {new Date(e.watchedOn).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }).toUpperCase()} / {e.rewatch ? 'REWATCH' : 'FIRST WATCH'}
                       </div>
                     </div>
-                    <span style={{ font: '500 14px var(--mono)', color: e.score >= taste.meanScore ? 'var(--cyan)' : 'var(--ink-4)' }}>
-                      {e.score.toFixed(1)}
+                    <span style={{ font: '500 14px var(--mono)', color: !isRated(e) ? 'var(--ink-7)' : e.score >= taste.meanScore ? 'var(--cyan)' : 'var(--ink-4)' }}>
+                      {isRated(e) ? e.score.toFixed(1) : '—'}
                     </span>
                   </Link>
                 );

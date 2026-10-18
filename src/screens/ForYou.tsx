@@ -15,7 +15,7 @@ import {
   tasteIsFlat,
 } from '../lib/recommend';
 import type { Focus } from '../lib/recommend';
-import { useStore } from '../lib/store';
+import { isRated, useStore } from '../lib/store';
 import type { Tag } from '../lib/types';
 
 /** Readable names for the tags that can be steered by. */
@@ -60,10 +60,12 @@ export function ForYou() {
 
   const taste = useMemo(() => buildTaste(state.log, getFilm), [state.log, getFilm]);
 
-  /** Your best-rated films, as things to say "more like this" about. */
+  /** Your best-rated films, as things to say "more like this" about. A film
+      you only marked seen has no verdict to be "more like". */
   const seedChoices = useMemo(
     () =>
-      [...state.log]
+      state.log
+        .filter(isRated)
         .sort((a, b) => b.score - a.score)
         .map((e) => ({ e, f: getFilm(e.filmId) }))
         .filter((x): x is { e: typeof x.e; f: NonNullable<typeof x.f> } => Boolean(x.f))
@@ -205,9 +207,10 @@ export function ForYou() {
                 <span>
                   A spread of {taste.spread.toFixed(1)} across {taste.n} rated{' '}
                   {taste.n === 1 ? 'film' : 'films'}. Matching reads the gap between what you loved and
-                  what you merely finished, so while the scores sit in one band every match lands near
-                  the middle — that is why nothing reaches 80%. Put your favourites at 9 and 10 and the
-                  ones you shrugged at down at 5 and 6, and it sharpens more than any setting here.
+                  what you merely finished, so while your scores sit in one band every film comes back
+                  in one band too — which is why nothing here stands out. Put your favourites at 9 and
+                  10 and the ones you shrugged at down at 5 and 6, and it sharpens more than any
+                  setting on this page.
                 </span>
               </span>
             </div>

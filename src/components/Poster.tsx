@@ -12,24 +12,33 @@ export function Poster({
   status,
   caption = true,
   match = null,
+  mine = null,
 }: {
   film: Film;
   status?: 'seen' | 'listed' | null;
   caption?: boolean;
   /** How well it fits the taste profile, 0-100. Null hides the badge. */
   match?: number | null;
+  /** Your own score, for a film you have rated. Shown instead of a match. */
+  mine?: number | null;
 }) {
   return (
     <Link
       to={`/film/${film.id}`}
       className={posterClass(film)}
-      aria-label={match === null ? film.title : `${film.title} — ${match}% match`}
+      aria-label={
+        mine !== null ? `${film.title} — you rated it ${mine.toFixed(1)}` : match === null ? film.title : `${film.title} — ${match}% match`
+      }
     >
       {film.posterPath && (
         <img className="art-img" src={posterUrl(film.posterPath, 'w342')} alt="" loading="lazy" />
       )}
       <span className="fade" />
-      {match !== null && (
+      {mine !== null ? (
+        <span className="match-pip is-mine" aria-hidden="true">
+          ★ {mine.toFixed(1)}
+        </span>
+      ) : match !== null && (
         <span className={match >= 70 ? 'match-pip is-strong' : 'match-pip'} aria-hidden="true">
           {match}
         </span>
