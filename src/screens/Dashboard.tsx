@@ -95,8 +95,13 @@ export function Dashboard() {
             </div>
           </div>
 
-          <div className={`hero-art art-${top.film.art}`} aria-hidden="true">
-            {top.film.posterPath && <img className="art-img" src={posterUrl(top.film.posterPath, 'w500')} alt="" />}
+          {/* The whole poster, uncropped, over a blurred wash of itself — the
+              strip it used to be showed only a slice of the artwork. */}
+          <div className="hero-art" aria-hidden="true">
+            {top.film.posterPath && <img className="hero-art-bg" src={posterUrl(top.film.posterPath, 'w342')} alt="" />}
+            <div className={`hero-poster art-${top.film.art}`}>
+              {top.film.posterPath && <img className="art-img" src={posterUrl(top.film.posterPath, 'w500')} alt="" />}
+            </div>
           </div>
         </section>
       )}
