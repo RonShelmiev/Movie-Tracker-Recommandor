@@ -1228,32 +1228,15 @@
   .log-when::before { content: ' · '; }
 }
 
-/* ── film page, phone: the poster is the header ───────────────────────
-   Letterboxd leads a film with its art. On a phone the poster runs full
-   width and sharp, roughly its top half showing before it fades into the
-   page, and the title sits over the fade. The small poster card would
-   only repeat the same image, so it steps aside. */
+/* ── film page, phone: the whole poster leads ─────────────────────────
+   This used to run the poster full width and fade it out halfway, under
+   the title — so you only ever saw its top half. Now the poster is shown
+   whole and centred over the blurred backdrop (the same wash a desktop
+   gets), with the title beneath it, as Tonight's pick does. */
 @media (max-width: 860px) {
-  .film-hero.has-art .film-backdrop img {
-    inset: 0 0 auto 0;
-    width: 100%;
-    height: auto;
-    aspect-ratio: 2 / 3;
-    object-fit: cover;
-    object-position: top;
-    filter: none;
-    opacity: 1;
-  }
-  .film-hero.has-art .film-veil {
-    background:
-      linear-gradient(to bottom, rgba(4, 6, 10, 0.55) 0, rgba(4, 6, 10, 0) 70px),
-      linear-gradient(to bottom, transparent 0, transparent calc(78vw - 160px), rgba(4, 6, 10, 0.75) calc(78vw - 40px), var(--void) 78vw);
-  }
-  .film-hero.has-art .film-hero-inner { padding-top: 14px; }
-  /* Half the poster shows above the title: the head starts well down. */
-  .film-hero.has-art .film-head { margin-top: calc(78vw - 150px); }
-  .film-hero.has-art .film-poster { display: none; }
-  .film-hero.has-art .film-titles h1 { font-size: 30px; text-shadow: 0 2px 18px rgba(0, 0, 0, 0.85); }
+  .film-hero.has-art .film-head { flex-direction: column; align-items: stretch; gap: 18px; }
+  .film-hero.has-art .film-poster { width: min(62%, 250px); align-self: center; }
+  .film-hero.has-art .film-titles h1 { font-size: 30px; }
   .film-hero.has-art .film-back {
     padding: 6px 10px 6px 6px;
     background: rgba(4, 6, 10, 0.55);
@@ -1261,6 +1244,7 @@
   }
 }
 @media (max-width: 480px) {
+  .film-hero.has-art .film-head { gap: 16px; }
   .film-hero.has-art .film-titles h1 { font-size: 27px; }
 }
 
