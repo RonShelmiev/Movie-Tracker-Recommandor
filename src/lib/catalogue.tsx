@@ -17,6 +17,7 @@ const POSTER_KEY = 'flick.posters.v1';
 const LINKS_KEY = 'flick.links.v1';
 const GROWN_KEY = 'flick.grown.v1';
 const TMDB_IDS_KEY = 'flick.tmdbids.v1';
+const TRAILERS_KEY = 'flick.trailers.v1';
 
 /** How long one favourite's TMDB neighbours are trusted before asking again. */
 const REGROW_DAYS = 14;
@@ -136,6 +137,12 @@ export interface CatalogueApi {
   growFrom: (favourites: Film[]) => Promise<void>;
   /** Progress of a running growFrom, for a quiet "finding more" line. */
   growing: { done: number; total: number } | null;
+  /**
+   * The film's YouTube trailer key. Null when TMDB lists none, and undefined
+   * when it could not be asked — no key, offline — so the page can tell
+   * "there is no trailer" from "we could not look".
+   */
+  trailerFor: (film: Film) => Promise<string | null | undefined>;
   remember: (films: Film[]) => void;
   /**
    * Fetch one TMDB film that is not cached yet — a shared link, or a device
@@ -345,6 +352,30 @@ export function CatalogueProvider({ children }: { children: ReactNode }) {
     [cfg],
   );
 
+  const trailerFor = useCallback(
+    async (film: Film): Promise<string | null | undefined> => {
+      // "" is a settled "TMDB has no trailer"; a failed request is not recorded.
+      const known = readJson<Record<string, string>>(TRAILERS_KEY, {});
+      if (film.id in known) return known[film.id] || null;
+      if (!cfg) return undefined;
+      try {
+        const ids = readJson<Record<string, number>>(TMDB_IDS_KEY, {});
+        let id = tmdb.isTmdbId(film.id) ? tmdb.rawTmdbId(film.id) : ids[film.id];
+        if (!id && film.imdb) {
+          id = (await tmdb.findByImdb(film.imdb.id, cfg)) ?? 0;
+          if (id) writeJson(TMDB_IDS_KEY, { ...ids, [film.id]: id });
+        }
+        if (!id) return null;
+        const key = await tmdb.trailerFor(id, cfg);
+        writeJson(TRAILERS_KEY, { ...readJson<Record<string, string>>(TRAILERS_KEY, {}), [film.id]: key ?? '' });
+        return key;
+      } catch {
+        return undefined;
+      }
+    },
+    [cfg],
+  );
+
   /**
    * Give the bundled films real artwork. One search per film, in small batches
    * with a breather between them so a cold start does not fire 89 requests at
@@ -470,6 +501,7 @@ export function CatalogueProvider({ children }: { children: ReactNode }) {
       expandPool,
       growFrom,
       growing,
+      trailerFor,
       remember,
       load,
       tmdbKey,
@@ -478,7 +510,7 @@ export function CatalogueProvider({ children }: { children: ReactNode }) {
       busy,
       lastError,
     }),
-    [cfg, getFilm, candidates, search, hydrating, hydratePosters, posterStats, expandPool, growFrom, growing, remember, load, tmdbKey, setTmdbKey, probe, busy, lastError],
+    [cfg, getFilm, candidates, search, hydrating, hydratePosters, posterStats, expandPool, growFrom, growing, trailerFor, remember, load, tmdbKey, setTmdbKey, probe, busy, lastError],
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

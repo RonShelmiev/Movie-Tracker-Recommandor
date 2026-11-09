@@ -4,6 +4,7 @@ import { useCatalogue } from '../lib/catalogue';
 import { useLastPlace, useLogModal } from '../components/AppShell';
 import { Icon } from '../components/Icon';
 import { Poster } from '../components/Poster';
+import { Trailer } from '../components/Trailer';
 import { SectionHead, Stars } from '../components/ui';
 import { crowdRating, formatRuntime, matchContext, scoreFilm } from '../lib/recommend';
 import { posterUrl } from '../lib/tmdb';
@@ -209,6 +210,13 @@ export function FilmDetail() {
           <p style={{ marginTop: 12, maxWidth: 660, font: '300 15px var(--sans)', lineHeight: 1.7, color: 'var(--ink-2)', textWrap: 'pretty' }}>
             {film.synopsis}
           </p>
+
+          <div style={{ marginTop: 26 }}>
+            <div className="lbl">Trailer</div>
+            <div style={{ marginTop: 12 }}>
+              <Trailer film={film} />
+            </div>
+          </div>
 
           {/* Director and country moved up into the header, where Letterboxd
               puts them; only the tags are left down here. */}

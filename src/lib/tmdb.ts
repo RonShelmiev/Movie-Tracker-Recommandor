@@ -299,6 +299,35 @@ export async function recommendedWith(id: number, cfg: TmdbConfig, minVotes = 30
     .map((r) => r.id);
 }
 
+interface TmdbVideo {
+  key: string;
+  site: string;
+  type: string;
+  official?: boolean;
+  iso_639_1?: string;
+  size?: number;
+  published_at?: string;
+}
+
+/**
+ * The YouTube key of a film's trailer, or null when TMDB lists none. An
+ * official English trailer first; then any trailer; then a teaser, which is
+ * still better than nothing. The oldest wins a tie — it is usually the
+ * original theatrical trailer rather than a re-release.
+ */
+export async function trailerFor(id: number, cfg: TmdbConfig): Promise<string | null> {
+  const res = await get<{ results?: TmdbVideo[] }>(`/movie/${id}/videos`, cfg);
+  const yt = (res.results ?? []).filter((v) => v.site === 'YouTube' && v.key);
+  const rank = (v: TmdbVideo) =>
+    (v.type === 'Trailer' ? 0 : v.type === 'Teaser' ? 4 : 8) +
+    (v.official ? 0 : 2) +
+    (!v.iso_639_1 || v.iso_639_1 === 'en' ? 0 : 1);
+  const best = yt
+    .filter((v) => v.type === 'Trailer' || v.type === 'Teaser')
+    .sort((a, b) => rank(a) - rank(b) || (a.published_at ?? '').localeCompare(b.published_at ?? ''))[0];
+  return best?.key ?? null;
+}
+
 export interface DiscoverOptions {
   genreIds?: number[];
   decade?: number;
