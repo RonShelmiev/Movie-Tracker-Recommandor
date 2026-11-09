@@ -89,13 +89,10 @@ export function FilmDetail() {
 
   return (
     <div className="film-page">
-      {/* On a phone the poster is the header, the way Letterboxd leads with
-          its art: sharp, full width, the top half showing before it fades
-          into the page under the title. On a wide screen it would be cropped
-          to a sliver, so there it is blurred into a backdrop beside a poster
-          card instead. The art-* skin sits on its own layer and only shows
-          when there is no artwork — on the section itself, its motif drew a
-          line through the title. */}
+      {/* The whole poster over a blurred backdrop of itself: beside the
+          title on a wide screen, centred above it on a phone. The art-* skin
+          sits on its own layer and only shows when there is no artwork — on
+          the section itself, its motif drew a line through the title. */}
       <section className={art ? 'film-hero has-art' : 'film-hero'}>
         <div className={`film-backdrop art-${film.art}`} aria-hidden="true">
           {art && <img src={art} alt="" />}
