@@ -235,6 +235,17 @@ function sameSeries(a: Film, b: Film): boolean {
   return x.length >= 4 && x === y;
 }
 
+/** One favourite pointing at a film reads as a fair resemblance, three as a strong one. */
+const LINK_BASE = 0.45;
+const LINK_STEP = 0.15;
+
+/** The favourites TMDB recommends this film alongside, best-loved first. */
+function linkedFavourites(film: Film, taste: Taste): Film[] {
+  if (!film.linkedFrom?.length) return [];
+  const from = new Set(film.linkedFrom);
+  return taste.favourites.filter((f) => from.has(f.film.id) && f.film.id !== film.id).map((f) => f.film);
+}
+
 function components(film: Film, taste: Taste): Components {
   /* ── people ──
      Was a flat 0.35 for any director you had not rated, which is most of
@@ -289,6 +300,14 @@ function components(film: Film, taste: Taste): Components {
       wsum += w;
     }
     similarity = wsum ? clamp01((acc / wsum) * SIM_SCALE) : 0.5;
+
+    // TMDB recommends it alongside films you loved. That comes from what
+    // people actually watch together, so it holds where hand tags and TMDB's
+    // keyword-derived ones disagree — the usual case for a searched film.
+    const links = linkedFavourites(film, taste);
+    // Capped at three: a hugely popular film turns up beside nearly every
+    // favourite, and that says it is popular, not that it is like them.
+    if (links.length) similarity = Math.max(similarity, clamp01(LINK_BASE + LINK_STEP * Math.min(3, links.length)));
   }
 
   const z = (film.runtime - taste.runtimeMean) / taste.runtimeSd;
@@ -465,6 +484,12 @@ function reasonsFor(
   const seed = nearestSeed(film, log, getFilm, taste.centre);
   if (seed) out.push(`Because you rated ${seed.film.title} ${seed.entry.score.toFixed(1)}`);
 
+  const linked = linkedFavourites(film, taste).filter((f) => f.id !== seed?.film.id);
+  if (linked.length) {
+    const names = linked.slice(0, 2).map((f) => f.title).join(' and ');
+    out.push(`People who loved ${names} watch this next`);
+  }
+
   const dir = taste.director.get(film.director);
   if (dir && dir.mean > taste.centre + 0.2) {
     out.push(`You rate ${film.director} ${dir.mean.toFixed(1)} on average`);
@@ -487,7 +512,9 @@ function reasonsFor(
 
   // Zero here means "TMDB gave us no count", not "nobody has seen it", so it
   // is not something to claim.
-  if (settings.surfaceObscure && film.ratingsK > 0 && film.ratingsK < 120) {
+  // TMDB's vote counts run far below IMDb's, so only the bundled figures can
+  // say how widely a film has been seen.
+  if (settings.surfaceObscure && !film.id.startsWith('tmdb:') && film.ratingsK > 0 && film.ratingsK < 120) {
     out.push(`Only ${film.ratingsK}k ratings — off the beaten path`);
   }
 
@@ -547,7 +574,8 @@ function passesRules(film: Film, state: AppState, ctx: RuleContext): boolean {
   if (last && !(settings.offerRewatches && isRewatchWorthy(last, ctx.meanScore))) return false;
   if (settings.runtimeCeiling !== null && film.runtime > settings.runtimeCeiling) return false;
   if (film.genres.some((g) => settings.excludedGenres.includes(g))) return false;
-  if (!settings.surfaceObscure && film.ratingsK < 200) return false;
+  // Same measure on TMDB's scale, where 200k IMDb votes is roughly 5k.
+  if (!settings.surfaceObscure && film.ratingsK < (film.id.startsWith('tmdb:') ? 5 : 200)) return false;
   return true;
 }
 
@@ -766,7 +794,7 @@ export function recommend(
   // list. They get one place per eight picks, never in the top three.
   const TOP_FOR_NEW = 3;
   const rewatchesLeft = Math.max(1, Math.floor(limit / 8));
-  const fresh = scored.filter((r) => !r.rewatch);
+  const fresh = spreadDirectors(scored.filter((r) => !r.rewatch));
   const again = scored.filter((r) => r.rewatch).slice(0, rewatchesLeft);
   const out: Recommendation[] = [];
   let i = 0;
@@ -780,6 +808,29 @@ export function recommend(
     out.push(rec);
   }
   return out;
+}
+
+/**
+ * At most two films by one director in a row near the top. Five Villeneuve
+ * films are each a good fit for someone who loved Arrival, but a list of
+ * them is one suggestion, not five. The extras are not dropped — they go to
+ * the back of the ranking, in their own order.
+ */
+const PER_DIRECTOR = 2;
+function spreadDirectors<T extends { film: Film }>(ranked: T[]): T[] {
+  const out: T[] = [];
+  const held: T[] = [];
+  const count = new Map<string, number>();
+  for (const r of ranked) {
+    const d = r.film.director;
+    if (d && d !== 'Unknown' && (count.get(d) ?? 0) >= PER_DIRECTOR) {
+      held.push(r);
+      continue;
+    }
+    count.set(d, (count.get(d) ?? 0) + 1);
+    out.push(r);
+  }
+  return [...out, ...held];
 }
 
 export interface SeedCluster {

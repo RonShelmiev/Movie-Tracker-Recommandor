@@ -251,9 +251,11 @@ film was *about* had the least influence of any of them.
   egress to `supabase.co`. It is covered end to end by a mock
   (two devices, merge, deletion, token refresh, wrong password); `Test project`
   in Settings checks a real one in a tap.
-- Recommendations score a local candidate pool: the bundled films plus every
-  film you have touched. `expandPool()` can pull more by your strongest genres,
-  but **nothing in the UI calls it yet**.
+- Recommendations score a local candidate pool: the bundled films, every film
+  you have touched, and — with a TMDB key — what TMDB recommends alongside your
+  favourites (`growFrom()` in `lib/catalogue.tsx`, each favourite re-asked
+  every 14 days). Those TMDB links also count toward the match. Tested against
+  a mocked TMDB, not the live API.
 - CSV / Letterboxd import is designed but not implemented; JSON backup
   export/import is.
 - No automated tests. Behaviour is verified by driving the real app in a browser

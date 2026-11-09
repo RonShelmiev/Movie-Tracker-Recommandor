@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useCatalogue } from '../lib/catalogue';
 import { Poster } from '../components/Poster';
+import { FilterSheet } from '../components/FilterSheet';
 import { StarterBanner } from '../components/StarterBanner';
 import { Chip } from '../components/ui';
 import { matchContext, matchIsMeaningful, scoreFilm } from '../lib/recommend';
@@ -100,23 +101,49 @@ export function Browse() {
         </div>
       </div>
 
-      {/* Two rows rather than one flat list: on a phone these wrap into seven
-          rows and push every film below the fold, so each row scrolls
-          sideways instead (see .filter-row in layout.css). */}
-      <div className="filter-rows">
-        <div className="filter-row">
-          <Chip label="ALL" on={!genre && decade === null && !unseenOnly && !collection} onClick={() => { setGenre(null); setDecade(null); setUnseenOnly(false); setParams({}); }} />
-          {GENRES.map((g) => (
-            <Chip key={g} label={g} on={genre === g} onClick={() => setGenre(genre === g ? null : g)} />
-          ))}
-        </div>
-        <div className="filter-row">
-          {DECADES.map((d) => (
-            <Chip key={d} label={`${d}s`} on={decade === d} onClick={() => setDecade(decade === d ? null : d)} />
-          ))}
-          <Chip label="Unseen only" on={unseenOnly} onClick={() => setUnseenOnly(!unseenOnly)} />
-        </div>
-      </div>
+      <FilterSheet
+        groups={[
+          {
+            label: 'Genre',
+            content: (
+              <>
+                <Chip label="Any" on={!genre} onClick={() => setGenre(null)} />
+                {GENRES.map((g) => (
+                  <Chip key={g} label={g} on={genre === g} onClick={() => setGenre(genre === g ? null : g)} />
+                ))}
+              </>
+            ),
+            chosen: genre ? [{ label: genre, clear: () => setGenre(null) }] : [],
+          },
+          {
+            label: 'Decade',
+            content: (
+              <>
+                <Chip label="Any" on={decade === null} onClick={() => setDecade(null)} />
+                {DECADES.map((d) => (
+                  <Chip key={d} label={`${d}s`} on={decade === d} onClick={() => setDecade(decade === d ? null : d)} />
+                ))}
+              </>
+            ),
+            chosen: decade !== null ? [{ label: `${decade}s`, clear: () => setDecade(null) }] : [],
+          },
+          {
+            label: 'Show',
+            content: (
+              <>
+                <Chip label="Everything" on={!unseenOnly} onClick={() => setUnseenOnly(false)} />
+                <Chip label="Unseen only" on={unseenOnly} onClick={() => setUnseenOnly(true)} />
+              </>
+            ),
+            chosen: unseenOnly ? [{ label: 'Unseen only', clear: () => setUnseenOnly(false) }] : [],
+          },
+          ...(collection
+            ? [{ label: 'Collection', content: <Chip label={collection.name} on onClick={() => setParams({})} />, chosen: [{ label: collection.name, clear: () => setParams({}) }] }]
+            : []),
+        ]}
+        onClear={() => { setGenre(null); setDecade(null); setUnseenOnly(false); setParams({}); }}
+        footer={`SHOW ${films.length} ${films.length === 1 ? 'FILM' : 'FILMS'}`}
+      />
 
       {films.length === 0 ? (
         <div className="empty-note">Nothing matches those filters.</div>

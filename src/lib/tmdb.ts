@@ -279,6 +279,26 @@ export async function findPoster(
   return { posterPath: best.poster_path ?? undefined, tmdbId: best.id };
 }
 
+/** TMDB's id for a film known by its IMDb id — how a bundled film is found there. */
+export async function findByImdb(imdbId: string, cfg: TmdbConfig): Promise<number | null> {
+  const res = await get<{ movie_results?: { id: number }[] }>(`/find/${imdbId}`, cfg, { external_source: 'imdb_id' });
+  return res.movie_results?.[0]?.id ?? null;
+}
+
+/**
+ * What TMDB recommends alongside a film: ids only, already released and with
+ * enough votes to be a real film rather than a stub. TMDB builds this list
+ * from what its users watch together, which is exactly the kind of signal a
+ * hand-tagged catalogue of 89 films cannot carry.
+ */
+export async function recommendedWith(id: number, cfg: TmdbConfig, minVotes = 300): Promise<number[]> {
+  const list = await get<{ results: TmdbListItem[] }>(`/movie/${id}/recommendations`, cfg, { page: 1 });
+  const today = new Date().toISOString().slice(0, 10);
+  return list.results
+    .filter((r) => (r.vote_count ?? 0) >= minVotes && Boolean(r.release_date) && r.release_date! <= today)
+    .map((r) => r.id);
+}
+
 export interface DiscoverOptions {
   genreIds?: number[];
   decade?: number;
