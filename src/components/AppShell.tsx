@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useCatalogue } from '../lib/catalogue';
+import { buildTaste } from '../lib/recommend';
 import { computeStats } from '../lib/stats';
 import { useStore } from '../lib/store';
 import { Icon } from './Icon';
@@ -54,10 +55,18 @@ const NAV: {
 ];
 
 export function AppShell() {
-  const { getFilm } = useCatalogue();
+  const { getFilm, growFrom } = useCatalogue();
   const { state } = useStore();
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Widen the recommendation pool from what you loved most. Runs from any
+  // screen, so For You is ready by the time you open it; each favourite is
+  // only asked about once a fortnight, so this is cheap on most visits.
+  useEffect(() => {
+    const favourites = buildTaste(state.log, getFilm).favourites.map((f) => f.film);
+    void growFrom(favourites);
+  }, [state.log, getFilm, growFrom]);
   const stats = computeStats(state, getFilm);
   const [logFor, setLogFor] = useState<string | null | undefined>(undefined);
   const [editingEntry, setEditingEntry] = useState<LogEntry | undefined>(undefined);

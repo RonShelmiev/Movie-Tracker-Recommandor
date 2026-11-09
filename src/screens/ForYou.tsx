@@ -5,6 +5,7 @@ import { Icon } from '../components/Icon';
 import { Thumb } from '../components/Poster';
 import { posterUrl } from '../lib/tmdb';
 import { Chip, SectionHead } from '../components/ui';
+import { FilterSheet } from '../components/FilterSheet';
 import {
   buildTaste,
   focusIsActive,
@@ -54,7 +55,7 @@ const LENGTHS: { label: string; minutes: number | null }[] = [
 ];
 
 export function ForYou() {
-  const { candidates, getFilm } = useCatalogue();
+  const { candidates, getFilm, growing, mode } = useCatalogue();
   const { state, dispatch } = useStore();
   const [focus, setFocus] = useState<Focus>({});
 
@@ -221,59 +222,65 @@ export function ForYou() {
 
       {/* Tune My Taste holds the standing profile. These steer tonight only,
           and are deliberately not saved. */}
-      <div className="focus-panel">
-        <div className="focus-row">
-          <span className="lbl focus-lbl">Tonight</span>
-          <div className="filter-row">
-            {LENGTHS.map((l) => (
+      <FilterSheet
+        title="TONIGHT"
+        groups={[
+          {
+            label: 'Length',
+            content: LENGTHS.map((l) => (
               <Chip
                 key={l.label}
                 label={l.label}
                 on={(focus.maxRuntime ?? null) === l.minutes}
                 onClick={() => setFocus((f) => ({ ...f, maxRuntime: l.minutes }))}
               />
-            ))}
-          </div>
+            )),
+            chosen: focus.maxRuntime
+              ? [{ label: LENGTHS.find((l) => l.minutes === focus.maxRuntime)?.label ?? '', clear: () => setFocus((f) => ({ ...f, maxRuntime: null })) }]
+              : [],
+          },
+          ...(seedChoices.length
+            ? [{
+                label: 'More like',
+                content: seedChoices.map(({ f, e }) => (
+                  <Chip
+                    key={f.id}
+                    label={`${f.title} ${e.score.toFixed(1)}`}
+                    on={(focus.seedIds ?? []).includes(f.id)}
+                    onClick={() => toggleSeed(f.id)}
+                  />
+                )),
+                chosen: (focus.seedIds ?? []).map((id) => ({ label: `Like ${getFilm(id)?.title ?? id}`, clear: () => toggleSeed(id) })),
+              }]
+            : []),
+          ...(moods.length
+            ? [{
+                label: 'In the mood for',
+                content: moods.map((t) => (
+                  <Chip
+                    key={t}
+                    label={MOOD_LABEL[t] ?? t}
+                    on={(focus.tags ?? []).includes(t)}
+                    onClick={() => toggleTag(t)}
+                  />
+                )),
+                chosen: (focus.tags ?? []).map((t) => ({ label: MOOD_LABEL[t] ?? t, clear: () => toggleTag(t) })),
+              }]
+            : []),
+        ]}
+        onClear={() => setFocus({})}
+        footer={`SHOW ${recs.length} ${recs.length === 1 ? 'PICK' : 'PICKS'}`}
+      />
+
+      {growing ? (
+        <div className="meta pool-note">
+          FINDING FILMS LIKE YOUR FAVOURITES… {growing.done} / {growing.total}
         </div>
-
-        {seedChoices.length > 0 && (
-          <div className="focus-row">
-            <span className="lbl focus-lbl">More like</span>
-            <div className="filter-row">
-              {seedChoices.map(({ f, e }) => (
-                <Chip
-                  key={f.id}
-                  label={`${f.title} ${e.score.toFixed(1)}`}
-                  on={(focus.seedIds ?? []).includes(f.id)}
-                  onClick={() => toggleSeed(f.id)}
-                />
-              ))}
-            </div>
-          </div>
-        )}
-
-        {moods.length > 0 && (
-          <div className="focus-row">
-            <span className="lbl focus-lbl">In the mood for</span>
-            <div className="filter-row">
-              {moods.map((t) => (
-                <Chip
-                  key={t}
-                  label={MOOD_LABEL[t] ?? t}
-                  on={(focus.tags ?? []).includes(t)}
-                  onClick={() => toggleTag(t)}
-                />
-              ))}
-            </div>
-          </div>
-        )}
-
-        {active && (
-          <button type="button" className="btn btn-sm btn-ghost focus-clear" onClick={() => setFocus({})}>
-            CLEAR — BACK TO MY WHOLE TASTE
-          </button>
-        )}
-      </div>
+      ) : mode === 'bundled' ? (
+        <div className="meta pool-note">
+          PICKING FROM THE 89 BUILT-IN FILMS. <Link to="/settings">ADD A TMDB KEY</Link> AND IT LOOKS FURTHER — AT WHAT PEOPLE WATCH AFTER THE FILMS YOU RATED HIGHEST.
+        </div>
+      ) : null}
 
       {top.length === 0 ? (
         <div className="empty-note">
@@ -309,11 +316,10 @@ export function ForYou() {
                     </li>
                   ))}
                 </ul>
-                <div style={{ marginTop: 'auto', paddingTop: 16, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <div className="rec-actions">
                   <button
                     type="button"
                     className="btn btn-primary"
-                    style={{ justifyContent: 'center' }}
                     onClick={() => dispatch({ type: 'watchlist/add', filmId: rec.film.id, source: rec.seedReason ?? rec.reasons[0] ?? 'Recommended for you' })}
                   >
                     <Icon name="tosee" size={14} width={2} colour="var(--void)" />
@@ -321,12 +327,13 @@ export function ForYou() {
                   </button>
                   <button
                     type="button"
-                    className="btn"
-                    style={{ justifyContent: 'center', borderColor: 'var(--edge-2)', color: 'var(--ink-5)' }}
+                    className="btn rec-dismiss"
                     onClick={() => dispatch({ type: 'dismiss', filmId: rec.film.id })}
                     title="Never recommend this again"
+                    aria-label={`Not for me — never recommend ${rec.film.title} again`}
                   >
-                    NOT FOR ME
+                    <Icon name="close" size={14} width={1.8} />
+                    <span className="rec-dismiss-text">NOT FOR ME</span>
                   </button>
                 </div>
               </div>

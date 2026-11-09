@@ -30,6 +30,13 @@ export interface Film {
   /** The real IMDb rating and vote count, where known — see data/imdb.ts. */
   imdb?: { id: string; rating: number; votes: number };
   synopsis: string;
+  /**
+   * Ids of your own films that TMDB recommends this one alongside — set when
+   * the pool grows from your favourites (see lib/catalogue.tsx). Evidence a
+   * film belongs with what you loved, from what people actually watch
+   * together, which tags alone miss.
+   */
+  linkedFrom?: string[];
 }
 
 export interface LogEntry {

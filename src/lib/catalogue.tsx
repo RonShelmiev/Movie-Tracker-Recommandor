@@ -14,6 +14,32 @@ const pause = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const CACHE_KEY = 'flick.films.v1';
 const KEY_KEY = 'flick.tmdb.v1';
 const POSTER_KEY = 'flick.posters.v1';
+const LINKS_KEY = 'flick.links.v1';
+const GROWN_KEY = 'flick.grown.v1';
+const TMDB_IDS_KEY = 'flick.tmdbids.v1';
+
+/** How long one favourite's TMDB neighbours are trusted before asking again. */
+const REGROW_DAYS = 14;
+/** Favourites asked about per run, and new films fetched per run at most. */
+const GROW_SEEDS = 8;
+const GROW_FETCH_CAP = 60;
+
+function readJson<T>(key: string, fallback: T): T {
+  try {
+    const raw = localStorage.getItem(key);
+    return raw ? (JSON.parse(raw) as T) : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function writeJson(key: string, value: unknown) {
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+  } catch {
+    /* over quota — the links are rebuilt next time the pool grows */
+  }
+}
 
 /**
  * Posters found for bundled films, kept separately from the film cache: the
@@ -60,6 +86,12 @@ function loadCache(): Map<string, Film> {
   } catch {
     // Corrupt or unavailable storage just means we fall back to the bundled set.
   }
+  // Kept apart from the cache because bundled films are never persisted there.
+  const links = readJson<Record<string, string[]>>(LINKS_KEY, {});
+  for (const [id, from] of Object.entries(links)) {
+    const f = m.get(id);
+    if (f) m.set(id, { ...f, linkedFrom: from });
+  }
   return m;
 }
 
@@ -97,6 +129,13 @@ export interface CatalogueApi {
   posterStats: { found: number; total: number };
   /** Pull a candidate pool matching the user's strongest genres. */
   expandPool: (genres: Genre[], decade?: number) => Promise<number>;
+  /**
+   * Widen the pool with what TMDB recommends alongside your favourites. Safe
+   * to call on every visit: each favourite is only asked about once a fortnight.
+   */
+  growFrom: (favourites: Film[]) => Promise<void>;
+  /** Progress of a running growFrom, for a quiet "finding more" line. */
+  growing: { done: number; total: number } | null;
   remember: (films: Film[]) => void;
   /**
    * Fetch one TMDB film that is not cached yet — a shared link, or a device
@@ -123,6 +162,8 @@ export function CatalogueProvider({ children }: { children: ReactNode }) {
   const [lastError, setLastError] = useState<string | null>(null);
   const [hydrating, setHydrating] = useState<{ done: number; total: number } | null>(null);
   const runningRef = useRef(false);
+  const growingRef = useRef(false);
+  const [growing, setGrowing] = useState<{ done: number; total: number } | null>(null);
 
   const cfg = useMemo<tmdb.TmdbConfig | null>(
     () => (tmdbKey.trim() ? { key: tmdbKey.trim(), kind: tmdb.detectKeyKind(tmdbKey) } : null),
@@ -215,6 +256,93 @@ export function CatalogueProvider({ children }: { children: ReactNode }) {
       }
     },
     [cfg, remember],
+  );
+
+  const growFrom = useCallback(
+    async (favourites: Film[]) => {
+      if (!cfg || growingRef.current) return;
+      const grown = readJson<Record<string, string>>(GROWN_KEY, {});
+      const stale = favourites
+        .filter((f) => {
+          const at = grown[f.id];
+          return !at || Date.now() - new Date(at).getTime() > REGROW_DAYS * 86_400_000;
+        })
+        .slice(0, GROW_SEEDS);
+      if (!stale.length) return;
+
+      growingRef.current = true;
+      try {
+        const ids = readJson<Record<string, number>>(TMDB_IDS_KEY, {});
+        const links = readJson<Record<string, string[]>>(LINKS_KEY, {});
+        const bundledByKey = new Map(CATALOGUE.map((f) => [filmKey(f), f.id] as const));
+        /** TMDB id -> the favourites that pointed at it. */
+        const pointed = new Map<number, Set<string>>();
+
+        // 1. Ask TMDB what goes with each favourite.
+        for (const seed of stale) {
+          try {
+            let id = tmdb.isTmdbId(seed.id) ? tmdb.rawTmdbId(seed.id) : ids[seed.id];
+            if (!id && seed.imdb) {
+              id = (await tmdb.findByImdb(seed.imdb.id, cfg)) ?? 0;
+              if (id) ids[seed.id] = id;
+            }
+            if (!id) continue;
+            for (const r of await tmdb.recommendedWith(id, cfg)) {
+              const set = pointed.get(r) ?? new Set<string>();
+              set.add(seed.id);
+              pointed.set(r, set);
+            }
+            grown[seed.id] = new Date().toISOString();
+          } catch {
+            // Unanswered favourites stay stale and are asked about next visit.
+          }
+        }
+        writeJson(TMDB_IDS_KEY, ids);
+
+        // 2. Fetch the ones not already known, most-pointed-at first.
+        const unknown = [...pointed.entries()]
+          .filter(([id]) => !cacheRef.current.has(tmdb.tmdbId(id)))
+          .sort((a, b) => b[1].size - a[1].size)
+          .slice(0, GROW_FETCH_CAP)
+          .map(([id]) => id);
+        setGrowing({ done: 0, total: unknown.length });
+        const fetched: Film[] = [];
+        for (let i = 0; i < unknown.length; i += BATCH) {
+          const settled = await Promise.allSettled(unknown.slice(i, i + BATCH).map((id) => tmdb.fetchFilm(id, cfg)));
+          for (const r of settled) if (r.status === 'fulfilled') fetched.push(r.value);
+          setGrowing({ done: Math.min(unknown.length, i + BATCH), total: unknown.length });
+          if (i + BATCH < unknown.length) await pause(PACE);
+        }
+
+        // 3. Record who pointed at what. A film the bundled catalogue already
+        //    has is linked under its bundled id, so there is one copy of it.
+        const idFor = (tmdbNum: number) => {
+          const f = cacheRef.current.get(tmdb.tmdbId(tmdbNum)) ?? fetched.find((x) => x.id === tmdb.tmdbId(tmdbNum));
+          return f ? bundledByKey.get(filmKey(f)) ?? f.id : null;
+        };
+        for (const [tmdbNum, from] of pointed) {
+          const id = idFor(tmdbNum);
+          if (!id) continue;
+          links[id] = [...new Set([...(links[id] ?? []), ...from])];
+        }
+        writeJson(LINKS_KEY, links);
+        writeJson(GROWN_KEY, grown);
+
+        const withLinks = (f: Film) => (links[f.id] ? { ...f, linkedFrom: links[f.id] } : f);
+        // New films that are not copies of a bundled one join the pool.
+        for (const f of fetched) if (!bundledByKey.has(filmKey(f))) cacheRef.current.set(f.id, withLinks(f));
+        for (const id of Object.keys(links)) {
+          const f = cacheRef.current.get(id);
+          if (f) cacheRef.current.set(id, withLinks(f));
+        }
+        persistCache(cacheRef.current);
+        setVersion((v) => v + 1);
+      } finally {
+        growingRef.current = false;
+        setGrowing(null);
+      }
+    },
+    [cfg],
   );
 
   /**
@@ -340,6 +468,8 @@ export function CatalogueProvider({ children }: { children: ReactNode }) {
       hydratePosters,
       posterStats,
       expandPool,
+      growFrom,
+      growing,
       remember,
       load,
       tmdbKey,
@@ -348,7 +478,7 @@ export function CatalogueProvider({ children }: { children: ReactNode }) {
       busy,
       lastError,
     }),
-    [cfg, getFilm, candidates, search, hydrating, hydratePosters, posterStats, expandPool, remember, load, tmdbKey, setTmdbKey, probe, busy, lastError],
+    [cfg, getFilm, candidates, search, hydrating, hydratePosters, posterStats, expandPool, growFrom, growing, remember, load, tmdbKey, setTmdbKey, probe, busy, lastError],
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
